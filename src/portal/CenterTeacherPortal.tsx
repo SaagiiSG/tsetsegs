@@ -3,8 +3,8 @@ import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, Radio, LayoutDashboard,
-  Search, Pencil, BookOpen, Flame, ChevronRight, ArrowLeft, LifeBuoy,
+  Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, LayoutDashboard,
+  Search, Pencil, BookOpen, ShieldCheck, Flame, ChevronRight, LifeBuoy, Settings,
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,33 +14,35 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from 'sonner';
 import { CenterLogo, STATUS_LABEL, STATUS_ORDER, STATUS_STYLE, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
 import { allPages, localDate } from './centerApi';
-import { LiquidGlassFX } from '@/components/admin/LiquidGlassFX';
 import { liquidTrack, liquidRest } from '@/hooks/useLiquidHighlight';
 import { AdminBackgroundPaths } from '@/components/ui/background-paths';
-import { MathText } from '@/components/MathText';
-import { domainStats, loadQuestionMeta, pct, type DomainStat } from './questionMeta';
-import { TeacherLive } from './LiveSession';
+import { domainStats, loadQuestionMeta, pct } from './questionMeta';
+import CenterStudentCards, { DomainBars } from './CenterStudentCards';
+import { CenterPracticeHub, type PracticeTab } from './CenterPracticeHub';
+import { CenterProctor } from './proctor/CenterProctor';
 import { CenterHelpPage } from './CenterHelp';
 import { ChangePasswordForm } from './ChangePasswordForm';
+import { ClassCarousel } from '@/components/teacher/dashboard/ClassCarousel';
 
-type Mode = 'dashboard' | 'analytics' | 'practice' | 'live';
-const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice', 'live'];
+type Mode = 'dashboard' | 'analytics' | 'practice' | 'proctor';
+const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice', 'proctor'];
 const MODE_GLOW: Record<Mode, string> = {
   dashboard: '217 91% 60%',
   analytics: '262 83% 62%',
   practice: '152 60% 42%',
-  live: '345 75% 55%',
+  proctor: '345 75% 55%',
 };
 
 type CenterClass = {
   id: string; name: string; join_code: string; schedule: string | null;
   starts_on: string | null; created_at: string; studentCount: number;
 };
-type CenterStudent = { id: string; class_id: string | null; name: string; phone: string; user_id: string | null };
+type CenterStudent = { id: string; class_id: string | null; name: string; phone: string; user_id: string | null; sat_month: string | null };
 type Attempt = { student_id: string; question_id: string; is_correct: boolean; created_at: string };
 type AttRow = { student_id: string; class_id: string; status: string; session_date: string };
 
@@ -73,18 +75,6 @@ function InviteDialog({ name, code, onClose }: { name: string; code: string; onC
   );
 }
 
-function DomainBars({ stats }: { stats: DomainStat[] }) {
-  if (!stats.length) return <p className="text-sm text-muted-foreground">No practice yet.</p>;
-  return (
-    <ul className="space-y-3">{stats.map(s => (
-      <li key={s.domain} className="space-y-1">
-        <div className="flex justify-between text-sm"><span>{s.domain} <span className="text-xs text-muted-foreground capitalize">· {s.subject}</span></span>
-          <span className="font-mono text-xs">{pct(s.c, s.n)}% <span className="text-muted-foreground">({s.n})</span></span></div>
-        <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-foreground/70 rounded-full" style={{ width: `${pct(s.c, s.n)}%` }} /></div>
-      </li>))}</ul>
-  );
-}
-
 /** Big liquid class card with Students / Analytics tabs — mirrors the main dashboard's ClassCardBig. */
 function CenterClassCard({
   cls, students, statsMap, attMap, date, onCycle, onInspect, onInvite, onRename, canRename, onOpen,
@@ -111,8 +101,7 @@ function CenterClassCard({
   return (
     <div onPointerMove={liquidTrack} onPointerLeave={liquidRest}
       className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6 space-y-4 transition-transform hover:-translate-y-0.5">
-      <LiquidGlassFX />
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="relative flex flex-wrap items-start justify-between gap-3">
         <button onClick={onOpen} className="min-w-0 text-left group" aria-label={`Open ${cls.name}`}>
           <h3 className="font-semibold text-lg truncate group-hover:underline underline-offset-4 flex items-center gap-1.5">{cls.name}<ChevronRight className="h-4 w-4 opacity-50 group-hover:translate-x-0.5 transition-transform" /></h3>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -146,14 +135,14 @@ function CenterClassCard({
             <p className="text-sm text-muted-foreground py-4">No students yet — share the class QR code to enroll them.</p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="text-xs text-foreground/65 border-b border-border/60"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th></tr></thead>
+              <thead className="text-xs text-foreground/65 border-b border-border/60"><tr><th className="text-left py-2">Student</th><th className="text-left">Attendance</th><th className="text-left hidden sm:table-cell">Questions</th><th className="text-left hidden sm:table-cell">Accuracy</th><th className="text-left">Status</th></tr></thead>
               <tbody className="divide-y divide-border/50">{students.map(s => {
                 const st = attMap[s.id]; const p = statsMap[s.id]; const risk = riskOf(p);
                 return <tr key={s.id}>
                   <td className="py-3"><button onClick={() => onInspect(s.id)} className="hover:underline text-left">{s.name}</button>{!s.user_id && <span className="ml-2 text-xs text-foreground/60">not signed up</span>}</td>
                   <td><button onClick={() => onCycle(cls.id, s.id)} className={`rounded px-2.5 py-1 text-xs min-w-20 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button></td>
-                  <td className="font-mono">{p?.n ?? 0}</td>
-                  <td className="font-mono">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
+                  <td className="font-mono hidden sm:table-cell">{p?.n ?? 0}</td>
+                  <td className="font-mono hidden sm:table-cell">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
                   <td className="text-xs">{risk ? <span className="text-status-watch">{risk}</span> : <span className="text-foreground/50">On track</span>}</td>
                 </tr>;
               })}</tbody>
@@ -172,87 +161,6 @@ function CenterClassCard({
 }
 
 /** Per-class domain mastery, loaded lazily when the Analytics tab opens. */
-/** Dedicated class hub — full attendance grid, roster with risk, domain mastery and live launcher. */
-function ClassHub({
-  cls, students, statsMap, history, attMap, date, onCycle, onInspect, onInvite, onBack, onLive,
-}: {
-  cls: CenterClass; students: CenterStudent[]; statsMap: Record<string, StudentStats>;
-  history: AttRow[]; attMap: Record<string, string>; date: string;
-  onCycle: (classId: string, studentId: string) => void; onInspect: (id: string) => void;
-  onInvite: () => void; onBack: () => void; onLive: () => void;
-}) {
-  const classHistory = history.filter(a => a.class_id === cls.id);
-  const dates = [...new Set([date, ...classHistory.map(a => a.session_date)])].sort().reverse().slice(0, 12).reverse();
-  const cell: Record<string, string> = {};
-  for (const a of classHistory) cell[`${a.student_id}|${a.session_date}`] = a.status;
-  for (const [sid, st] of Object.entries(attMap)) cell[`${sid}|${date}`] = st;
-  const totals = students.reduce((t, s) => { const st = statsMap[s.id]; return { n: t.n + (st?.n ?? 0), c: t.c + (st?.c ?? 0), p: t.p + (st?.present ?? 0), s: t.s + (st?.sessions ?? 0) }; }, { n: 0, c: 0, p: 0, s: 0 });
-  const glass = 'relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 md:p-6';
-  const short = (d: string) => new Date(d + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft className="h-4 w-4" />All classes</Button>
-      </div>
-      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} flex flex-wrap items-start justify-between gap-4`}>
-        <LiquidGlassFX />
-        <div className="relative min-w-0">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{cls.name}</h2>
-          <p className="text-sm text-muted-foreground mt-1">{cls.schedule || 'No schedule set'}{cls.starts_on ? ` · started ${cls.starts_on}` : ''}</p>
-        </div>
-        <div className="relative flex flex-wrap items-center gap-2">
-          <button onClick={() => { navigator.clipboard.writeText(cls.join_code); toast.success('Join code copied'); }} className="font-mono text-sm border rounded-full px-3 py-1 hover:bg-muted flex items-center gap-1.5"><Copy className="h-3.5 w-3.5" />{cls.join_code}</button>
-          <Button variant="outline" size="sm" onClick={onInvite}><QrCode className="h-4 w-4" />Invite</Button>
-          <Button size="sm" onClick={onLive}><Radio className="h-4 w-4" />Start live session</Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[['Students', students.length], ['Questions', totals.n], ['Accuracy', totals.n ? `${pct(totals.c, totals.n)}%` : '—'], ['Attendance', totals.s ? `${pct(totals.p, totals.s)}%` : '—']].map(([l, v]) => (
-          <div key={l as string} className="admin-glass-card rounded-2xl border p-4"><p className="text-xs text-muted-foreground">{l}</p><p className="font-mono text-2xl">{v}</p></div>
-        ))}
-      </div>
-
-      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
-        <LiquidGlassFX />
-        <div className="relative flex items-center justify-between"><p className="font-medium">Attendance</p><p className="text-xs text-muted-foreground">Tap the {short(date)} column to mark</p></div>
-        <div className="relative overflow-x-auto">
-          {!students.length ? <p className="text-sm text-muted-foreground">No students yet — share the class QR code.</p> : (
-            <table className="w-full text-sm">
-              <thead><tr className="text-xs text-foreground/65 border-b border-border/60">
-                <th className="text-left py-2 pr-3 sticky left-0 bg-background/60 backdrop-blur">Student</th>
-                {dates.map(d => <th key={d} className={`px-1.5 font-mono font-normal whitespace-nowrap ${d === date ? 'text-foreground' : ''}`}>{short(d)}</th>)}
-                <th className="text-left pl-3">Questions</th><th className="text-left">Accuracy</th><th className="text-left">Status</th>
-              </tr></thead>
-              <tbody className="divide-y divide-border/50">{students.map(s => {
-                const p = statsMap[s.id]; const risk = riskOf(p);
-                return <tr key={s.id}>
-                  <td className="py-2.5 pr-3 sticky left-0 bg-background/60 backdrop-blur"><button onClick={() => onInspect(s.id)} className="hover:underline text-left whitespace-nowrap">{s.name}</button></td>
-                  {dates.map(d => { const st = cell[`${s.id}|${d}`]; return (
-                    <td key={d} className="px-1.5 text-center">{d === date
-                      ? <button onClick={() => onCycle(cls.id, s.id)} className={`rounded px-2 py-1 text-xs min-w-14 active:scale-[0.97] ${st ? STATUS_STYLE[st] : 'border text-muted-foreground'}`}>{st ? STATUS_LABEL[st] : 'Mark'}</button>
-                      : <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] ${st ? STATUS_STYLE[st] : 'text-muted-foreground/40'}`}>{st ? STATUS_LABEL[st][0] : '·'}</span>}</td>
-                  ); })}
-                  <td className="pl-3 font-mono">{p?.n ?? 0}</td>
-                  <td className="font-mono">{p?.n ? `${pct(p.c, p.n)}%` : '—'}</td>
-                  <td className="text-xs whitespace-nowrap">{risk ? <span className="text-status-watch">{risk}</span> : <span className="text-foreground/50">On track</span>}</td>
-                </tr>;
-              })}</tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className={`${glass} space-y-3`}>
-        <LiquidGlassFX />
-        <p className="relative font-medium">Domain mastery</p>
-        <div className="relative"><ClassAnalytics classId={cls.id} studentIds={students.map(s => s.id)} /></div>
-      </div>
-    </div>
-  );
-}
-
 function ClassAnalytics({ classId, studentIds }: { classId: string; studentIds: string[] }) {
   const { data } = useQuery({
     enabled: studentIds.length > 0,
@@ -270,66 +178,6 @@ function ClassAnalytics({ classId, studentIds }: { classId: string; studentIds: 
   return <DomainBars stats={data} />;
 }
 
-/** Read-only practice browser over the international question bank. */
-function PracticeBrowser() {
-  const [q, setQ] = useState('');
-  const [subject, setSubject] = useState<'all' | 'math' | 'english'>('all');
-  const [difficulty, setDifficulty] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
-  const { data, isLoading } = useQuery({
-    queryKey: ['center-practice', q, subject, difficulty],
-    queryFn: async () => {
-      let query = supabase.from('intl_questions')
-        .select('id, question_text, subject, subtopic, difficulty_level, question_set')
-        .order('created_at', { ascending: false }).limit(50);
-      if (q.trim()) query = query.ilike('question_text', `%${q.trim()}%`);
-      if (subject !== 'all') query = query.eq('subject', subject);
-      if (difficulty !== 'all') query = query.eq('difficulty_level', difficulty);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-  });
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search questions…" className="pl-9 border-0 bg-transparent" />
-        </div>
-        <Select value={subject} onValueChange={v => setSubject(v as typeof subject)}>
-          <SelectTrigger className="h-9 w-32 rounded-xl text-sm border-0 bg-transparent"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All subjects</SelectItem><SelectItem value="math">Math</SelectItem><SelectItem value="english">English</SelectItem></SelectContent>
-        </Select>
-        <Select value={difficulty} onValueChange={v => setDifficulty(v as typeof difficulty)}>
-          <SelectTrigger className="h-9 w-32 rounded-xl text-sm border-0 bg-transparent"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All levels</SelectItem><SelectItem value="easy">Easy</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="hard">Hard</SelectItem></SelectContent>
-        </Select>
-      </div>
-      {isLoading ? <p className="text-sm text-muted-foreground">Loading…</p> : !data?.length ? (
-        <p className="text-sm text-muted-foreground">No questions match.</p>
-      ) : (
-        <div className="grid gap-3">
-          {data.map(question => (
-            <div key={question.id} onPointerMove={liquidTrack} onPointerLeave={liquidRest}
-              className="relative admin-glass-card admin-glass-liquid admin-glass-neutral rounded-2xl border p-4">
-              <LiquidGlassFX />
-              <div className="relative space-y-2">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-foreground/60">
-                  <span className="capitalize border rounded-full px-2 py-0.5">{question.subject}</span>
-                  {question.subtopic && <span className="border rounded-full px-2 py-0.5">{question.subtopic}</span>}
-                  {question.difficulty_level && <span className="capitalize border rounded-full px-2 py-0.5">{question.difficulty_level}</span>}
-                  {question.question_set && <span className="font-mono">{question.question_set}</span>}
-                </div>
-                <div className="text-sm leading-relaxed"><MathText text={question.question_text ?? ''} /></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function CenterTeacherPortal() {
   const { center, role, userId, name, signOut } = useCenter();
   const qc = useQueryClient();
@@ -338,12 +186,14 @@ export default function CenterTeacherPortal() {
   const [intake, setIntake] = useState<'current' | 'previous' | 'all'>('current');
   const [date, setDate] = useState(localDate());
   const [searchOpen, setSearchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [invite, setInvite] = useState<CenterClass | null>(null);
   const [rename, setRename] = useState<CenterClass | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [inspect, setInspect] = useState<string | null>(null);
   const [liveClassId, setLiveClassId] = useState<string | null>(null);
+  const [practiceTab, setPracticeTab] = useState<PracticeTab>('browse');
   const navigate = useNavigate();
   const location = useLocation();
   const hubId = matchPath('/teacher/class/:id', location.pathname)?.params.id ?? null;
@@ -391,7 +241,7 @@ export default function CenterTeacherPortal() {
     queryKey: ['center-teacher-students', center.id, classIds.join(',')],
     queryFn: async () => {
       return allPages(p => supabase.from('tenant_students')
-        .select('id, class_id, name, phone, user_id').eq('institution_id', center.id).eq('active', true).order('name').order('id').range(p, p + 999), 5000) as Promise<CenterStudent[]>;
+        .select('id, class_id, name, phone, user_id, sat_month').eq('institution_id', center.id).eq('active', true).order('name').order('id').range(p, p + 999), 5000) as Promise<CenterStudent[]>;
     },
   });
   const allStudents = studentsQuery.data ?? [];
@@ -503,29 +353,35 @@ export default function CenterTeacherPortal() {
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { key: 'analytics', label: 'Analytics', icon: TrendingUp },
     { key: 'practice', label: 'Practice', icon: BookOpen },
-    { key: 'live', label: 'Live', icon: Radio },
+    { key: 'proctor', label: 'Proctor', icon: ShieldCheck },
   ];
 
-  const renderCard = (c: CenterClass) => (
-    <CenterClassCard
-      key={c.id}
-      cls={c}
-      students={allStudents.filter(s => s.class_id === c.id)}
-      statsMap={statsMap}
-      attMap={attByClass[c.id] ?? {}}
-      date={date}
-      onCycle={cycle}
-      onInspect={setInspect}
-      onOpen={() => navigate(`/teacher/class/${c.id}`)}
-      onInvite={() => setInvite(c)}
-      onRename={() => { setRename(c); setRenameValue(c.name); }}
-      canRename={role === 'center_admin'}
-    />
+  // Same look as the main dashboard's carousel: the centred card is sharp, its neighbours sit back.
+  const renderCard = (c: CenterClass, _i: number, isActive: boolean) => (
+    <motion.div
+      animate={{ opacity: isActive ? 1 : 0.55, scale: isActive ? 1 : 0.9, filter: isActive ? 'blur(0px)' : 'blur(1.5px)' }}
+      transition={{ type: 'spring', stiffness: 220, damping: 28, mass: 0.9 }}
+      className="shrink-0 w-[92vw] md:w-[85vw] max-w-[1400px]"
+    >
+      <CenterClassCard
+        cls={c}
+        students={allStudents.filter(s => s.class_id === c.id)}
+        statsMap={statsMap}
+        attMap={attByClass[c.id] ?? {}}
+        date={date}
+        onCycle={cycle}
+        onInspect={setInspect}
+        onOpen={() => navigate(`/teacher/class/${c.id}`)}
+        onInvite={() => setInvite(c)}
+        onRename={() => { setRename(c); setRenameValue(c.name); }}
+        canRename={role === 'center_admin'}
+      />
+    </motion.div>
   );
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-background to-muted overflow-x-clip admin-glow-scope"
+      className="center-teacher min-h-screen bg-gradient-to-br from-background to-muted overflow-x-clip admin-glow-scope"
       style={{ '--section-glow': sectionGlow } as React.CSSProperties}
     >
       <div aria-hidden className="admin-page-atmosphere" />
@@ -547,19 +403,13 @@ export default function CenterTeacherPortal() {
               <span className="hidden md:inline text-xs">Search</span>
               <kbd className="hidden lg:inline-flex ml-2 pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">⌘K</kbd>
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" asChild>
-              <Link to="/teacher/help" aria-label="Help"><LifeBuoy className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Help</span></Link>
-            </Button>
             {role === 'center_admin' && (
               <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" asChild>
                 <Link to="/admin"><LayoutDashboard className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Admin view</span></Link>
               </Button>
             )}
-            <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground" onClick={() => setPasswordOpen(true)} aria-label="Change password">
-              <KeyRound className="h-4 w-4 md:mr-2" /><span className="hidden md:inline text-xs">Password</span>
-            </Button>
-            <Button variant="outline" size="sm" className="h-8 md:h-9 px-2 md:px-3" onClick={signOut}>
-              <LogOut className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">Logout</span>
+            <Button variant="outline" size="icon" className="h-8 w-8 md:h-9 md:w-9" onClick={() => setSettingsOpen(true)} aria-label="Settings">
+              <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -583,18 +433,15 @@ export default function CenterTeacherPortal() {
                 transition={slideTransition}
               >
                 {hubClass && (
-                  <ClassHub
+                  <CenterStudentCards
                     cls={hubClass}
-                    students={allStudents.filter(s => s.class_id === hubClass.id)}
-                    statsMap={statsMap}
-                    history={historyQuery.data?.att ?? []}
-                    attMap={attByClass[hubClass.id] ?? {}}
+                    students={studentsQuery.data?.filter(s => s.class_id === hubClass.id)}
+                    practice={historyQuery.data}
                     date={date}
-                    onCycle={cycle}
-                    onInspect={setInspect}
-                    onInvite={() => setInvite(hubClass)}
+                    onDateChange={setDate}
                     onBack={() => navigate('/teacher')}
-                    onLive={() => { setLiveClassId(hubClass.id); navigate('/teacher'); handleModeChange('live'); }}
+                    onInvite={() => setInvite(hubClass)}
+                    onLive={() => { setLiveClassId(hubClass.id); setPracticeTab('live'); navigate('/teacher'); handleModeChange('practice'); }}
                   />
                 )}
                 {!hubClass && mode === 'dashboard' && (
@@ -624,12 +471,12 @@ export default function CenterTeacherPortal() {
                         {Object.entries(groupedClasses).map(([key, list]) => key !== 'ungrouped' && (
                           <div key={key} className="space-y-3">
                             <h4 className="text-xs font-medium text-muted-foreground px-1 sticky top-16 bg-background/80 backdrop-blur py-1 z-10">{key}</h4>
-                            <div className="grid gap-4">{list.map(renderCard)}</div>
+                            <ClassCarousel items={list} renderCard={renderCard} />
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="grid gap-4">{filteredClasses.map(renderCard)}</div>
+                      <ClassCarousel items={filteredClasses} renderCard={renderCard} />
                     )}
                   </div>
                 )}
@@ -637,20 +484,17 @@ export default function CenterTeacherPortal() {
                 {mode === 'analytics' && (
                   <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
                     <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 space-y-4">
-                      <LiquidGlassFX />
                       <p className="relative font-medium">Domain mastery — all classes</p>
                       <div className="relative"><DomainBars stats={allDomains} /></div>
                     </div>
                     <div className="space-y-4">
                       <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 grid grid-cols-2 gap-4">
-                        <LiquidGlassFX />
                         <div className="relative"><p className="text-xs text-muted-foreground">Questions</p><p className="font-mono text-2xl">{grandTotals.n}</p></div>
                         <div className="relative"><p className="text-xs text-muted-foreground">Accuracy</p><p className="font-mono text-2xl">{grandTotals.n ? `${pct(grandTotals.c, grandTotals.n)}%` : '—'}</p></div>
                         <div className="relative"><p className="text-xs text-muted-foreground">Attendance</p><p className="font-mono text-2xl">{grandTotals.s ? `${pct(grandTotals.p, grandTotals.s)}%` : '—'}</p></div>
                         <div className="relative"><p className="text-xs text-muted-foreground">Students</p><p className="font-mono text-2xl">{allStudents.length}</p></div>
                       </div>
                       <div onPointerMove={liquidTrack} onPointerLeave={liquidRest} className="admin-glass-card admin-glass-liquid admin-glass-neutral rounded-3xl border p-5 space-y-2">
-                        <LiquidGlassFX />
                         <p className="relative font-medium text-sm">Needs attention</p>
                         <div className="relative">
                           {atRiskStudents.map(s => <button key={s.id} onClick={() => setInspect(s.id)} className="block text-sm hover:underline">{s.name}</button>)}
@@ -661,21 +505,18 @@ export default function CenterTeacherPortal() {
                   </div>
                 )}
 
-                {mode === 'practice' && <PracticeBrowser />}
-
-                {mode === 'live' && (
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 admin-glass rounded-xl border">
-                      <Select value={liveClassId ?? ''} onValueChange={setLiveClassId}>
-                        <SelectTrigger className="h-9 rounded-xl text-sm flex-1 md:max-w-xs border-0 bg-transparent"><SelectValue placeholder="Pick a class" /></SelectTrigger>
-                        <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id} className="text-sm">{c.name}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    {liveClassId
-                      ? <TeacherLive classId={liveClassId} studentCount={allStudents.filter(s => s.class_id === liveClassId).length} />
-                      : <p className="text-sm text-muted-foreground">Pick a class to start a live session.</p>}
-                  </div>
+                {mode === 'practice' && (
+                  <CenterPracticeHub
+                    tab={practiceTab}
+                    onTabChange={setPracticeTab}
+                    classes={classes}
+                    studentCount={id => allStudents.filter(s => s.class_id === id).length}
+                    liveClassId={liveClassId}
+                    onLiveClassChange={setLiveClassId}
+                  />
                 )}
+
+                {mode === 'proctor' && <CenterProctor classes={classes} />}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -684,12 +525,13 @@ export default function CenterTeacherPortal() {
 
       {/* Floating glass mode dock — mirrors the main teacher dashboard dock */}
       {!!classes?.length && (
-        <nav aria-label="Teacher tools" className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 admin-glass rounded-full border shadow-lg px-2 py-1.5 flex items-center gap-1">
+        <nav aria-label="Teacher tools" className="center-teacher-dock fixed bottom-4 left-1/2 -translate-x-1/2 z-40 admin-glass rounded-full border shadow-lg px-2 py-1.5 flex items-center gap-1">
           {dockItems.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => { if (hubClass || isHelp) navigate('/teacher'); handleModeChange(key); }}
               aria-pressed={mode === key}
+              aria-label={label}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm transition-colors active:scale-[0.96] ${mode === key ? 'bg-foreground text-background font-medium' : 'text-foreground/65 hover:text-foreground'}`}
             >
               <Icon className="h-4 w-4" /><span className="hidden sm:inline">{label}</span>
@@ -719,12 +561,28 @@ export default function CenterTeacherPortal() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Change password</DialogTitle><DialogDescription>Use it the next time you sign in.</DialogDescription></DialogHeader>
-          <ChangePasswordForm onDone={() => setPasswordOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      {/* Settings drawer: password, help and log out */}
+      <Sheet open={settingsOpen} onOpenChange={o => { setSettingsOpen(o); if (!o) setPasswordOpen(false); }}>
+        <SheetContent className="w-full sm:max-w-sm flex flex-col gap-1 overflow-y-auto">
+          <SheetHeader className="mb-3"><SheetTitle>Settings</SheetTitle></SheetHeader>
+          <Button variant="ghost" className="justify-start !shadow-none" aria-expanded={passwordOpen} onClick={() => setPasswordOpen(o => !o)}>
+            <KeyRound className="h-4 w-4" />Change password
+          </Button>
+          {passwordOpen && (
+            <div className="rounded-lg border p-4 mb-1 space-y-3">
+              <p className="text-xs text-muted-foreground">Use it the next time you sign in.</p>
+              <ChangePasswordForm onDone={() => setPasswordOpen(false)} />
+            </div>
+          )}
+          <Button variant="ghost" className="justify-start !shadow-none" asChild>
+            <Link to="/teacher/help" onClick={() => setSettingsOpen(false)}><LifeBuoy className="h-4 w-4" />Help</Link>
+          </Button>
+          <Separator className="my-2" />
+          <Button variant="ghost" className="justify-start !shadow-none" onClick={signOut}>
+            <LogOut className="h-4 w-4" />Log out
+          </Button>
+        </SheetContent>
+      </Sheet>
 
       {invite && <InviteDialog name={invite.name} code={invite.join_code} onClose={() => setInvite(null)} />}
 

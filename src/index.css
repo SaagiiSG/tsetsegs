@@ -439,6 +439,26 @@ body.admin-theme .admin-glass-card.admin-glass-liquid {
     inset 0 0 34px -12px hsl(0 0% 100% / 0.14),
     0 18px 44px -22px hsl(0 0% 0% / 0.65);
 }
+/* Center teacher portal, dark: no rose wash on the bars, no grey fog in the cards,
+   and a top bar and dock the page doesn't read through. Scoped so the main site's admin keeps its look. */
+.dark body.admin-theme .center-teacher, body.admin-theme.dark .center-teacher {
+  --admin-atmosphere-wash: none;
+}
+.dark body.admin-theme .center-teacher .admin-glass-card.admin-glass-liquid, body.admin-theme.dark .center-teacher .admin-glass-card.admin-glass-liquid {
+  background-color: hsl(var(--card) / 0.75);
+  background-image: radial-gradient(320px 220px at var(--lx) var(--ly), hsl(0 0% 100% / 0.05), transparent 72%);
+  border-color: hsl(0 0% 100% / 0.09);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 18px 44px -22px hsl(0 0% 0% / 0.65);
+}
+.dark body.admin-theme .center-teacher-dock, body.admin-theme.dark .center-teacher-dock,
+.dark body.admin-theme .center-teacher .admin-glass-bar, body.admin-theme.dark .center-teacher .admin-glass-bar {
+  background-color: hsl(var(--card) / 0.92);
+  border-color: hsl(0 0% 100% / 0.1);
+}
+/* The brand glow behind the title is near-black on most centers, which shows as a dark box in dark mode. */
+.dark body.admin-theme .center-teacher h1, body.admin-theme.dark .center-teacher h1 {
+  text-shadow: none;
+}
 /* A light drifting slowly inside the glass. */
 body.admin-theme .admin-glass-card-glow > .admin-liquid-sheen {
   position: absolute;

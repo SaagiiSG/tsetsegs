@@ -1,17 +1,13 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ClassCardBig } from "./ClassCardBig";
-import type { DashboardBatch } from "@/hooks/useTeacherDashboardData";
 
-interface Props {
-  batches: DashboardBatch[];
-  onRename: (b: DashboardBatch) => void;
-  onShowQR: (b: DashboardBatch) => void;
-}
-
-export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
+/** Sideways class strip with snapping. Shared by the main teacher dashboard and the center teacher portal. */
+export function ClassCarousel<T extends { id: string }>({ items: batches, renderCard }: {
+  items: T[];
+  renderCard: (item: T, index: number, isActive: boolean) => ReactNode;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const activeIndexRef = useRef(0);
@@ -26,6 +22,18 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
   const velocityRef = useRef(0);
   const scrollEndTimerRef = useRef<number | null>(null);
   const programmaticRef = useRef(false);
+  const targetLeftRef = useRef(0);
+  const releaseTimerRef = useRef<number | null>(null);
+
+  // Keeps snapping out of an arrow/dot/key scroll until it lands. A fixed timeout lost long smooth
+  // scrolls: the snap fired mid-way and pulled the strip back to the old card.
+  const holdProgrammatic = useCallback((ms: number) => {
+    programmaticRef.current = true;
+    if (releaseTimerRef.current) window.clearTimeout(releaseTimerRef.current);
+    releaseTimerRef.current = window.setTimeout(() => {
+      programmaticRef.current = false;
+    }, ms);
+  }, []);
 
   const getCardCenters = useCallback(() => {
     const el = ref.current;
@@ -46,18 +54,13 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
       const clamped = Math.max(0, Math.min(batches.length - 1, idx));
       const target = centers.find((c) => c.index === clamped);
       if (!target) return;
-      programmaticRef.current = true;
-      el.scrollTo({
-        left: target.center - el.clientWidth / 2,
-        behavior: smooth ? "smooth" : "auto",
-      });
+      const left = Math.max(0, Math.min(el.scrollWidth - el.clientWidth, target.center - el.clientWidth / 2));
+      targetLeftRef.current = left;
+      if (Math.abs(el.scrollLeft - left) >= 2) holdProgrammatic(300);
+      el.scrollTo({ left, behavior: smooth ? "smooth" : "auto" });
       setActiveIndex(clamped);
-      // release programmatic guard after animation likely done
-      window.setTimeout(() => {
-        programmaticRef.current = false;
-      }, 450);
     },
-    [batches.length, getCardCenters]
+    [batches.length, getCardCenters, holdProgrammatic]
   );
 
   const nearestIndex = useCallback(() => {
@@ -123,6 +126,7 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
     if (!el) return;
 
     const onPointerDown = () => {
+      programmaticRef.current = false;
       gestureStartLeftRef.current = el.scrollLeft;
       gestureStartIndexRef.current = nearestIndex();
       gestureKindRef.current = "touch";
@@ -132,6 +136,7 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
     };
 
     const onWheel = () => {
+      programmaticRef.current = false;
       if (gestureStartLeftRef.current === null) {
         gestureStartLeftRef.current = el.scrollLeft;
         gestureStartIndexRef.current = nearestIndex();
@@ -140,7 +145,11 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
     };
 
     const onScroll = () => {
-      if (programmaticRef.current) return;
+      if (programmaticRef.current) {
+        if (Math.abs(el.scrollLeft - targetLeftRef.current) < 2) programmaticRef.current = false;
+        else holdProgrammatic(250); // still moving: wait for it
+        return;
+      }
       const now = performance.now();
       const dt = now - lastScrollTimeRef.current;
       if (dt > 0) {
@@ -170,8 +179,9 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
       el.removeEventListener("wheel", onWheel);
       el.removeEventListener("scroll", onScroll);
       if (scrollEndTimerRef.current) window.clearTimeout(scrollEndTimerRef.current);
+      if (releaseTimerRef.current) window.clearTimeout(releaseTimerRef.current);
     };
-  }, [nearestIndex, resolveSnap]);
+  }, [nearestIndex, resolveSnap, holdProgrammatic]);
 
   const scrollByDir = (dir: 1 | -1) => {
     scrollToIndex(activeIndexRef.current + dir, true);
@@ -196,8 +206,8 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
         style={{
           // Fade the cards themselves at the edges instead of painting an
           // opaque overlay, so the page atmosphere stays continuous behind.
-          maskImage: "linear-gradient(to right, transparent 0, black 96px, black calc(100% - 96px), transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0, black 96px, black calc(100% - 96px), transparent 100%)",
+          maskImage: "linear-gradient(to right, transparent 0, black min(96px, 12vw), black calc(100% - min(96px, 12vw)), transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0, black min(96px, 12vw), black calc(100% - min(96px, 12vw)), transparent 100%)",
         }}
       >
         <div
@@ -216,13 +226,7 @@ export function ClassCarousel({ batches, onRename, onShowQR }: Props) {
               className="flex items-center"
               style={{ scrollSnapAlign: "center" }}
             >
-              <ClassCardBig
-                batch={b}
-                index={i}
-                isActive={i === activeIndex}
-                onRename={onRename}
-                onShowQR={onShowQR}
-              />
+              {renderCard(b, i, i === activeIndex)}
             </div>
           ))}
         </div>

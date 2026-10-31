@@ -15,6 +15,7 @@ import { TeacherPracticeHub } from "@/components/teacher/practice";
 import { TeacherMathAnalytics } from "@/components/teacher/analytics/TeacherMathAnalytics";
 import { useTeacherDashboardData, type DashboardBatch } from "@/hooks/useTeacherDashboardData";
 import { ClassCarousel } from "@/components/teacher/dashboard/ClassCarousel";
+import { ClassCardBig } from "@/components/teacher/dashboard/ClassCardBig";
 import { RenameClassDialog } from "@/components/teacher/dashboard/RenameClassDialog";
 import { ChecklistLauncherDialog } from "@/components/teacher/checklist/ChecklistLauncherDialog";
 import { TeacherModeDock } from "@/components/teacher/dashboard/TeacherModeDock";
@@ -119,6 +120,10 @@ export default function TeacherDashboard({ initialMode = "dashboard" }: { initia
     return groups;
   }, [batches, selectedIntake]);
 
+  const renderBatch = (b: DashboardBatch, i: number, isActive: boolean) => (
+    <ClassCardBig batch={b} index={i} isActive={isActive} onRename={setRenameBatch} onShowQR={setQrBatch} />
+  );
+
   const slideVariants = {
     enter: (direction: number) => ({ x: direction > 0 ? "100%" : "-100%", opacity: 0 }),
     center: { x: 0, opacity: 1 },
@@ -185,13 +190,13 @@ export default function TeacherDashboard({ initialMode = "dashboard" }: { initia
                         <h4 className="text-xs font-medium text-muted-foreground px-1 sticky top-0 bg-background/80 backdrop-blur py-1 z-10">
                           {key}
                         </h4>
-                        <ClassCarousel batches={list} onRename={setRenameBatch} onShowQR={setQrBatch} />
+                        <ClassCarousel items={list} renderCard={renderBatch} />
                       </div>
                     )
                 )}
               </div>
             ) : (
-              <ClassCarousel batches={batches} onRename={setRenameBatch} onShowQR={setQrBatch} />
+              <ClassCarousel items={batches} renderCard={renderBatch} />
             )}
           </motion.div>
         </AnimatePresence>

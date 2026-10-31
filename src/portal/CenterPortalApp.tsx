@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { Session } from '@supabase/supabase-js';
@@ -15,6 +15,17 @@ import CenterTeacherPortal from './CenterTeacherPortal';
 import CenterStudentPortal from './CenterStudentPortal';
 import CenterGoogleGate from './CenterGoogleGate';
 
+const AFTER_SIGNIN = 'center-after-signin';
+const afterSignIn = () => { try { return sessionStorage.getItem(AFTER_SIGNIN); } catch { return null; } };
+
+// A proctor link: students go straight in; a signed-out visitor signs in first and is sent back here.
+function ProctorEntry({ role, signedIn }: { role: CenterRole | null; signedIn: boolean }) {
+  const { code } = useParams();
+  const target = `/student/proctor/${code}`;
+  useEffect(() => { if (!role) try { sessionStorage.setItem(AFTER_SIGNIN, target); } catch { /* Private mode: they just land on home. */ } }, [role, target]);
+  return role === 'student' ? <Navigate to={target} replace /> : role ? <Navigate to="/" replace /> : <CenterSignIn signedInWithoutAccess={signedIn} />;
+}
+
 export default function CenterPortalApp({ slug }: { slug: string }) {
   const [center, setCenter] = useState<Center | null | undefined>(undefined);
   const [session, setSession] = useState<Session | null | undefined>(undefined);
@@ -28,6 +39,8 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const queryClient = useQueryClient();
   const googleFinish = useRef<Promise<void> | null>(null);
 
+  // The remembered proctor link is used once, by `home` on the render where the role first appears.
+  useEffect(() => { if (role) try { sessionStorage.removeItem(AFTER_SIGNIN); } catch { /* ignore */ } }, [role]);
   useEffect(() => {
     document.body.classList.add('admin-theme');
     return () => document.body.classList.remove('admin-theme');
@@ -115,7 +128,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     );
   }
 
-  const home = role === 'center_admin' ? '/admin' : role === 'teacher' ? '/teacher' : role === 'student' ? '/student' : '/';
+  const home = role === 'center_admin' ? '/admin' : role === 'teacher' ? '/teacher' : role === 'student' ? (afterSignIn() ?? '/student') : '/';
   return (
     <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, signOut, reloadCenter: loadCenter }}>
       {role === 'center_admin' && (access?.warnings ?? 0) > 0 && (
@@ -125,6 +138,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
       )}
       {recovering ? <CenterSignIn signedInWithoutAccess={false} recovering onRecovered={() => setRecovering(false)} /> : <Routes>
         <Route path="/join/:code" element={<CenterJoin />} />
+        <Route path="/proctor/:code" element={<ProctorEntry role={role ?? null} signedIn={!!session} />} />
         <Route path="/" element={role ? <Navigate to={home} replace /> : <CenterSignIn signedInWithoutAccess={!!session} />} />
         <Route path="/admin/*" element={role === 'center_admin' ? <CenterAdminPortal /> : <Navigate to={home} replace />} />
         <Route path="/teacher/*" element={role === 'teacher' || role === 'center_admin' ? <CenterTeacherPortal /> : <Navigate to={home} replace />} />

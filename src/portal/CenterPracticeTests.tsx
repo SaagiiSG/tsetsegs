@@ -4,12 +4,13 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCenter } from './centerContext';
 import { SkyListSkeleton } from './SkySkeleton';
 import { historyLine, testCardAction, testCardLine, type PracticeTest } from './practiceTests';
 
-type Attempt = { id: string; test_name: string; started_at: string; status: string; current_module: number; math_score: number | null };
+type Attempt = { id: string; test_name: string; started_at: string; status: string; current_module: number; math_score: number | null; session_id?: string | null };
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const monthYear = (t: PracticeTest) => [t.test_month ? MONTHS[t.test_month - 1] : null, t.test_year].filter(Boolean).join(' ');
@@ -29,7 +30,7 @@ export function CenterPracticeTests({ studentId }: { studentId: string }) {
   const history = useQuery({ queryKey: ['center-tests', center.id, 'history', studentId], queryFn: async () => {
     // No select('*'): the paper column is not readable by students.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await supabase.from('tenant_test_attempts' as any).select('id, test_name, started_at, status, current_module, math_score')
+    const { data, error } = await supabase.from('tenant_test_attempts' as any).select('id, test_name, started_at, status, current_module, math_score, session_id')
       .eq('institution_id', center.id).eq('student_id', studentId).order('started_at', { ascending: false }).limit(100); if (error) throw error;
     return (data ?? []) as unknown as Attempt[];
   } });
@@ -58,9 +59,9 @@ export function CenterPracticeTests({ studentId }: { studentId: string }) {
       <TabsContent value="history" className="space-y-3 max-w-3xl">
         {history.isLoading ? <SkyListSkeleton /> : history.error ? <Failed onRetry={() => history.refetch()} /> : !history.data?.length ? <p className="text-muted-foreground">Your finished tests will appear here.</p> :
           history.data.map(a => <div key={a.id} className="sky-card flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0"><p className="font-semibold">{a.test_name}</p><p className="text-sm text-muted-foreground">{new Date(a.started_at).toLocaleDateString()}</p>
+            <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><p className="font-semibold">{a.test_name}</p>{a.session_id && <Badge variant="secondary">Proctored</Badge>}</div><p className="text-sm text-muted-foreground">{new Date(a.started_at).toLocaleDateString()}</p>
               <p className="text-sm">{historyLine(a)}</p></div>
-            <Button variant="outline" onClick={() => navigate(`/student/tests/${a.id}`)}>{a.status === 'completed' ? 'Review' : 'Resume'}</Button>
+            {a.session_id && a.status !== 'completed' ? <p className="text-sm text-muted-foreground">Use your teacher's link</p> : <Button variant="outline" onClick={() => navigate(`/student/tests/${a.id}`)}>{a.status === 'completed' ? 'Review' : 'Resume'}</Button>}
           </div>)}
       </TabsContent>
     </Tabs>
