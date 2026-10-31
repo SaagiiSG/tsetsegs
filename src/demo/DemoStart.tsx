@@ -3,7 +3,7 @@ import { ArrowRight, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { withSource } from '@/lib/educatorLanding';
-import { clearDemo, demoEntry, loadDemo, saveDemo, setPortalLanguage, startDemo, storedRole } from './demoStore';
+import { clearDemo, demoEntry, loadDemo, saveDemo, resumeStored, setPortalLanguage, startDemo } from './demoStore';
 
 export default function DemoStart() {
   const entry = demoEntry(window.location.search);
@@ -14,7 +14,12 @@ export default function DemoStart() {
 
   const start = async () => {
     const stored = loadDemo();
-    if (stored) { window.location.assign(`/demo/${storedRole(stored, window.location.search)}/`); return; }
+    if (stored) {
+      const { copy, role } = resumeStored(stored, window.location.search);
+      if (copy !== stored) saveDemo(copy);
+      window.location.assign(`/demo/${role}/`);
+      return;
+    }
     setBusy(true); setError('');
     try {
       // The previous copy's leftover sign-in would otherwise be picked up by the new copy.

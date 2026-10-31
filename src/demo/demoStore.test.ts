@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { demoEntry, demoStartError, endedUrl, ownsStorage, parseDemo, storedRole, type DemoCopy } from './demoStore';
+import { demoEntry, demoStartError, endedUrl, ownsStorage, parseDemo, resumeStored, storedRole, type DemoCopy } from './demoStore';
 
 const sample: DemoCopy = {
   copyId: 'c1', endToken: 't', slug: 'northside', expiresAt: '', practiceOnly: false, lang: 'eng', ref: null,
@@ -41,4 +41,11 @@ test('a stored copy sends practice visitors to student and others to the asked r
   expect(storedRole({ ...sample, practiceOnly: true }, '?role=admin')).toBe('student');
   expect(storedRole(sample, '?role=admin')).toBe('admin');
   expect(storedRole(sample, '')).toBe('student');
+});
+test('a practice copy plus an educators role link upgrades to a full copy', () => {
+  const practice = { ...sample, practiceOnly: true };
+  expect(resumeStored(practice, '?role=admin&preview=educator')).toEqual({ copy: sample, role: 'admin' });
+  expect(resumeStored(practice, '?role=admin').role).toBe('student');
+  expect(resumeStored(practice, '?preview=educator').copy.practiceOnly).toBe(true);
+  expect(resumeStored(sample, '?role=admin').copy).toBe(sample);
 });

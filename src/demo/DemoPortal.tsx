@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import CenterPortalApp from '@/portal/CenterPortalApp';
 import { DemoBar } from './DemoBar';
 import { finishDemo, loadDemo, setPortalLanguage } from './demoStore';
-import type { DemoRole } from './storageKey';
+import { demoKeyOk, type DemoRole } from './storageKey';
 
 export default function DemoPortal({ role }: { role: DemoRole }) {
   const [copy] = useState(loadDemo);
@@ -23,6 +23,8 @@ export default function DemoPortal({ role }: { role: DemoRole }) {
 
   useEffect(() => {
     if (!copy) { void finishDemo(null); return; }
+    // If client.ts lost the demo key, signing in would replace a real login.
+    if (!demoKeyOk((supabase.auth as unknown as { storageKey: string }).storageKey, role)) { end(); return; }
     setPortalLanguage(copy.lang);
     // A new tab or reload keeps the role's stored session; otherwise sign in with this copy's login.
     supabase.auth.getSession().then(async ({ data }) => {

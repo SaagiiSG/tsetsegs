@@ -85,6 +85,13 @@ export const ownsStorage = (stored: DemoCopy | null, c: DemoCopy) => !stored || 
 export const storedRole = (c: DemoCopy, search: string): DemoRole =>
   c.practiceOnly || !new URLSearchParams(search).has('role') ? 'student' : demoRole(new URLSearchParams(search).get('role'));
 
+// A practice copy opened from the /educators page (preview=educator + a role) becomes a full copy.
+export const resumeStored = (c: DemoCopy, search: string): { copy: DemoCopy; role: DemoRole } => {
+  const p = new URLSearchParams(search);
+  const copy = c.practiceOnly && p.get('preview') === 'educator' && p.has('role') ? { ...c, practiceOnly: false } : c;
+  return { copy, role: storedRole(copy, search) };
+};
+
 // The ended screen keeps the lead source, language, role and practice-only mode, so "Start a new demo" restarts the same demo.
 export const endedUrl = (c: DemoCopy | null, role?: DemoRole) => {
   const q = new URLSearchParams({ ended: '1' });
