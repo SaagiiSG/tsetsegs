@@ -42,8 +42,8 @@ GRANT EXECUTE ON FUNCTION public.is_demo_center(uuid) TO authenticated, service_
 DO $$
 DECLARE test uuid; n integer;
 BEGIN
-  -- The test: a published Math test that tenant_practice_tests offers (every Math question has an active International
-  -- copy), preferring the one whose copies have the most explanations.
+  -- The test: a published Math test that tenant_eligible_tests (0106) offers (every Math question has an active
+  -- International copy), preferring the one whose copies have the most explanations.
   SELECT t.id INTO test
   FROM public.bluebook_tests t
   JOIN public.bluebook_modules m ON m.test_id = t.id AND m.section = 'math'
@@ -57,7 +57,7 @@ BEGIN
   LIMIT 1;
   IF test IS NULL THEN RAISE EXCEPTION '0108: no published Math test has International copies of every question'; END IF;
 
-  -- Every active copy, duplicates included, so tenant_test_start's paper stays inside the slice.
+  -- Every active copy, duplicates included, so tenant_test_paper's paper stays inside the slice.
   INSERT INTO public.demo_slice (item_id, kind)
   SELECT DISTINCT i.id, 'question'
   FROM public.bluebook_modules m
@@ -131,23 +131,19 @@ $$;
 REVOKE ALL ON FUNCTION public.can_read_concept_video(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.can_read_concept_video(text) TO authenticated;
 
--- 5. Practice tests (0091): a demo center is offered a test only if every active International copy of every Math
--- question is in the slice (fails closed); tenant_test_start checks against this list. Real centers: exactly 0091.
-CREATE OR REPLACE FUNCTION public.tenant_practice_tests(_institution uuid) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
-DECLARE sid uuid;
-BEGIN
-sid:=public.tenant_my_student_id(_institution); IF sid IS NULL THEN RAISE EXCEPTION 'Not allowed'; END IF;
-RETURN COALESCE((SELECT jsonb_agg(jsonb_build_object('id',t.id,'name',t.name,'test_month',t.test_month,'test_year',t.test_year,'modules',s.modules,'questions',s.questions,'minutes',s.minutes,
-'last_score',(SELECT a.math_score FROM public.tenant_test_attempts a WHERE a.student_id=sid AND a.test_id=t.id AND a.status='completed' ORDER BY a.completed_at DESC LIMIT 1),
-'open_attempt',(SELECT a.id FROM public.tenant_test_attempts a WHERE a.student_id=sid AND a.test_id=t.id AND a.status='in_progress' LIMIT 1))
-ORDER BY t.test_year DESC NULLS LAST,t.test_month DESC NULLS LAST,t.name)
+-- 5. Which tests a center gets: 0106's tenant_eligible_tests, the one list behind tenant_practice_tests (so tenant_test_start),
+-- tenant_proctor_tests, tenant_proctor_create and tenant_proctor_join. For a demo user a test counts only if every active
+-- International copy of every Math question is in the slice (fails closed), so no paper, practice or proctored, leaves it.
+-- It takes no center, so it asks who is calling: those four let into a demo center only its own staff and students,
+-- and is_demo_user() is true for all of them. Real centers and Tsetsegs staff: exactly 0106.
+CREATE OR REPLACE FUNCTION public.tenant_eligible_tests() RETURNS jsonb LANGUAGE sql STABLE SET search_path=public AS $$
+SELECT COALESCE(jsonb_agg(jsonb_build_object('id',t.id,'name',t.name,'test_month',t.test_month,'test_year',t.test_year,'modules',s.modules,'questions',s.questions,'minutes',s.minutes)
+ORDER BY t.test_year DESC NULLS LAST,t.test_month DESC NULLS LAST,t.name),'[]'::jsonb)
 FROM public.bluebook_tests t CROSS JOIN LATERAL (SELECT count(*) modules,sum(mm.n) questions,sum(mm.mins) minutes,bool_and(mm.all_intl) all_intl FROM (SELECT m.time_limit_minutes mins,count(*) n,bool_and(i.id IS NOT NULL
-AND ((SELECT NOT public.is_demo_center(_institution)) OR i.id IN (SELECT item_id FROM public.demo_slice WHERE kind='question'))) all_intl -- Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
-FROM public.bluebook_modules m JOIN public.bluebook_module_questions mq ON mq.module_id=m.id LEFT JOIN public.questions q ON q.id=mq.question_id LEFT JOIN public.intl_questions i ON i.question_id=q.question_id AND i.is_active WHERE m.test_id=t.id AND m.section='math' GROUP BY m.id,m.time_limit_minutes) mm) s
-WHERE t.is_published AND t.section_type='math' AND s.modules>0 AND s.all_intl),'[]'::jsonb);
-END $$;
-REVOKE ALL ON FUNCTION public.tenant_practice_tests(uuid) FROM PUBLIC,anon;
-GRANT EXECUTE ON FUNCTION public.tenant_practice_tests(uuid) TO authenticated;
+AND ((SELECT NOT public.is_demo_user()) OR i.id IN (SELECT item_id FROM public.demo_slice WHERE kind='question')) -- Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
+) all_intl FROM public.bluebook_modules m JOIN public.bluebook_module_questions mq ON mq.module_id=m.id LEFT JOIN public.questions q ON q.id=mq.question_id LEFT JOIN public.intl_questions i ON i.question_id=q.question_id AND i.is_active WHERE m.test_id=t.id AND m.section='math' GROUP BY m.id,m.time_limit_minutes) mm) s
+WHERE t.is_published AND t.section_type='math' AND s.modules>0 AND s.all_intl $$;
+REVOKE ALL ON FUNCTION public.tenant_eligible_tests() FROM PUBLIC,anon,authenticated;
 
 -- 6. SAT simulation (0014) draws from the whole bank, so a demo center can't start one (the feature is off anyway).
 CREATE OR REPLACE FUNCTION public.tenant_sat_start(_institution uuid) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$

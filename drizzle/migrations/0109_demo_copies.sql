@@ -19,6 +19,14 @@ REVOKE ALL ON public.demo_copies FROM anon, authenticated;
 GRANT ALL ON public.demo_copies TO service_role;
 ALTER TABLE public.demo_copies ENABLE ROW LEVEL SECURITY;
 
+-- One row per start, kept when the copy is dropped, so a start-then-end loop still counts toward the hourly limits.
+-- Cleanup prunes rows older than a day. Only the service role reads or writes it.
+CREATE TABLE public.demo_starts (visitor text NOT NULL, ip text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX demo_starts_created_at_idx ON public.demo_starts (created_at);
+REVOKE ALL ON public.demo_starts FROM anon, authenticated;
+GRANT ALL ON public.demo_starts TO service_role;
+ALTER TABLE public.demo_starts ENABLE ROW LEVEL SECURITY;
+
 -- 2. The sample center: 3 staff, 3 classes, 24 students and two months of practice, attendance and sprints.
 -- Students who must look a certain way are built to: Maya Chen (streak 23, Gold, 440+ distinct math questions, rings
 -- part-closed today), Noah Kim (under 50% accuracy) and Ava Johnson (nothing in 9 days) are the only two in Fall Cohort A
@@ -251,7 +259,8 @@ REVOKE ALL ON FUNCTION public.demo_build_center(uuid) FROM PUBLIC, anon, authent
 GRANT EXECUTE ON FUNCTION public.demo_build_center(uuid) TO service_role;
 
 -- 3. Copy bookkeeping, called by the demo edge function.
--- Limits: 100 unexpired copies at once (demo_busy); 5 per visitor or 40 per network address in the last hour (demo_limit).
+-- Limits: 100 unexpired copies at once (demo_busy); 5 starts per visitor or 40 per network address in the last hour,
+-- counted from demo_starts (demo_limit).
 -- The lock is held through the whole build, so a start waits at most 3 s for the one before it, then fails with
 -- SQLSTATE 55P03 (the edge function answers demo_busy) instead of holding a shared API connection.
 CREATE FUNCTION public.demo_create(_visitor text, _ip text, _end_token_hash text) RETURNS jsonb
@@ -260,10 +269,11 @@ DECLARE inst uuid; new_slug text := 'demo-' || substr(md5(gen_random_uuid()::tex
 BEGIN
   PERFORM pg_advisory_xact_lock(7715402);
   IF (SELECT count(*) FROM demo_copies WHERE expires_at > now()) >= 100 THEN RAISE EXCEPTION 'demo_busy'; END IF;
-  IF (SELECT count(*) FROM demo_copies WHERE visitor = _visitor AND created_at > now() - interval '1 hour') >= 5
-     OR (SELECT count(*) FROM demo_copies WHERE ip = _ip AND created_at > now() - interval '1 hour') >= 40 THEN
+  IF (SELECT count(*) FROM demo_starts WHERE visitor = _visitor AND created_at > now() - interval '1 hour') >= 5
+     OR (SELECT count(*) FROM demo_starts WHERE ip = _ip AND created_at > now() - interval '1 hour') >= 40 THEN
     RAISE EXCEPTION 'demo_limit';
   END IF;
+  INSERT INTO demo_starts (visitor, ip) VALUES (_visitor, _ip);
   INSERT INTO institution_customers (name, country, status, portal_enabled, is_demo, slug)
   VALUES ('Northside Academy', 'United States', 'active', true, true, new_slug) RETURNING id INTO inst;
   built := public.demo_build_center(inst);
@@ -311,7 +321,7 @@ REVOKE ALL ON FUNCTION public.demo_expired() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.demo_expired() TO service_role;
 
 -- Deletes a copy's center row by row (several tables have no cascade from the center). Only a demo center is ever
--- touched; a second call finds no copy and does nothing.
+-- touched; a second call finds no copy and does nothing. demo_starts is never touched here.
 CREATE FUNCTION public.demo_drop(_copy uuid) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE inst uuid;
@@ -325,12 +335,16 @@ BEGIN
     DELETE FROM tenant_live_sessions WHERE institution_id = inst;
     DELETE FROM tenant_badge_celebrations WHERE institution_id = inst;
     DELETE FROM tenant_test_attempts WHERE institution_id = inst;
+    -- After the attempts: dropping a session first would null their session_id and could collide with tenant_test_open_idx.
+    DELETE FROM tenant_proctor_sessions WHERE institution_id = inst;
     DELETE FROM tenant_sat_predictions WHERE institution_id = inst;
     DELETE FROM tenant_video_progress WHERE institution_id = inst;
     DELETE FROM tenant_student_goals WHERE institution_id = inst;
     DELETE FROM tenant_speed_runs WHERE institution_id = inst;
     DELETE FROM tenant_attempts WHERE institution_id = inst;
     DELETE FROM tenant_attendance WHERE institution_id = inst;
+    DELETE FROM tenant_homework WHERE institution_id = inst;
+    DELETE FROM tenant_student_notes WHERE institution_id = inst;
     DELETE FROM tenant_registrations WHERE institution_id = inst;
     DELETE FROM tenant_students WHERE institution_id = inst;
     DELETE FROM tenant_classes WHERE institution_id = inst;
@@ -344,12 +358,14 @@ REVOKE ALL ON FUNCTION public.demo_drop(uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.demo_drop(uuid) TO service_role;
 
 -- The cleanup job stops itself once no copies are left (as 0016 does). Same lock as demo_create, so a copy made
--- meanwhile keeps its job.
+-- meanwhile keeps its job; like demo_create it waits at most 3 s, so calling the public cleanup over and over can't
+-- hold up starts. It also prunes start-log rows older than a day.
 CREATE FUNCTION public.demo_cleanup_finish() RETURNS void
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public SET lock_timeout = '3s' AS $$
 DECLARE j bigint;
 BEGIN
   PERFORM pg_advisory_xact_lock(7715402);
+  DELETE FROM demo_starts WHERE created_at < now() - interval '1 day';
   IF NOT EXISTS (SELECT 1 FROM demo_copies) THEN
     FOR j IN SELECT jobid FROM cron.job WHERE jobname = 'demo-cleanup' LOOP PERFORM cron.unschedule(j); END LOOP;
   END IF;
