@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, LayoutDashboard,
-  Search, Pencil, BookOpen, Flame, ChevronRight, LifeBuoy, Settings,
+  Search, Pencil, BookOpen, ShieldCheck, Flame, ChevronRight, LifeBuoy, Settings,
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,16 +24,18 @@ import { AdminBackgroundPaths } from '@/components/ui/background-paths';
 import { domainStats, loadQuestionMeta, pct } from './questionMeta';
 import CenterStudentCards, { DomainBars } from './CenterStudentCards';
 import { CenterPracticeHub, type PracticeTab } from './CenterPracticeHub';
+import { CenterProctor } from './proctor/CenterProctor';
 import { CenterHelpPage } from './CenterHelp';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { ClassCarousel } from '@/components/teacher/dashboard/ClassCarousel';
 
-type Mode = 'dashboard' | 'analytics' | 'practice';
-const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice'];
+type Mode = 'dashboard' | 'analytics' | 'practice' | 'proctor';
+const MODE_ORDER: Mode[] = ['dashboard', 'analytics', 'practice', 'proctor'];
 const MODE_GLOW: Record<Mode, string> = {
   dashboard: '217 91% 60%',
   analytics: '262 83% 62%',
   practice: '152 60% 42%',
+  proctor: '345 75% 55%',
 };
 
 type CenterClass = {
@@ -351,6 +353,7 @@ export default function CenterTeacherPortal() {
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { key: 'analytics', label: 'Analytics', icon: TrendingUp },
     { key: 'practice', label: 'Practice', icon: BookOpen },
+    { key: 'proctor', label: 'Proctor', icon: ShieldCheck },
   ];
 
   // Same look as the main dashboard's carousel: the centred card is sharp, its neighbours sit back.
@@ -512,6 +515,8 @@ export default function CenterTeacherPortal() {
                     onLiveClassChange={setLiveClassId}
                   />
                 )}
+
+                {mode === 'proctor' && <CenterProctor classes={classes} />}
               </motion.div>
             </AnimatePresence>
           </div>
