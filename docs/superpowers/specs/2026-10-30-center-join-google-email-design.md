@@ -109,3 +109,17 @@ Connect flow (the student is signed in with phone + password):
 ## Left to the builder
 
 Exact screen copy, the hashing scheme for codes and tokens (pgcrypto/sha256), rate-limit bookkeeping, how the join page remembers the steps across the Google redirect, and the email template's look (match `support-request.tsx`).
+
+## Release steps
+
+1. The teacher session pushes 0103 first. Then this branch is brought up to date with origin/main: `_journal.json` stays in `idx` order (0103, 0104, 0105, 0106 if it has landed, 0107) and 0107's snapshot `prevId` is re-pointed to the newest snapshot before it.
+2. Before applying 0107, run this. It must return no rows, or the new unique index will fail:
+   `SELECT institution_id, user_id, count(*) FROM tenant_students WHERE user_id IS NOT NULL GROUP BY 1,2 HAVING count(*) > 1;`
+3. Lovable applies 0104, 0105 and 0107 and deploys the tenant-accounts function. Message to paste: "Apply the migration files 0104, 0105 and 0107 exactly as written, and deploy supabase/functions/tenant-accounts. Don't change or apply anything else."
+4. Publish.
+5. Saagii tests Google on zz-signin-test.flowersos.co:
+   - Join with Google from a ZZ Batch link.
+   - Sign out, then sign in with Google.
+   - With student 99000003, sign in by phone, see the connect screen, and connect Google.
+   - In the admin, press "Switch to phone sign-in" on that student, then sign in by phone again.
+6. After the new join page is live, a follow-up removes the old `register` action.
