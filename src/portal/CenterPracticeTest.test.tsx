@@ -45,4 +45,13 @@ describe('practice test runner', () => {
     query.result = { data: completed, error: null, refetch: () => {} };
     expect(render()).toContain('1/2 or .5');
   });
+  it('review off shows the score only, without a popup hold', () => {
+    query.result = { data: { ...completed, paper: [], session: { status: 'active', review_mode: 'off', title: 'Test 1' } }, error: null, refetch: () => {} };
+    const html = render();
+    expect(html).toContain('800');
+    expect(html).toContain('1/1 correct');
+    expect(html).toContain('Your teacher will share answers later.');
+    expect(html).not.toContain('Could not load this test.');
+    expect(html).not.toContain('data-popup-hold');
+  });
 });

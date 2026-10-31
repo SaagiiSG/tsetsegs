@@ -125,6 +125,8 @@ export function CenterPracticeTest() {
     const reconnect = () => { if (pendingAdvance.current) void advance(); else if (state && !completed) void save(answersRef.current).catch(() => undefined); };
     window.addEventListener('online', reconnect); return () => window.removeEventListener('online', reconnect);
   }, [state?.id, state?.current_module, completed]);
+  // Proctored with review off: the server sends the score and no paper.
+  if (completed && !state.paper.length) return <div className="sky-card space-y-3"><h1 className="text-xl font-semibold">{state.test_name}</h1>{state.math_score != null && <p className="font-mono text-2xl">{state.math_score}</p>}{state.math_total != null && <p className="text-xs text-muted-foreground">Practice score (estimate) · {state.math_correct ?? 0}/{state.math_total} correct</p>}<p role="status">Your teacher will share answers later.</p><Button variant="outline" onClick={() => navigate('/student/tests')}><ArrowLeft className="h-4 w-4"/>Practice tests</Button></div>;
   // A failed refetch keeps the loaded test on screen; the error shows only without data (or with a broken paper).
   if (state?.session && !completed && !module) return <div className="sky-card space-y-3" data-popup-hold><p role="status">Waiting for your teacher to start the test. Reopen your teacher's link to enter the room.</p><Button variant="outline" onClick={() => navigate(-1)}>Back</Button></div>;
   if (!state || !module) return !query.error && !state ? <SkyCardSkeleton /> : <div className="sky-card space-y-3"><p role="alert">Could not load this test.</p><Button variant="outline" onClick={() => query.refetch()}>Try again</Button></div>;

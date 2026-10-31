@@ -90,14 +90,14 @@ END $$;
 REVOKE ALL ON FUNCTION public.tenant_test_grade(uuid) FROM PUBLIC,anon,authenticated;
 
 -- As 0091, plus the session. A proctored student gets no paper until the session is active and they've taken the oath;
--- once finished, review mode decides: off = no keys, correctness = a correct flag per question, explanations = as 0091.
+-- once finished, review mode decides: off = no paper (score only, as main's proctor_review), correctness = a correct flag per question, explanations = as 0091.
 CREATE OR REPLACE FUNCTION public.tenant_test_state(_attempt uuid) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$
 DECLARE a public.tenant_test_attempts; s public.tenant_proctor_sessions; p jsonb:='[]'; m jsonb; qs jsonb;
 BEGIN
 SELECT * INTO a FROM public.tenant_test_attempts WHERE id=_attempt;
 IF a.id IS NULL OR a.student_id IS DISTINCT FROM public.tenant_my_student_id(a.institution_id) THEN RAISE EXCEPTION 'Not allowed'; END IF;
 SELECT * INTO s FROM public.tenant_proctor_sessions WHERE id=a.session_id;
-IF a.session_id IS NULL OR (s.id IS NOT NULL AND a.status='completed') OR (s.status IN ('active','finished') AND a.oath_accepted_at IS NOT NULL) THEN
+IF a.session_id IS NULL OR (a.status='completed' AND s.review_mode<>'off') OR (a.status<>'completed' AND s.status IN ('active','finished') AND a.oath_accepted_at IS NOT NULL) THEN
 FOR m IN SELECT value FROM jsonb_array_elements(a.paper) LOOP
 SELECT jsonb_agg(CASE WHEN a.status='completed' AND (a.session_id IS NULL OR s.review_mode='explanations') THEN e.value||jsonb_build_object('rationale',(SELECT x.rationale FROM public.intl_questions x WHERE x.id=(e.value->>'id')::uuid))
 WHEN a.status='completed' AND s.review_mode='correctness' THEN e.value-'answer'-'alternate_answers'-'rationale'||jsonb_build_object('correct',public.fill_answer_matches(a.answers->(e.value->>'id')->>'value',e.value->>'answer',ARRAY(SELECT jsonb_array_elements_text(COALESCE(NULLIF(e.value->'alternate_answers','null'::jsonb),'[]'::jsonb)))))

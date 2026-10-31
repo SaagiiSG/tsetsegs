@@ -127,6 +127,15 @@ export function ProctorLobby({ sessionId, onBack, onStarted }: { sessionId: stri
     }
     onStarted();
   };
+  // Never started, so finalize deletes every attempt and keeps no score.
+  const cancel = async () => {
+    setWorking(true);
+    const { error } = await rpc('tenant_proctor_finalize', { _session: sessionId });
+    setWorking(false);
+    if (error) return toast.error('Could not cancel the session. Try again.');
+    toast.success('Session cancelled');
+    onBack();
+  };
 
   return (
     <div className="space-y-4">
@@ -172,6 +181,18 @@ export function ProctorLobby({ sessionId, onBack, onStarted }: { sessionId: stri
           <Button className="w-full gap-2" onClick={start} disabled={working || rows.length === 0}>
             {working ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} Start for everyone
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="w-full gap-2" disabled={working}><Square className="h-4 w-4" /> Cancel session</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancel this session?</AlertDialogTitle>
+                <AlertDialogDescription>Students who joined are removed and no scores are kept.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter><AlertDialogCancel>Keep the lobby</AlertDialogCancel><AlertDialogAction onClick={cancel}>Cancel session</AlertDialogAction></AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
@@ -222,7 +243,7 @@ export function ProctorMonitor({ sessionId, onBack }: { sessionId: string; onBac
               {isLateJoin(r.started_at, session.started_at) && <Badge variant="outline" className="text-[10px] font-mono">late join</Badge>}
               {r.focus_violations > 0 && <Badge variant="destructive" className="text-[10px] font-mono">{r.focus_violations} focus</Badge>}
               <Badge variant="secondary" className="text-[10px] font-mono">
-                {st === 'done' ? (r.math_total ? `${r.math_correct ?? 0}/${r.math_total}${r.math_score != null ? ` · ${r.math_score}` : ''}` : 'submitted') : st === 'testing' ? `module ${r.current_module}` : STATE_LABEL[st]}
+                {st === 'done' ? (r.math_total ? `${r.math_correct ?? 0}/${r.math_total}${r.math_score != null ? ` · ${r.math_score}` : ''}` : 'submitted') : st === 'testing' ? `module ${r.current_module + 1}` : STATE_LABEL[st]}
               </Badge>
             </div>
           );
