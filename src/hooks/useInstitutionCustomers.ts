@@ -18,7 +18,7 @@ export function useInstitutionCustomers() {
       const customers: InstitutionCustomer[] = [];
       const payments: InstitutionPayment[] = [];
       for (let offset = 0; ; offset += 500) {
-        const { data, error } = await supabase.from('institution_customers').select('*').order('created_at', { ascending: false }).order('id').range(offset, offset + 499);
+        const { data, error } = await supabase.from('institution_customers').select('*').eq('is_demo', false).order('created_at', { ascending: false }).order('id').range(offset, offset + 499);
         if (error) throw error;
         customers.push(...data);
         if (data.length < 500) break;

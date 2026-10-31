@@ -8,7 +8,7 @@ export async function loadQuestionMeta(ids: string[]): Promise<Record<string, QM
   const [{ data: cats }, ...chunks] = await Promise.all([
     supabase.from('question_categories').select('id, name'),
     ...Array.from({ length: Math.ceil(uniq.length / 150) }, (_, i) =>
-      supabase.from('intl_questions').select('id, subject, skill, category_id, difficulty_level').in('id', uniq.slice(i * 150, i * 150 + 150))),
+      supabase.rpc('intl_question_meta', { _ids: uniq.slice(i * 150, i * 150 + 150) })),
   ]);
   const catName = Object.fromEntries((cats ?? []).map(c => [c.id, c.name]));
   const out: Record<string, QMeta> = {};
