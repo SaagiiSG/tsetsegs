@@ -182,30 +182,30 @@ UPDATE public.tenant_test_attempts SET module_started_at=now() WHERE session_id=
 END $$;
 
 -- Staff: force end. Grades every attempt that took the oath from its saved answers, deletes those that never did (they
--- never saw the paper), and turns review off into explanations as main does. Safe to repeat: it grades anyone still
--- open, and leaves alone a review mode the teacher picked after the end.
+-- never saw the paper), and turns review off into explanations as main does. Ended from the lobby, nobody saw the paper,
+-- so every attempt goes. Safe to repeat: it grades anyone still open, and leaves alone a review mode picked after the end.
 CREATE OR REPLACE FUNCTION public.tenant_proctor_finalize(_session uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE s public.tenant_proctor_sessions; x uuid;
 BEGIN
 SELECT * INTO s FROM public.tenant_proctor_sessions WHERE id=_session FOR UPDATE;
 IF s.id IS NULL OR NOT public.tenant_has_role(s.institution_id,'teacher') THEN RAISE EXCEPTION 'Not allowed'; END IF;
 UPDATE public.tenant_proctor_sessions SET status='finished',finished_at=COALESCE(finished_at,now()),review_mode=CASE WHEN s.status<>'finished' AND review_mode='off' THEN 'explanations' ELSE review_mode END WHERE id=s.id;
+DELETE FROM public.tenant_test_attempts WHERE session_id=s.id AND (oath_accepted_at IS NULL OR s.started_at IS NULL);
 FOR x IN SELECT id FROM public.tenant_test_attempts WHERE session_id=s.id AND status='in_progress' AND oath_accepted_at IS NOT NULL LOOP PERFORM public.tenant_test_grade(x); END LOOP;
-DELETE FROM public.tenant_test_attempts WHERE session_id=s.id AND oath_accepted_at IS NULL;
 END $$;
 
 -- Student: join by code, in any case, if they're on the session's class list and it hasn't ended. Joining again (refresh,
--- second tab) returns the same attempt and clock. The paper is taken as tenant_test_start takes it; a late joiner's
--- Module 1 runs from the room's start.
+-- second tab, or after the end to see results) returns the same attempt and clock. The paper is taken as tenant_test_start
+-- takes it; a late joiner's Module 1 runs from the room's start.
 CREATE OR REPLACE FUNCTION public.tenant_proctor_join(_institution uuid,_join_code text) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 DECLARE sid uuid; s public.tenant_proctor_sessions; aid uuid;
 BEGIN
 sid:=public.tenant_my_student_id(_institution); IF sid IS NULL THEN RAISE EXCEPTION 'Not allowed'; END IF;
 PERFORM pg_advisory_xact_lock(hashtext(sid::text));
 SELECT * INTO s FROM public.tenant_proctor_sessions WHERE upper(join_code)=upper(btrim(_join_code)) AND institution_id=_institution FOR SHARE;
+SELECT id INTO aid FROM public.tenant_test_attempts WHERE session_id=s.id AND student_id=sid; IF aid IS NOT NULL THEN RETURN aid; END IF;
 IF s.id IS NULL OR s.status='finished' THEN RAISE EXCEPTION 'This code isn''t open'; END IF;
 IF NOT EXISTS(SELECT 1 FROM public.tenant_students st WHERE st.id=sid AND st.class_id=s.class_id) THEN RAISE EXCEPTION 'You''re not on this class''s list'; END IF;
-SELECT id INTO aid FROM public.tenant_test_attempts WHERE session_id=s.id AND student_id=sid; IF aid IS NOT NULL THEN RETURN aid; END IF;
 IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(public.tenant_eligible_tests()) e(v) WHERE e.v->>'id'=s.test_id::text) THEN RAISE EXCEPTION 'This test is not available'; END IF;
 INSERT INTO public.tenant_test_attempts(institution_id,student_id,test_id,test_name,paper,session_id,module_started_at) SELECT _institution,sid,t.id,t.name,public.tenant_test_paper(t.id),s.id,COALESCE(s.started_at,now()) FROM public.bluebook_tests t WHERE t.id=s.test_id RETURNING id INTO aid;
 RETURN aid;
