@@ -281,7 +281,15 @@ Deno.serve(async (req) => {
         : null;
       if (user?.ok) {
         // Demo check (live-demo plan, 30 Oct): keep this line when rewriting.
-        if (String((await user.json()).email ?? "").toLowerCase().endsWith("@demo.flowersos.co")) {
+        // The email, or is_demo_user() run as the caller (catches a demo login that changed its email).
+        // Anything but `true` from that call (an error, a missing function) counts as not demo, so real users never get blocked.
+        const isDemo = String((await user.json()).email ?? "").toLowerCase().endsWith("@demo.flowersos.co") ||
+          (await fetch(`${supabaseUrl}/rest/v1/rpc/is_demo_user`, {
+            method: "POST",
+            headers: { apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "", Authorization: auth, "Content-Type": "application/json" },
+            body: "{}",
+          }).then((r) => (r.ok ? r.json() : null)).catch(() => null)) === true;
+        if (isDemo) {
           return new Response(JSON.stringify({ error: "Turned off in the demo." }), {
             status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
