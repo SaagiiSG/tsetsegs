@@ -729,6 +729,13 @@
       "when": 1793403129685,
       "tag": "0103_center_homework_notes_teacher_test_scores",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1793410901313,
+      "tag": "0106_center_proctored_tests",
+      "breakpoints": true
     }
   ]
 }
