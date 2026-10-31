@@ -45,7 +45,9 @@ export default function CenterGoogleGate({ children }: { children: ReactNode }) 
   const connect = async () => {
     setBusy(true);
     const { data: token, error } = await supabase.rpc('tenant_google_link_start' as any, { _institution: center.id });
-    const msg = error ? error.message : await startGoogle({ kind: 'link', token: token as string }, '/student');
+    // Come back to the page they opened (e.g. a proctored test's QR link), not just Home.
+    const here = window.location.pathname.startsWith('/student') ? window.location.pathname + window.location.search : '/student';
+    const msg = error ? error.message : await startGoogle({ kind: 'link', token: token as string }, here);
     if (msg) { toast.error(msg); setBusy(false); }
   };
   const n = daysLeft(row!.google_due_on, today);
