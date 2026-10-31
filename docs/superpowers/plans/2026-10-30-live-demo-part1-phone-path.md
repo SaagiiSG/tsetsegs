@@ -162,7 +162,7 @@ line('admin sees three classes and 24 students', adminClasses === 3 && adminStud
 
 No `institution_payment_dues` and no `educator_demo_requests` (gotcha D).
 
-- [ ] **Step 3: Write the rest of 0107**
+- [ ] **Step 3: Write the rest of 0109**
 
 - `demo_create`: `pg_advisory_xact_lock(7715402)`; check limits; insert `institution_customers` (`name 'Northside Academy'`, `country 'United States'`, `status 'active'`, `portal_enabled true`, `is_demo true`, `slug 'demo-' || substr(md5(gen_random_uuid()::text), 1, 12)`); `demo_build_center`; insert `demo_copies`; schedule `demo-cleanup` (`* * * * *`, `select public._post_edge_function('demo', '{"action":"cleanup"}'::jsonb)`) when it's missing, as `0016` does. Put the `-- lovable-cron-fallback-reviewed:` header line from 0016 at the top, reworded for this job.
 - The other functions as listed in Interfaces.
