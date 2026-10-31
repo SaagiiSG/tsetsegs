@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { demoEntry, demoStartError, parseDemo, type DemoCopy } from './demoStore';
+import { demoEntry, demoStartError, endedUrl, ownsStorage, parseDemo, storedRole, type DemoCopy } from './demoStore';
 
 const sample: DemoCopy = {
   copyId: 'c1', endToken: 't', slug: 'northside', expiresAt: '', practiceOnly: false, lang: 'eng', ref: null,
@@ -20,4 +20,25 @@ test('start errors read as plain sentences', () => {
   expect(demoStartError(429)).toMatch(/Try again in a few minutes/);
   expect(demoStartError(503)).toMatch(/busy/);
   expect(demoStartError(500)).toMatch(/couldn't start/);
+});
+
+test('lang: the URL wins, then the visitor preference, then Mongolian', () => {
+  expect(demoEntry('?lang=mon', 'eng').lang).toBe('mon');
+  expect(demoEntry('', 'eng').lang).toBe('eng');
+  expect(demoEntry('', null).lang).toBe('mon');
+});
+test('the ended URL keeps ref, lang, role and practice-only', () => {
+  expect(endedUrl({ ...sample, ref: 'websummit' }, 'teacher')).toBe('/demo?ended=1&lang=eng&ref=websummit&role=teacher');
+  expect(endedUrl({ ...sample, practiceOnly: true }, 'student')).toBe('/demo?ended=1&lang=eng&signup=practice');
+  expect(endedUrl(null)).toBe('/demo?ended=1');
+});
+test('a demo only clears storage that is empty or its own', () => {
+  expect(ownsStorage(null, sample)).toBe(true);
+  expect(ownsStorage(sample, sample)).toBe(true);
+  expect(ownsStorage({ ...sample, copyId: 'newer' }, sample)).toBe(false);
+});
+test('a stored copy sends practice visitors to student and others to the asked role', () => {
+  expect(storedRole({ ...sample, practiceOnly: true }, '?role=admin')).toBe('student');
+  expect(storedRole(sample, '?role=admin')).toBe('admin');
+  expect(storedRole(sample, '')).toBe('student');
 });

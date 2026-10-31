@@ -9,16 +9,24 @@ export type DemoCopy = {
   logins: Record<DemoRole, { email: string; password: string }>;
 };
 
+// Blocked storage (private mode, site data off) reads as "nothing stored".
+const store = {
+  get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
+  remove: (k: string) => { try { localStorage.removeItem(k); } catch { /* ignore */ } },
+  keys: () => { try { return Object.keys(localStorage); } catch { return [] as string[]; } },
+};
+
 const COPY_KEY = 'flowersos-demo-v2';
 const VISITOR_KEY = 'flowersos-demo-visitor';
 
-export const demoEntry = (search: string) => {
+export const demoEntry = (search: string, storedLang: string | null = store.get(PUBLIC_LANGUAGE_KEY)) => {
   const p = new URLSearchParams(search);
   const practiceOnly = p.get('signup') === 'practice';
   return {
     role: demoRole(p.get('role')),
     practiceOnly,
-    lang: p.get('lang') === 'eng' ? 'eng' : 'mon',
+    lang: (p.has('lang') ? p.get('lang') : storedLang) === 'eng' ? 'eng' : 'mon',
     ref: sourceFromSearch(search),
     autoStart: practiceOnly || p.get('preview') === 'educator',
   };
@@ -40,18 +48,18 @@ export const demoStartError = (status: number) =>
     : status === 503 ? 'The demo is busy right now. Try again in a minute.'
       : "The demo couldn't start. Please try again.";
 
-export const loadDemo = () => parseDemo(localStorage.getItem(COPY_KEY), Date.now());
-export const saveDemo = (c: DemoCopy) => localStorage.setItem(COPY_KEY, JSON.stringify(c));
+export const loadDemo = () => parseDemo(store.get(COPY_KEY), Date.now());
+export const saveDemo = (c: DemoCopy) => store.set(COPY_KEY, JSON.stringify(c));
 export const clearDemo = () => {
-  localStorage.removeItem(COPY_KEY);
-  Object.keys(localStorage).filter(k => k.startsWith('sb-demo-')).forEach(k => localStorage.removeItem(k));
+  store.remove(COPY_KEY);
+  store.keys().filter(k => k.startsWith('sb-demo-')).forEach(store.remove);
 };
 
 export const visitorId = () => {
-  let v = localStorage.getItem(VISITOR_KEY);
+  let v = store.get(VISITOR_KEY);
   if (!v || !/^[0-9a-f]{32}$/.test(v)) {
     v = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-    localStorage.setItem(VISITOR_KEY, v);
+    store.set(VISITOR_KEY, v);
   }
   return v;
 };
@@ -70,13 +78,33 @@ export const endDemo = async (c: DemoCopy) => {
   catch { /* the expiry cleanup removes it anyway */ }
 };
 
-// Ends the copy, forgets it, and leaves for the ended screen, keeping the lead source and language.
-export const finishDemo = async (c: DemoCopy | null) => {
+// A stored copy is only ever cleared by the demo that owns it, so an old tab can't wipe a newer copy.
+export const ownsStorage = (stored: DemoCopy | null, c: DemoCopy) => !stored || stored.copyId === c.copyId;
+
+// Where a stored copy sends the visitor: a practice copy is student-only; otherwise the URL may ask for a role.
+export const storedRole = (c: DemoCopy, search: string): DemoRole =>
+  c.practiceOnly || !new URLSearchParams(search).has('role') ? 'student' : demoRole(new URLSearchParams(search).get('role'));
+
+// The ended screen keeps the lead source, language, role and practice-only mode, so "Start a new demo" restarts the same demo.
+export const endedUrl = (c: DemoCopy | null, role?: DemoRole) => {
   const q = new URLSearchParams({ ended: '1' });
-  if (c) { q.set('lang', c.lang); if (c.ref) q.set('ref', c.ref); }
-  clearDemo();
-  if (c) await endDemo(c);
-  window.location.replace(`/demo?${q}`);
+  if (c) {
+    q.set('lang', c.lang);
+    if (c.ref) q.set('ref', c.ref);
+    if (c.practiceOnly) q.set('signup', 'practice');
+    else if (role) q.set('role', role);
+  }
+  return `/demo?${q}`;
 };
 
-export const setPortalLanguage = (lang: string) => localStorage.setItem(PUBLIC_LANGUAGE_KEY, lang);
+// Ends the copy, forgets it, and leaves for the ended screen.
+export const finishDemo = async (c: DemoCopy | null, role?: DemoRole) => {
+  if (!c || ownsStorage(loadDemo(), c)) clearDemo();
+  if (c) await endDemo(c);
+  window.location.replace(endedUrl(c, role));
+};
+
+// The visitor's own language choice wins; a URL lang only fills it in, or replaces it when force is set.
+export const setPortalLanguage = (lang: string, force = false) => {
+  if (force || !store.get(PUBLIC_LANGUAGE_KEY)) store.set(PUBLIC_LANGUAGE_KEY, lang);
+};

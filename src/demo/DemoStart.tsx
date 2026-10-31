@@ -3,7 +3,7 @@ import { ArrowRight, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { withSource } from '@/lib/educatorLanding';
-import { demoEntry, loadDemo, saveDemo, startDemo } from './demoStore';
+import { clearDemo, demoEntry, loadDemo, saveDemo, setPortalLanguage, startDemo, storedRole } from './demoStore';
 
 export default function DemoStart() {
   const entry = demoEntry(window.location.search);
@@ -13,10 +13,15 @@ export default function DemoStart() {
   const auto = useRef(false);
 
   const start = async () => {
+    const stored = loadDemo();
+    if (stored) { window.location.assign(`/demo/${storedRole(stored, window.location.search)}/`); return; }
     setBusy(true); setError('');
     try {
+      // The previous copy's leftover sign-in would otherwise be picked up by the new copy.
+      clearDemo();
       const copy = await startDemo(entry);
       saveDemo(copy);
+      if (new URLSearchParams(window.location.search).has('lang')) setPortalLanguage(copy.lang, true);
       window.location.assign(`/demo/${entry.role}/`);
     } catch (e) { setError((e as Error).message); setBusy(false); }
   };
@@ -24,8 +29,7 @@ export default function DemoStart() {
   useEffect(() => {
     if (ended || auto.current) return;
     auto.current = true;
-    if (loadDemo()) window.location.assign(`/demo/${entry.role}/`);
-    else if (entry.autoStart) void start();
+    if (loadDemo() || entry.autoStart) void start();
   }, []);
 
   return (
