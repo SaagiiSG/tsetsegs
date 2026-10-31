@@ -16,7 +16,7 @@ Each topic's map shows hairline line figures that switch sides along the path. S
 - A topic gets `max(2, ceil((videos − 1) / 4))` slots. With the live video counts (30 Oct) that makes **52 slots**: 3 for Topic 1, 4 for Topic 2, 3 for Topic 16, and 2 for each of the other 21 topics.
 - No figure appears in two topics.
 
-**2. Each figure is about its topic.** A student should glance at it and think of the topic's maths. The figure's object, and what the pointer does to it, carry the idea. The numbers go only in the read-out, never inside the drawing (hairline rule 10).
+**2. Each figure is about its topic.** A student should glance at it and think of the topic's maths. The figure's object, and what the pointer does to it, carry the idea. The numbers go only in the read-out, never inside the drawing (hairline rule 10). The read-out now shows as a caption (goal 6), so it should name the maths plainly.
 
 **3. Four existing figures move to the topic they fit best.** That leaves **48 new figures**. My calls:
 - `parabola` goes to Topic 16, Quadratic Functions.
@@ -32,7 +32,15 @@ Each topic's map shows hairline line figures that switch sides along the path. S
 
 **5. Small sizes.** On a phone the figures are about 130px wide; on a laptop, up to 280px. A figure must read at 130px: few parts, big gestures, and a rest pose that already says the idea.
 
-**6. Colour comes from the map.**
+**6. A short caption under each figure (Saagii, 30 Oct: "short text seems nice").**
+- Today `HairlineFigure` throws away the read-out; it should show it.
+- It's a small, muted caption centred under the figure, updating as the pointer or the idle tour moves.
+- It's blank at rest (when the read-out is `rest`), with its line height reserved, so nothing jumps.
+- It changes only when the text changes; figures write the read-out every frame.
+- It is not read aloud. The figure stays decorative (`aria-hidden`), and the captions are hints, not content.
+- This applies to the four existing figures too.
+
+**7. Colour comes from the map.**
 - Figures use only the kernel's classes.
 - The map paints them in the topic's colour family through `--hairline-*` (`.sky-hairline`).
 - No figure sets a colour.
@@ -53,6 +61,8 @@ Each topic's map shows hairline line figures that switch sides along the path. S
 - **A figure covers a node or caption.** The layout's `hairline` browser check must keep passing.
 
 ## The process
+
+**0. The caption.** Wire the read-out caption into `HairlineFigure` first, on the four existing figures, so the pilot is judged with its captions.
 
 **1. Pilot.**
 - Build three figures first, from three different areas (Topic 1 "Cube growth", Topic 13 "Crossing beams", Topic 24 "Marble jar").
@@ -218,6 +228,6 @@ Each line gives the object, what the pointer does to it, and what the read-out s
 
 ## Left to the builder
 
-- Each figure's camera, scale, slider number (`range`) and tour stops.
+- Each figure's camera, scale, slider number (`range`) and tour stops. The tour stops should give good captions.
 - The exact read-out wording, kept short.
 - Whether a concept's first form reads at 130px. If not, simplify it, and say so on the sheet.
