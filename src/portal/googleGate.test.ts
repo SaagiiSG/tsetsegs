@@ -8,6 +8,9 @@ describe('gateState', () => {
     expect(gateState(null, '2026-10-30', false)).toBe('off');
     expect(gateState(row('a@b.co'), '2026-12-01', false)).toBe('off');
   });
+  it('is off with a verified email', () => {
+    expect(gateState({ ...row(null), email_verified_at: '2026-10-31T10:00:00Z' }, '2026-12-01', false)).toBe('off');
+  });
   it('asks before the due date, off after Later', () => {
     expect(gateState(row(null), '2026-10-30', false)).toBe('ask');
     expect(gateState(row(null), '2026-10-30', true)).toBe('off');

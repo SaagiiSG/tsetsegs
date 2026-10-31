@@ -8,6 +8,7 @@
 ALTER TABLE public.tenant_students
   ADD COLUMN email text,
   ADD COLUMN google_email text,
+  ADD COLUMN email_verified_at timestamptz,
   ADD COLUMN google_user_id uuid,
   ADD COLUMN password_user_id uuid,
   ADD COLUMN google_due_on date NOT NULL DEFAULT (current_date + 7);

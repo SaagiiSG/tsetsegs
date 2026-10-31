@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       // The admin-added row keeps its class and its admin-entered email; only a null class takes the link's.
       const { data: linked } = await admin.from('tenant_students').update({
         user_id: created.user.id, password_user_id: created.user.id,
-        email: cur?.email ? cur.email : typedEmail, class_id: cur?.class_id ?? cls.id,
+        email: cur?.email ? cur.email : typedEmail, class_id: cur?.class_id ?? cls.id, email_verified_at: new Date().toISOString(),
         // Email-path students get 7 days to connect Google; an admin-added row keeps a later date.
         ...(cur ? { google_due_on: [cur.google_due_on, new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10)].filter(Boolean).sort().pop() } : {}),
       }).eq('id', studentId).is('user_id', null).select('id')
@@ -221,7 +221,7 @@ Deno.serve(async (req) => {
       return json({ email })
     }
 
-    // ---------- Staff actions (authenticated) ----------
+    // ---------- Signed-in actions ----------
     const token = req.headers.get('Authorization')?.replace('Bearer ', '')
     if (!token) return json({ error: 'Not signed in' }, 401)
     const { data: userData, error: userErr } = await admin.auth.getUser(token)
@@ -230,6 +230,54 @@ Deno.serve(async (req) => {
     const { data: isPlatformAdmin } = await admin.rpc('has_role', { _user_id: callerId, _role: 'admin' })
 
     const institutionId = String(body.institution_id ?? '')
+
+    // ---------- Signed-in student verifies an email instead of connecting Google ----------
+    if (action === 'student_email_code' || action === 'student_email_verify') {
+      const { data: me } = await admin.from('tenant_students').select('id').eq('institution_id', institutionId).eq('user_id', callerId).eq('active', true).maybeSingle()
+      if (!me) return json({ error: 'Not allowed' }, 403)
+      if (!emailOk) return json({ error: 'Enter a valid email.' }, 400)
+      const now = new Date()
+      if (action === 'student_email_code') {
+        const { data: sent } = await admin.from('tenant_email_codes').select('created_at').eq('institution_id', institutionId).eq('email', typedEmail)
+          .gte('created_at', new Date(now.getTime() - 3600e3).toISOString()).order('created_at', { ascending: false })
+        const gate = canSend((sent ?? []).map((r) => r.created_at), now)
+        if (!gate.ok) return json({ error: gate.error }, 429)
+        const { count: hourly } = await admin.from('tenant_email_codes').select('id', { count: 'exact', head: true }).eq('institution_id', institutionId)
+          .gte('created_at', new Date(now.getTime() - 3600e3).toISOString())
+        if ((hourly ?? 0) > 300) return json({ error: 'Too many codes right now. Please try again later.' }, 429)
+        const code = newCode()
+        const { data: row, error: insErr } = await admin.from('tenant_email_codes').insert({
+          institution_id: institutionId, email: typedEmail, code_hash: await hashCode(typedEmail, code), expires_at: new Date(now.getTime() + 600e3).toISOString(),
+        }).select('id').single()
+        if (insErr || !row) throw insErr ?? new Error('Could not save code')
+        const { data: center } = await admin.from('institution_customers').select('name').eq('id', institutionId).maybeSingle()
+        try {
+          const r = await sendTemplateEmail('center-email-code', typedEmail, { templateData: { code, center_name: center?.name ?? '' } })
+          if (!r.sent) {
+            await admin.from('tenant_email_codes').delete().eq('id', row.id)
+            return json({ error: "We can't send email to this address. Use Google or another email." }, 400)
+          }
+        } catch (e) {
+          console.error('student email code failed', e)
+          await admin.from('tenant_email_codes').delete().eq('id', row.id)
+          return json({ error: 'Could not send the code. Try again.' }, 502)
+        }
+        return json({ ok: true })
+      }
+      const { data: codeRow } = await admin.from('tenant_email_codes').select('id, code_hash, expires_at, attempts').eq('institution_id', institutionId).eq('email', typedEmail)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      const verdict = checkCode(codeRow, await hashCode(typedEmail, String(body.email_code ?? '').trim()), now)
+      if (verdict === 'expired' || verdict === 'locked') return json({ error: CODE_ERRORS[verdict] }, 400)
+      // Charge the attempt first (compare-and-set), as in register_verified.
+      const { data: charged } = await admin.from('tenant_email_codes').update({ attempts: codeRow!.attempts + 1 })
+        .eq('id', codeRow!.id).eq('attempts', codeRow!.attempts).select('id')
+      if (!charged?.length || verdict === 'wrong') return json({ error: CODE_ERRORS.wrong }, 400)
+      const { error: upErr } = await admin.from('tenant_students').update({ email: typedEmail, email_verified_at: now.toISOString() }).eq('id', me.id)
+      if (upErr) throw upErr
+      await admin.from('tenant_email_codes').delete().eq('id', codeRow!.id)
+      return json({ ok: true })
+    }
+
     const { data: callerMember } = await admin.from('tenant_members').select('role, active')
       .eq('institution_id', institutionId).eq('user_id', callerId).maybeSingle()
     const isCenterAdmin = callerMember?.active && callerMember.role === 'center_admin'

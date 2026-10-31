@@ -20,7 +20,7 @@ import { phoneDigits } from '@/lib/tenant';
 import { STATUS_LABEL, STATUS_STYLE, useCenter } from '../centerContext';
 import { centerAccounts } from '../centerApi';
 import { useCenterAdminData, useRefreshCenter, pct, type CenterAdminData } from './useCenterAdminData';
-import { googleStatus, hasGoogleColumns, signsInWithGoogle, isConnected, formatDue, type GoogleFields } from './studentGoogle';
+import { googleStatus, hasGoogleColumns, signsInWithGoogle, hasEither, formatDue, type GoogleFields } from './studentGoogle';
 import { checkStudentRows, failedRowsText, type ImportRow } from './studentImport';
 import { Empty, Loading, PageHeader, Section, StatRow } from './ui';
 import { PredictionVsReal } from '@/components/shared/PredictionVsReal';
@@ -239,7 +239,7 @@ export function StudentsPage() {
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <Stat icon={User} label="Total students" value={data.students.length} />
         <Stat icon={UserCheck} label="Signed up" value={active.filter(s => s.user_id).length} />
-        <Stat icon={UserX} label="Not connected to Google" value={gcols ? active.filter(s => !isConnected(s as GoogleFields)).length : '—'} />
+        <Stat icon={UserX} label="No Google or verified email" value={gcols ? active.filter(s => !hasEither(s as GoogleFields)).length : '—'} />
         <Stat icon={PowerOff} label="Access removed" value={data.students.length - active.length} />
       </div>
 
@@ -355,7 +355,7 @@ export function StudentDetailPage() {
     <div className="space-y-8">
       <Link to="/admin/students" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" />Student Management</Link>
       <PageHeader title={s.name} description={`${s.phone} · ${!s.active ? 'Access removed' : s.user_id ? 'Signed up' : 'Not signed up yet'}`} actions={<>
-        {gcols && !isConnected(g) && <Button variant="outline" size="sm" onClick={() => googleCall('tenant_give_google_time')}>Give more time</Button>}
+        {gcols && !hasEither(g) && <Button variant="outline" size="sm" onClick={() => googleCall('tenant_give_google_time')}>Give more time</Button>}
         {gcols && signsInWithGoogle(g) && <AlertDialog>
           <AlertDialogTrigger asChild><Button variant="outline" size="sm">Switch to phone sign-in</Button></AlertDialogTrigger>
           <AlertDialogContent>

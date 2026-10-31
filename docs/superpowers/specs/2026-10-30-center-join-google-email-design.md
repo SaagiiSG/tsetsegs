@@ -48,7 +48,7 @@ Admin-added students who never signed up (`user_id` null): after the phone step 
 
 ### 3. Connecting Google later (existing students), required
 
-A student whose row has no `google_email` sees a **Connect Google** screen before the portal (wrapper around the `/student/*` route in `CenterPortalApp`, not inside `CenterStudentPortal`, which is the student session's file).
+A student whose row has no `google_email` and no `email_verified_at` (Google OR a verified email turns the gate off) sees a **Connect Google** screen before the portal (wrapper around the `/student/*` route in `CenterPortalApp`, not inside `CenterStudentPortal`, which is the student session's file).
 
 - Until `google_due_on`: "Connect Google" or "Later (N days left)". Later hides it for this browser session.
 - From `google_due_on` on: only "Connect Google" and "Sign out".
@@ -92,6 +92,16 @@ Connect flow (the student is signed in with phone + password):
 - **Join link for someone the center already has** (call): a phone that belongs to an admin-added student with no account is taken over by either path (Google or email). That student **keeps their current batch**; only a student with no batch takes the link's batch. A phone or Google account that already has an account in this center is refused with "You already have an account here. Sign in instead." No join link ever moves a student between batches.
 - **Release gap** (call): the email path uses a new action `register_verified` (requires the code). The old `register` stays as it is so live QR codes keep working until the new page is published; a follow-up removes it.
 - **Google redirect back during "connect later"** (call): `CenterPortalApp` runs `tenant_google_link_finish` when it sees the stored token, before it looks up the role, so `/student?google_link=1` doesn't bounce to `/`. Same for the join page and `tenant_claim_with_google`.
+
+## Email instead of Google (Saagii, 31 Oct)
+
+Saagii: "ask them if they are able to connect their google account if they are not then we will do email verification."
+
+- New column `tenant_students.email_verified_at` (migration 0107, edited in place). `register_verified` sets it on insert and on takeover, so students who joined by email never see the connect screen.
+- The connect screen first asks "Can you sign in with a Google account?". Yes runs the connect-Google flow above. No asks for an email, sends a 6-digit code, and takes the code. A match saves the email and `email_verified_at` on the student's row and the screen never comes back.
+- Two `tenant-accounts` actions for a signed-in active student of the center (no staff role needed): `student_email_code` and `student_email_verify`. Same code rules as the join page: 6 digits, 10 minutes, 5 tries (the try is charged before the verdict), 1 send per 60 s and 5 per hour per email, 300 per center per hour, suppressed address gives a 400. Template `center-email-code`.
+- "Later (N days left)" still lasts 7 days, then it is required. Google or a verified email both count as done.
+- Student Management Google column: Connected, Phone sign-in, Email verified, "Due {Mon d}" (neither, due today or later), Not connected (fallback). Tile: "No Google or verified email". Give more time only shows when the student has neither.
 
 ## Non-goals
 
