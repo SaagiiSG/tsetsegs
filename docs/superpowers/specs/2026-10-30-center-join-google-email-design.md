@@ -103,7 +103,7 @@ Connect flow (the student is signed in with phone + password):
 ## Constraints
 
 - Google can only be tested on the published site; Saagii will test it on `zz-signin-test.flowersos.co`. Everything else is tested locally (PGlite for the SQL, browser checks for the screens, the function logic by reading + a local Deno run if available).
-- Order on release: Lovable applies 0107 and deploys `tenant-accounts` **before** the new join page is published, or the join page's email path fails. Until then the old one-form join keeps working.
+- Order on release: Lovable applies 0104, 0105 and 0107 and deploys `tenant-accounts` **before** the new join page is published, or the join page's email path fails. Until then the old one-form join keeps working.
 - shadcn components only; plain sixth-grade copy; no emoji; `Array.prototype.at` is not allowed (Lovable's preview).
 
 ## Left to the builder
@@ -113,9 +113,9 @@ Exact screen copy, the hashing scheme for codes and tokens (pgcrypto/sha256), ra
 ## Release steps
 
 1. The teacher session pushes 0103 first. Then this branch is brought up to date with origin/main: `_journal.json` stays in `idx` order (0103, 0104, 0105, 0106 if it has landed, 0107) and 0107's snapshot `prevId` is re-pointed to the newest snapshot before it.
-2. Before applying 0107, run this. It must return no rows, or the new unique index will fail:
+2. Before step 3, Saagii runs this on the live database (Lovable SQL editor or Supabase). It must return no rows, or the new unique index will fail:
    `SELECT institution_id, user_id, count(*) FROM tenant_students WHERE user_id IS NOT NULL GROUP BY 1,2 HAVING count(*) > 1;`
-3. Lovable applies 0104, 0105 and 0107 and deploys the tenant-accounts function. Message to paste: "Apply the migration files 0104, 0105 and 0107 exactly as written, and deploy supabase/functions/tenant-accounts. Don't change or apply anything else."
+3. Lovable applies 0104, 0105 and 0107 and deploys the tenant-accounts function. Message to paste: "Apply these migration files exactly as written: drizzle/migrations/0104_center_schedule_templates.sql, drizzle/migrations/0105_center_sprint_seasons.sql, drizzle/migrations/0107_center_join_google_email.sql. Deploy supabase/functions/tenant-accounts. Do not touch 0103 or 0106. Don't change or apply anything else."
 4. Publish.
 5. Saagii tests Google on zz-signin-test.flowersos.co:
    - Join with Google from a ZZ Batch link.
