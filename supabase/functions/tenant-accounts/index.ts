@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { sendTemplateEmail } from '../_shared/transactional-email-templates/send-email.ts'
+import { CODE_ERRORS, canSend, checkCode, hashCode, newCode } from './emailCode.ts'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -41,6 +43,104 @@ Deno.serve(async (req) => {
       return data && data.portal_enabled && data.status !== 'churned' ? data : null
     }
 
+    // The open center and the class for a join link, or the error response (shared by send_email_code and register_verified).
+    const joinTarget = async () => {
+      const tenant = await findTenant(body.slug)
+      if (!tenant) return { error: json({ error: 'This center portal is not available.' }, 404) }
+      if (tenant.access_blocked_at) return { error: json({ error: 'This center is paused because of an overdue payment, so new sign-ups are closed. Please contact your center.' }, 403) }
+      const { data: cls } = await admin.from('tenant_classes').select('id').eq('institution_id', tenant.id).eq('join_code', String(body.code ?? '').trim()).maybeSingle()
+      if (!cls) return { error: json({ error: 'This sign-up link is not valid. Ask your center for a new one.' }, 404) }
+      return { tenant, cls }
+    }
+    const typedEmail = String(body.email ?? '').trim().toLowerCase().slice(0, 200)
+    const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(typedEmail)
+
+    // ---------- Email code for the verified sign-up ----------
+    if (action === 'send_email_code') {
+      const t = await joinTarget()
+      if (t.error) return t.error
+      if (!emailOk) return json({ error: 'Enter a valid email.' }, 400)
+      const now = new Date()
+      const { data: sent } = await admin.from('tenant_email_codes').select('created_at').eq('institution_id', t.tenant.id).eq('email', typedEmail)
+        .gte('created_at', new Date(now.getTime() - 3600e3).toISOString()).order('created_at', { ascending: false })
+      const gate = canSend((sent ?? []).map((r) => r.created_at), now)
+      if (!gate.ok) return json({ error: gate.error }, 429)
+      const code = newCode()
+      const { data: row, error: insErr } = await admin.from('tenant_email_codes').insert({
+        institution_id: t.tenant.id, email: typedEmail, code_hash: await hashCode(typedEmail, code), expires_at: new Date(now.getTime() + 600e3).toISOString(),
+      }).select('id').single()
+      if (insErr || !row) throw insErr ?? new Error('Could not save code')
+      const { data: center } = await admin.from('institution_customers').select('name').eq('id', t.tenant.id).maybeSingle()
+      try {
+        await sendTemplateEmail('center-email-code', typedEmail, { templateData: { code, center_name: center?.name ?? '' } })
+      } catch (e) {
+        console.error('center email code failed', e)
+        await admin.from('tenant_email_codes').delete().eq('id', row.id)
+        return json({ error: 'Could not send the code. Try again.' }, 502)
+      }
+      return json({ ok: true })
+    }
+
+    // ---------- Verified registration (class join link + emailed code) ----------
+    if (action === 'register_verified') {
+      const t = await joinTarget()
+      if (t.error) return t.error
+      const { tenant, cls } = t
+      const name = String(body.name ?? '').trim().slice(0, 100)
+      const phone = digits(body.phone)
+      const school = String(body.school ?? '').trim().slice(0, 120)
+      const grade = String(body.grade ?? '').trim().slice(0, 20)
+      const password = String(body.password ?? '')
+      if (name.length < 2) return json({ error: 'Enter your full name.' }, 400)
+      if (phone.length < 6 || phone.length > 15) return json({ error: 'Enter a valid phone number.' }, 400)
+      if (!emailOk) return json({ error: 'Enter a valid email.' }, 400)
+      if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password))
+        return json({ error: 'Use at least 8 characters with letters and numbers.' }, 400)
+      const since = new Date(Date.now() - 3600e3).toISOString()
+      const { count } = await admin.from('tenant_registrations').select('id', { count: 'exact', head: true }).eq('institution_id', tenant.id).gte('created_at', since)
+      if ((count ?? 0) > 200) return json({ error: 'Too many sign-ups right now. Please try again later.' }, 429)
+      // Same order as tenant_join_with_google: an existing login or an inactive row stops here, an admin-added row is taken over.
+      const { data: cur } = await admin.from('tenant_students').select('id, user_id, active, class_id, email').eq('institution_id', tenant.id).eq('phone', phone).maybeSingle()
+      if (cur?.user_id) return json({ error: 'You already have an account here. Sign in instead.' }, 409)
+      if (cur && !cur.active) return json({ error: 'This phone number is not active here. Ask your center.' }, 403)
+      // Newest code for this email in this center.
+      const { data: codeRow } = await admin.from('tenant_email_codes').select('id, code_hash, expires_at, attempts').eq('institution_id', tenant.id).eq('email', typedEmail)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      const verdict = checkCode(codeRow, await hashCode(typedEmail, String(body.email_code ?? '').trim()), new Date())
+      if (verdict !== 'ok') {
+        if (verdict === 'wrong' && codeRow) await admin.from('tenant_email_codes').update({ attempts: codeRow.attempts + 1 }).eq('id', codeRow.id)
+        return json({ error: CODE_ERRORS[verdict] }, 400)
+      }
+      let studentId = cur?.id as string | undefined
+      if (!studentId) {
+        const { data: student, error: sErr } = await admin.from('tenant_students')
+          .insert({ institution_id: tenant.id, class_id: cls.id, name, phone, email: typedEmail }).select('id').single()
+        if (sErr || !student) return json({ error: 'Could not create your account. Try again.' }, 400)
+        studentId = student.id
+      }
+      const loginEmail = `s-${studentId}@students.flowersos.co`
+      const { data: created, error: uErr } = await admin.auth.admin.createUser({
+        email: loginEmail, password, email_confirm: true, user_metadata: { tenant_student_id: studentId },
+      })
+      if (uErr || !created.user) {
+        if (!cur) await admin.from('tenant_students').delete().eq('id', studentId)
+        return json({ error: /weak|leaked|compromised|guess/i.test(uErr?.message ?? '') ? 'That password is too easy to guess. Pick another.' : 'Could not create your account. Try again.' }, 400)
+      }
+      // The admin-added row keeps its class and its admin-entered email; only a null class takes the link's.
+      const { data: linked } = await admin.from('tenant_students').update({
+        user_id: created.user.id, password_user_id: created.user.id,
+        email: cur?.email ? cur.email : typedEmail, class_id: cur?.class_id ?? cls.id,
+      }).eq('id', studentId).is('user_id', null).select('id')
+      if (!linked?.length) {
+        await admin.auth.admin.deleteUser(created.user.id)
+        if (!cur) await admin.from('tenant_students').delete().eq('id', studentId)
+        return json({ error: 'You already have an account here. Sign in instead.' }, 409)
+      }
+      await admin.from('tenant_registrations').insert({ institution_id: tenant.id, class_id: cur?.class_id ?? cls.id, name, phone, email: typedEmail, school, grade, status: 'approved', reviewed_at: new Date().toISOString() })
+      await admin.from('tenant_email_codes').delete().eq('institution_id', tenant.id).eq('email', typedEmail)
+      return json({ email: loginEmail })
+    }
+
     // ---------- Public registration (class join link) ----------
     if (action === 'register') {
       const tenant = await findTenant(body.slug)
@@ -77,7 +177,7 @@ Deno.serve(async (req) => {
         await admin.from('tenant_students').delete().eq('id', student.id)
         return json({ error: /weak|leaked|compromised|guess/i.test(uErr?.message ?? '') ? 'That password is too easy to guess. Pick another.' : 'Could not create your account. Try again.' }, 400)
       }
-      await admin.from('tenant_students').update({ user_id: created.user.id }).eq('id', student.id)
+      await admin.from('tenant_students').update({ user_id: created.user.id, password_user_id: created.user.id }).eq('id', student.id)
       await admin.from('tenant_registrations').insert({ institution_id: tenant.id, class_id: cls.id, name, phone, email, school, grade, status: 'approved', reviewed_at: new Date().toISOString() })
       return json({ email: loginEmail })
     }
@@ -88,11 +188,11 @@ Deno.serve(async (req) => {
       if (!tenant) return json({ error: 'This center portal is not available.' }, 404)
       const phone = digits(body.phone)
       if (phone.length < 6) return json({ error: 'Enter the phone number registered with your class.' }, 400)
-      const { data: student } = await admin.from('tenant_students').select('id, user_id, active')
+      const { data: student } = await admin.from('tenant_students').select('id, user_id, active, google_user_id')
         .eq('institution_id', tenant.id).eq('phone', phone).maybeSingle()
       if (!student || !student.active) return json({ error: 'This phone number is not registered with your center. Ask your center to add you.' }, 404)
       const email = `s-${student.id}@students.flowersos.co`
-      if (action === 'student_lookup') return json({ activated: !!student.user_id, email: student.user_id ? email : null })
+      if (action === 'student_lookup') return json({ activated: !!student.user_id, email: student.user_id ? email : null, google: !!student.user_id && student.user_id === student.google_user_id })
 
       if (student.user_id) return json({ error: 'This account already has a password. Sign in instead.' }, 409)
       const password = String(body.password ?? '')
@@ -102,7 +202,7 @@ Deno.serve(async (req) => {
         email, password, email_confirm: true, user_metadata: { tenant_student_id: student.id },
       })
       if (error || !created.user) throw new Error(error?.message ?? 'Could not create account')
-      const { error: linkErr } = await admin.from('tenant_students').update({ user_id: created.user.id })
+      const { error: linkErr } = await admin.from('tenant_students').update({ user_id: created.user.id, password_user_id: created.user.id })
         .eq('id', student.id).is('user_id', null)
       if (linkErr) { await admin.auth.admin.deleteUser(created.user.id); throw linkErr }
       return json({ email })
@@ -175,7 +275,7 @@ Deno.serve(async (req) => {
       const { data: student } = await admin.from('tenant_students').select('id, user_id, institution_id').eq('id', body.student_id).maybeSingle()
       if (!student || student.institution_id !== institutionId) return json({ error: 'Not found' }, 404)
       if (student.user_id) {
-        await admin.from('tenant_students').update({ user_id: null }).eq('id', student.id)
+        await admin.from('tenant_students').update({ user_id: null, password_user_id: null }).eq('id', student.id)
         // Center admins can edit user_id, so only delete the login this function made for this student, never someone else's.
         const { data: u } = await admin.auth.admin.getUserById(student.user_id)
         if (u?.user?.email === `s-${student.id}@students.flowersos.co`) await admin.auth.admin.deleteUser(student.user_id)
