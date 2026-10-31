@@ -87,6 +87,7 @@ Contents, in order:
 7. `submit_support_request`: copy from `0081_support_requests.sql:36-…`; first line of the body: `IF public.is_demo_user() THEN RAISE EXCEPTION 'Turned off in the demo.'; END IF;`.
 8. `admin_customer_activity`: copy from `0018_*.sql:44-…`; exclude rows where `c.is_demo`.
 9. Grants/revokes matching each original; `NOTIFY pgrst, 'reload schema';`.
+10. `search_questions` (Saagii, 30 Oct: remove Search Questions from the demo): copy the latest body (`supabase/migrations/20260822143804_fe717145-*.sql:6-100`) and give demo users an empty result (`IF public.is_demo_user() THEN RETURN; END IF;` first, or `AND NOT public.is_demo_user()` if it's SQL). Real users' results don't change.
 
 Every copied function keeps a comment `-- Demo check (live-demo plan, 30 Oct): keep this line when rewriting.` next to the added line.
 
@@ -200,7 +201,7 @@ git commit -m "0109: sample center generator and demo copy bookkeeping"
   - admin `submit_support_request` → error contains `Turned off in the demo`.
   - student `student-analytics-insights {stats:{}}` → 403.
   - student `concept-video-url` with a storage path not in the slice → 403 (skip with a note if no slice video is a storage file).
-  - **Gate:** student `search_questions` returns 0 rows. Print `GATE` instead of `true`/`FALSE`.
+  - Demo student `search_questions` returns 0 rows (blocked by 0108 item 10).
 - `end`: `{action:'end'}` with a wrong token → 403. With the right token → 200; then sign-in with the old password fails, and `tenant_lookup(slug)` is empty.
 - `limits`: 6 starts with one visitor id → the 6th is 429. End all of them afterwards.
 - `expiry` (long): start, wait 17 minutes, then sign-in fails and the lookup is empty.
@@ -257,7 +258,7 @@ Only commits from Tasks 1–3, which change nothing for real users. Show him the
 - [ ] **Step 3: Run the probe**
 
 Run: `node demo-probe.mjs regression copy refusals end limits`
-Expected: every line `true`, and the `GATE` line shows 0 rows. If `GATE` shows rows, stop and ask Saagii whether to wait for the admin session's `search_questions` fix or add a demo-only block. The demo must not go public with rows there.
+Expected: every line `true`.
 
 - [ ] **Step 3b: Check the other "signed in only" doors (spec section 4)**
 
@@ -403,6 +404,7 @@ Port `InvestorDemo.tsx:99-103` (role `Tabs` hidden when `practiceOnly`, an `mm:s
 - **`App.tsx`:** `demoRoleFromPath(location.pathname)` → `DemoPortal`; `/demo` or `/demo/` → `DemoStart`. Remove the `InvestorDemo` import; the files stay until Plan 3.
 - **`questionMeta.ts:11`:** `supabase.from('intl_questions').select(...).in('id', chunk)` becomes `supabase.rpc('intl_question_meta', { _ids: chunk })`. Keep the chunks and the result shape.
 - **`useInstitutionCustomers.ts:21`:** add `.eq('is_demo', false)` to the customers query.
+- **Search Questions hidden in the demo:** if `src/portal/CenterAdminPortal.tsx` on main doesn't already hide the `questions` nav item and route under `/demo/` (the admin session was asked to add it), add that: filter the nav entry and redirect the route to the dashboard when `window.location.pathname.startsWith('/demo/')`.
 - These two edits need Task 4's regenerated `types.ts`, so pull `origin/main` first.
 
 - [ ] **Step 8: Run the tests, type check and lint**

@@ -175,6 +175,7 @@ Once the new demo is live and checked, remove `src/demo/InvestorDemo.tsx`, `demo
 - "Try the demo" opens a dialog 80% wide × 55% tall with three cards side by side, each showing the whole portal, not part of it.
 - Live mini versions of each portal in the cards, showing their loading animation first, to catch attention.
 - Realistic-looking sample data.
+- Remove Search Questions from the demo (30 Oct): the server gives demo users no search results, and the admin sidebar hides the page under `/demo/`.
 
 ## Left to the builder
 
