@@ -30,7 +30,6 @@ import StudentReveal from "./pages/StudentReveal";
 import StudentPortal from "./pages/StudentPortal";
 import StudentQuestion from "./pages/StudentQuestion";
 import NotFound from "./pages/NotFound";
-import Unsubscribe from "./pages/Unsubscribe";
 
 
 import TeacherDashboard from "./pages/TeacherDashboard";
@@ -134,7 +133,6 @@ const MainApp = () => (
                   <Route path="/prep/:joinCode" element={<PrepClassJoin />} />
                   <Route path="/join/:code" element={<CenterJoinRedirect />} />
                   <Route path="/lectures" element={<LecturesHub />} />
-                  <Route path="/unsubscribe" element={<Unsubscribe />} />
 
                   <Route 
                     path="/admin/*" 
