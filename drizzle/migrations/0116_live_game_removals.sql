@@ -1,4 +1,4 @@
--- Apply AFTER the LiveSession page is published; re-add as the next free migration number with a journal `when` newer than Lovable's latest placeholder.
+-- The LiveSession page that answers through live_session_answer() (0114) went live with Saagii's publish on 1 Nov.
 -- Live class game: the server checks answers (task 4b item C). Part 2 of 2: the removals.
 -- DEPLOY ORDER: apply 0114, publish the page (src/pages/LiveSession.tsx, LiveQuestionControl.tsx), then apply this file.
 --   Applied before that page is live, phones on the old page would mark every answer wrong and save nothing.
