@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { readFileSync } from 'node:fs';
+import clientSrc from '../integrations/supabase/client.ts?raw';
 import { demoAuthOptions, demoKeyOk, demoRoleFromPath } from './storageKey';
 
 test('demo role paths get their own key', () => {
@@ -12,8 +12,7 @@ test('everything else keeps the default key', () => {
   expect(demoRoleFromPath('/demo')).toBeNull();
 });
 test('client.ts still uses the demo key (fails if Lovable regenerates the file)', () => {
-  const src = readFileSync('src/integrations/supabase/client.ts', 'utf8');
-  expect(src).toContain('...demoAuthOptions()');
+  expect(clientSrc).toContain('...demoAuthOptions()');
 });
 test('demoKeyOk only accepts the own-role demo key', () => {
   expect(demoKeyOk('sb-demo-admin-auth-token', 'admin')).toBe(true);
