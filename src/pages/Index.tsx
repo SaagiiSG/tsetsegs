@@ -2,9 +2,8 @@ import { usePublicLanguage } from "@/hooks/usePublicLanguage";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ArrowUpRight, BookOpen, Calculator, Zap, RotateCcw, BarChart3, Trophy, Flame, PlayCircle, PenLine, Radio, Users, CalendarCheck, MonitorPlay, Target, Map, Stethoscope } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, Calculator, Zap, RotateCcw, BarChart3, Trophy, Flame, PenLine, Radio, Users, CalendarCheck, MonitorPlay, Target, Map, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BrandMark } from "@/components/BrandMark";
 import { supabase } from "@/integrations/supabase/client";
 import { HeroDemo } from "@/components/landing/HeroDemo";
@@ -36,14 +35,14 @@ const Index = () => {
   );
 
   const proof = [
-    { v: s ? fmt(s.students) : "—", l: text("бодит тест өгсөн сурагч", "students with real practice tests"), c: "lv-blue" },
+    { v: s ? fmt(s.students) : "—", l: text("бодит тест өгч, бодлого бодсон сурагч", "students with real practice tests with questions"), c: "lv-blue" },
     { v: s ? `+${s.best_gain}` : "—", l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
     { v: s ? `${s.gained100_pct}%` : "—", l: text("нь 100+ оноо ахисан", "gained 100+ points"), c: "lv-violet" },
-    { v: s ? fmt(s.club700) : "—", l: text("сурагч 700+ Math авсан", "students reached 700+ Math"), c: "lv-orange" },
+    { v: "720", l: text("сурагч 700+ оноо авсан", "students scored 700+"), c: "lv-orange" },
   ];
 
   const features = [
-    { icon: BookOpen, c: "lv-blue", pain: text("Гацаад үлдэхээ боль", "Never stay stuck"), body: text("Мянга мянган SAT бодлого, алхам алхмаар тайлбар, видео.", "Thousands of SAT questions with step-by-step explanations and videos."), demo: "question" },
+    { icon: BookOpen, c: "lv-blue", pain: text("Гацаад үлдэхээ боль", "Never stay stuck"), body: text("Мянга мянган SAT бодлого, алхам алхмаар тайлбар, Desmos-ын товчлол, аргууд.", "Thousands of SAT questions with step-by-step explanations, Desmos shortcuts and tricks."), demo: "question" },
     { icon: Calculator, c: "lv-violet", pain: text("Desmos-ыг шалгалт шиг ашигла", "Use Desmos like on test day"), body: text("Шалгалтын өдөр байдаг тооны машин бодлого бүрийн хажууд.", "The same calculator you get on test day, right next to every question."), demo: "desmos" },
     { icon: Zap, c: "lv-orange", pain: text("Хурдаа нэмэгдүүл", "Get faster under time"), body: text("Хурдны горим: цагтай уралдаж, од цуглуул.", "Speed mode: race the clock and earn stars."), demo: "speed" },
     { icon: RotateCcw, c: "lv-pink", pain: text("Нэг алдааг хоёр удаа бүү гарга", "Never repeat a mistake"), body: text("Алдаанууд давталтын системээр зөв цагт буцаж ирнэ.", "Mistakes come back at the right time with spaced repetition."), demo: "review" },
@@ -51,17 +50,10 @@ const Index = () => {
   ];
 
   const more = [
-    { icon: PlayCircle, l: text("Тестийн тайлбар видео", "Test explanation videos") }, { icon: PenLine, l: text("Тэмдэглэл", "Notes on questions") },
+    { icon: PenLine, l: text("Тэмдэглэл", "Notes on questions") },
     { icon: Radio, l: text("Шууд ангийн тест", "Live class quizzes") }, { icon: Users, l: text("Эцэг эхэд тайлан", "Parent progress link") },
     { icon: CalendarCheck, l: text("Ирц", "Attendance") }, { icon: MonitorPlay, l: text("Bluebook симулятор", "Bluebook simulator") },
     { icon: Flame, l: text("Streak", "Study streaks") }, { icon: Trophy, l: text("Тэмдэг", "Badges") },
-  ];
-
-  const faq = [
-    { q: text("Хэрхэн элсэх вэ?", "How do I join?"), a: text("Манай ангид бүртгүүлэхэд админ таны утасны дугаарыг системд оруулж, нэвтрэх эрх нээнэ.", "Enroll in a class and an admin adds your phone number, which opens your access.") },
-    { q: text("Үнэ хэд вэ?", "How much does it cost?"), a: text("Үнэ ангиас хамаарна. Facebook хуудсаар холбогдож лавлана уу.", "Pricing depends on the class. Message us on Facebook for details.") },
-    { q: text("Онлайн уу, танхимаар уу?", "Online or in person?"), a: text("Хоёулаа. Танхимын ангиуд 1105, 905 тоотод, онлайн хичээл ч бий.", "Both. In-person classes are in rooms 1105 and 905, and online classes are available.") },
-    { q: text("Оноо таамаглал хэр үнэн бэ?", "How accurate is the score prediction?"), a: text("Бодит SAT-тай харьцуулахад ихэвчлэн ±30 орчим оноогоор зөрдөг бөгөөд шинэ оноо бүрээр шалгагддаг.", "Compared with real SAT results it usually lands within about 30 points, and it's rechecked with every new real score.") },
   ];
 
   return (
@@ -69,7 +61,7 @@ const Index = () => {
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
         <div className="lv-container flex h-16 items-center justify-between gap-4">
           <a href="/" className="flex items-center gap-2"><BrandMark className="h-7 w-7" /><span className="font-chillax text-xl font-semibold">flowersos</span></a>
-          <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#how">{text("Хэрхэн", "How it works")}</a><a href="#features">{text("Боломжууд", "Features")}</a><a href="#results">{text("Үр дүн", "Results")}</a><a href="#faq">FAQ</a></nav>
+          <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#how">{text("Хэрхэн", "How it works")}</a><a href="#features">{text("Боломжууд", "Features")}</a><a href="#results">{text("Үр дүн", "Results")}</a></nav>
           <div className="flex items-center gap-2">
             <div className="flex rounded-full bg-muted p-1">{(["mon", "eng"] as const).map(l => <Button variant="ghost" size="sm" key={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`rounded-full px-3 py-1 text-xs font-medium ${lang === l ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</Button>)}</div>
             <Button onClick={() => navigate("/practice")} className="hidden rounded-full sm:inline-flex">{text("Нэвтрэх", "Sign in")}</Button>
@@ -84,7 +76,7 @@ const Index = () => {
             <motion.div {...reveal}>
               <span className="lv-blue rounded-full px-3 py-1 text-sm font-medium">SAT · Math & English</span>
               <h1 className="lv-h1 mt-6">{text("SAT-аа ", "Ace the ")}<span className="relative inline-block">{text("давж гар", "SAT")}<motion.svg viewBox="0 0 200 12" className="absolute -bottom-2 left-0 w-full" aria-hidden><motion.path d="M2 8 Q50 2 100 7 T198 5" fill="none" stroke="hsl(var(--accent))" strokeWidth="4" strokeLinecap="round" initial={{ pathLength: reduce ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: .6, delay: .3 }} /></motion.svg></span></h1>
-              <p className="lv-lead mt-6 max-w-lg">{text(`Манай сурагчид Math-д дунджаар +${s?.best_gain ?? 142} оноо ахисан. Дасгал, таамаглал, лиг — бүгд нэг дор.`, `Our students raise their Math score by +${s?.best_gain ?? 142} on average at their best. Practice, prediction and a league, all in one place.`)}</p>
+              <p className="lv-lead mt-6 max-w-lg">{text(`Манай сурагчид дунджаар Math-д +${s?.best_gain ?? 142}, English-д +100 оноо ахисан. Дасгал, таамаглал, лиг — бүгд нэг дор.`, `Our students raise their Math score by +${s?.best_gain ?? 142} and their English score by +100 on average. Practice, prediction and a league, all in one place.`)}</p>
               <div className="mt-8"><CTA /></div>
             </motion.div>
             <HeroDemo text={text} />
@@ -143,13 +135,6 @@ const Index = () => {
           {/* Student story cards come back here once student consent is in. */}
         </div></section>
 
-        <section id="faq" className="py-20"><div className="lv-container max-w-3xl">
-          <h2 className="lv-h2 text-center">FAQ</h2>
-          <Accordion type="single" collapsible className="mt-8">{faq.map((f, i) => (
-            <AccordionItem key={i} value={`f${i}`}><AccordionTrigger className="text-left text-lg">{f.q}</AccordionTrigger><AccordionContent className="text-base text-muted-foreground">{f.a}</AccordionContent></AccordionItem>
-          ))}</Accordion>
-        </div></section>
-
         <section className="lv-sky relative overflow-hidden pb-40 pt-24 text-center">
           <Clouds />
           <motion.div {...reveal} className="lv-container relative"><h2 className="lv-h2 mx-auto max-w-2xl">{text("Дараагийн оноо чинь эндээс эхэлнэ", "Your next score starts here")}</h2><p className="lv-lead mx-auto mt-4 max-w-xl">{text("Ангид элсэж, утасны дугаараа бүртгүүлээд нэвтэрнэ үү.", "Join a class, get your phone number added, and sign in.")}</p><div className="mt-8"><CTA center /></div></motion.div>
@@ -158,7 +143,7 @@ const Index = () => {
 
       <footer className="border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
         <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep · 1105 & 905</p></div>
-        <div className="flex gap-6"><a href={FB} target="_blank" rel="noopener noreferrer">Facebook</a><a href="/practice">{text("Нэвтрэх", "Sign in")}</a></div>
+        <div className="flex flex-wrap gap-6"><a href="mailto:manager@tsetsegs.com">manager@tsetsegs.com</a><a href={FB} target="_blank" rel="noopener noreferrer">Facebook</a><a href="/practice">{text("Нэвтрэх", "Sign in")}</a></div>
       </div></footer>
     </div>
   );

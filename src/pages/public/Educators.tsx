@@ -146,7 +146,7 @@ export default function Educators() {
 
         <section id="story" className="scroll-mt-20 py-10"><motion.div {...reveal} className="lv-container"><div className="lv-card max-w-3xl p-6 md:p-10">
           <h2 className="lv-h2">{text("Жинхэнэ SAT төв дотор бүтээгдсэн", "Built inside a real SAT center")}</h2>
-          <p className="lv-lead mt-4">{text("Цэцэгс бол SAT бүрт 80+ сурагч шалгалт өгдөг SAT төв. Бид энэ платформыг өөрсдийн ангиудад зориулж бүтээсэн бөгөөд 2025 оны 12-р сараас хойш төвөө түүн дээр ажиллуулж байна. Математикийн тайлбаруудыг бичиж, хичээлүүдийг бичлэг хийсэн багш нар өдөр бүр Desmos ашиглан SAT математик заадаг.", "Tsetsegs is an SAT center where 80+ students sit every SAT. We built this platform for our own classes and have run the center on it since December 2025. The teachers who wrote the math explanations and recorded the lessons teach SAT math with Desmos every day.")}</p>
+          <p className="lv-lead mt-4">{text("Цэцэгс бол SAT бүрт 80+ сурагч шалгалт өгдөг SAT төв. Бид энэ платформыг өөрсдийн ангиудад зориулж бүтээсэн бөгөөд 2025 оны 12-р сараас хойш төвөө түүн дээр ажиллуулж байна. Математикийн тайлбаруудыг бичиж, хичээлүүдийг бичлэг хийсэн багш нар өдөр бүр Desmos ашиглан SAT математик заадаг.", "Tsetsegs is an SAT center where 80+ students take every SAT. We built this platform for our own classes and have run the center on it since December 2025. The teachers who wrote the math explanations and recorded the lessons teach SAT math with Desmos every day.")}</p>
         </div></motion.div></section>
 
         <section id="how" className="scroll-mt-20 py-20"><div className="lv-container">
@@ -183,7 +183,7 @@ export default function Educators() {
       </main>
 
       <footer id="signin" className="scroll-mt-20 border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
-        <div><a href="/" className="flex h-11 items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p></div>
+        <div><a href="/" className="flex h-11 items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p><a href="mailto:manager@tsetsegs.com" className="inline-flex h-11 items-center">manager@tsetsegs.com</a></div>
         <div className="space-y-2">
           <p className="font-medium text-foreground">{text("Аль хэдийн хэрэглэгч үү?", "Already a customer?")}</p>
           <div className="flex gap-6"><a href={`/login?role=admin&lang=${lang}`} className="inline-flex h-11 items-center">{text("Админ нэвтрэх", "Admin sign in")}</a><a href={`/login?role=teacher&lang=${lang}`} className="inline-flex h-11 items-center">{text("Багш нэвтрэх", "Teacher sign in")}</a></div>
