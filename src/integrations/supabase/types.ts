@@ -2466,6 +2466,7 @@ export type Database = {
           id: string
           join_code: string
           question_set: string
+          question_started_at: string | null
           status: string
           teacher_name: string
           time_per_question: number
@@ -2477,6 +2478,7 @@ export type Database = {
           id?: string
           join_code: string
           question_set: string
+          question_started_at?: string | null
           status?: string
           teacher_name: string
           time_per_question?: number
@@ -2488,6 +2490,7 @@ export type Database = {
           id?: string
           join_code?: string
           question_set?: string
+          question_started_at?: string | null
           status?: string
           teacher_name?: string
           time_per_question?: number
@@ -6838,6 +6841,16 @@ export type Database = {
         Args: { _participant: string; _question: string; _session: string }
         Returns: boolean
       }
+      live_session_answer: {
+        Args: {
+          _choice: string
+          _join_code: string
+          _participant: string
+          _question: string
+          _time_taken_ms: number
+        }
+        Returns: Json
+      }
       live_session_find_participant: {
         Args: { p_phone: string; p_session_id: string }
         Returns: {
@@ -6849,6 +6862,10 @@ export type Database = {
       live_session_question_list: {
         Args: { _join_code: string }
         Returns: Json
+      }
+      live_session_reveal: {
+        Args: { _join_code: string; _participant: string; _question: string }
+        Returns: string
       }
       longest_day_run: { Args: { p_days: string[] }; Returns: number }
       ngee_cancel_booking: {
