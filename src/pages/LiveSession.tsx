@@ -16,6 +16,7 @@ interface SessionData {
   current_question_index: number;
   time_per_question: number;
   teacher_name: string;
+  question_started_at?: string | null;
 }
 
 interface QuestionData {
@@ -206,7 +207,7 @@ export default function LiveSession() {
             }
 
             if (data.status === "active") {
-              startQuestion(data.current_question_index);
+              startQuestion(data.current_question_index, data.question_started_at);
             } else {
               setPhase("waiting");
             }
@@ -228,7 +229,7 @@ export default function LiveSession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [joinCode]);
 
-  const startQuestion = useCallback((index: number) => {
+  const startQuestion = useCallback((index: number, startedAt?: string | null) => {
     const sess = sessionRef.current;
     const q = questionsRef.current[index];
     setCurrentIndex(index);
@@ -242,9 +243,13 @@ export default function LiveSession() {
     const alreadyAnswered = q ? answeredRef.current.has(q.id) : false;
     hasAnsweredRef.current = alreadyAnswered;
 
-    questionStartRef.current = Date.now();
     const timePerQ = sess?.time_per_question || 30;
-    setTimeLeft(timePerQ);
+    // Late joiners/refreshers: count down from when the question really started (server clock), not from page load.
+    const startMs = startedAt ? Date.parse(startedAt) : NaN;
+    const elapsedMs = Number.isFinite(startMs) ? Math.min(Math.max(Date.now() - startMs, 0), timePerQ * 1000) : 0;
+    questionStartRef.current = Date.now() - elapsedMs;
+    const remainingMs = timePerQ * 1000 - elapsedMs;
+    setTimeLeft(Math.max(0, Math.ceil(remainingMs / 1000)));
 
     // Ask for the right answer when this phone's time runs out (the server's ran out a moment earlier).
     // Seeing it ends this player's turn on the server, so first let an answer still being checked land.
@@ -256,7 +261,7 @@ export default function LiveSession() {
         if (!pid) return;
         const { data } = await supabase.rpc("live_session_reveal" as never, { _join_code: joinCode.toUpperCase(), _participant: pid, _question: q.id } as never);
         if (typeof data === "string") setRevealed((prev) => ({ ...prev, [q.id]: data }));
-      }, timePerQ * 1000);
+      }, remainingMs);
     }
 
     if (alreadyAnswered) {
@@ -309,9 +314,9 @@ export default function LiveSession() {
             setSession(updated);
 
             if (updated.status === "active" && phaseRef.current === "waiting") {
-              startQuestion(updated.current_question_index);
+              startQuestion(updated.current_question_index, updated.question_started_at);
             } else if (updated.status === "active" && updated.current_question_index !== currentIndexRef.current) {
-              startQuestion(updated.current_question_index);
+              startQuestion(updated.current_question_index, updated.question_started_at);
             } else if (updated.status === "finished") {
               clearInterval(timerRef.current);
               setPhase("finished");
@@ -392,7 +397,7 @@ export default function LiveSession() {
       }
 
       if (session.status === "active") {
-        startQuestion(session.current_question_index);
+        startQuestion(session.current_question_index, session.question_started_at);
       } else {
         setPhase("waiting");
       }
