@@ -16,6 +16,7 @@ interface SessionData {
   current_question_index: number;
   time_per_question: number;
   teacher_name: string;
+  question_started_at?: string | null;
 }
 
 interface QuestionData {
@@ -206,7 +207,7 @@ export default function LiveSession() {
             }
 
             if (data.status === "active") {
-              startQuestion(data.current_question_index);
+              startQuestion(data.current_question_index, data.question_started_at);
             } else {
               setPhase("waiting");
             }
@@ -313,9 +314,9 @@ export default function LiveSession() {
             setSession(updated);
 
             if (updated.status === "active" && phaseRef.current === "waiting") {
-              startQuestion(updated.current_question_index);
+              startQuestion(updated.current_question_index, updated.question_started_at);
             } else if (updated.status === "active" && updated.current_question_index !== currentIndexRef.current) {
-              startQuestion(updated.current_question_index);
+              startQuestion(updated.current_question_index, updated.question_started_at);
             } else if (updated.status === "finished") {
               clearInterval(timerRef.current);
               setPhase("finished");
@@ -396,7 +397,7 @@ export default function LiveSession() {
       }
 
       if (session.status === "active") {
-        startQuestion(session.current_question_index);
+        startQuestion(session.current_question_index, session.question_started_at);
       } else {
         setPhase("waiting");
       }
