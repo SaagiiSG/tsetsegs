@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { readFileSync } from 'node:fs';
+import clientSrc from '../integrations/supabase/client.ts?raw';
 import { demoAuthOptions, demoKeyOk, demoRoleFromPath } from './storageKey';
 
 test('demo role paths get their own key', () => {
