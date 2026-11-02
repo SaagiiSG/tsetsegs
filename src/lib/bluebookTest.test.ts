@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal } from './bluebookTest';
+import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue } from './bluebookTest';
 
 const rw1 = { id: 'r1', section: 'reading_writing', module_number: 1 };
 const rw2 = { id: 'r2', section: 'reading_writing', module_number: 2 };
@@ -37,4 +37,32 @@ describe('cross-out list and storage', () => {
   beforeEach(() => { const m = new Map<string, string>(); (globalThis as any).localStorage = { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) }; });
   it('round-trips', () => { writeLocal('k', ['B']); expect(readLocal('k', [])).toEqual(['B']); });
   it('falls back when storage throws', () => { (globalThis as any).localStorage = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } }; expect(readLocal('k', ['x'])).toEqual(['x']); expect(() => writeLocal('k', 1)).not.toThrow(); });
+});
+
+describe('save queue', () => {
+  const row = (answer: string, q = 'q1') => ({ questionId: q, moduleId: 'm1', answer, isMarked: false, timeSpent: 1 });
+  it('sends only the first and the latest value while typing fast', async () => {
+    const sent: string[] = []; let release!: () => void;
+    const save = (r: any) => { sent.push(r.answer); return sent.length === 1 ? new Promise<void>(res => (release = res)) : Promise.resolve(); };
+    const q = createSaveQueue(save);
+    q.push(row('3')); q.push(row('3/')); q.push(row('3/3'));
+    release(); await q.flush();
+    expect(sent).toEqual(['3', '3/3']);
+  });
+  it('different questions save independently', async () => {
+    const sent: string[] = []; const q = createSaveQueue(async r => void sent.push(r.questionId));
+    q.push(row('A', 'q1')); q.push(row('B', 'q2')); await q.flush();
+    expect(sent.sort()).toEqual(['q1', 'q2']);
+  });
+  it('retries a failed save', async () => {
+    let calls = 0; const q = createSaveQueue(async () => { if (++calls === 1) throw new Error('offline'); }, 1);
+    q.push(row('A')); await q.flush();
+    expect(calls).toBe(2); expect(q.pending()).toBe(0);
+  });
+  it('flush rejects when saving keeps failing, and keeps the row', async () => {
+    const q = createSaveQueue(async () => { throw new Error('offline'); }, 1);
+    q.push(row('A'));
+    await expect(q.flush()).rejects.toThrow();
+    expect(q.pending()).toBe(1);
+  });
 });

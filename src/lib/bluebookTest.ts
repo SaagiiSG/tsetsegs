@@ -76,3 +76,53 @@ export function writeLocal(key: string, value: unknown): void {
 }
 
 export const crossOutKey = (attemptId: string, questionId: string) => `bb:x:${attemptId}:${questionId}`;
+
+export type SaveRow = { questionId: string; moduleId: string; answer: string | null; isMarked: boolean; timeSpent: number };
+
+/**
+ * One save in flight per question; a newer row replaces any waiting one, so the last value typed is the one saved.
+ * A failed row stays pending and retries every `retryMs` until it lands. `flush` waits for everything and rejects
+ * if a row still fails after one more try, so finishing never drops an answer silently.
+ */
+export function createSaveQueue(save: (row: SaveRow) => Promise<void>, retryMs = 2000) {
+  type Slot = { inFlight: Promise<void> | null; next: SaveRow | null };
+  const slots = new Map<string, Slot>();
+
+  const run = (slot: Slot) => {
+    const row = slot.next;
+    slot.next = null;
+    slot.inFlight = new Promise<void>(res => res(save(row))).then(
+      () => {
+        slot.inFlight = null;
+        if (slot.next) run(slot);
+      },
+      () => {
+        slot.inFlight = null;
+        if (!slot.next) slot.next = row;
+        setTimeout(() => { if (!slot.inFlight && slot.next) run(slot); }, retryMs);
+      },
+    );
+  };
+
+  return {
+    push(row: SaveRow) {
+      let slot = slots.get(row.questionId);
+      if (!slot) slots.set(row.questionId, (slot = { inFlight: null, next: null }));
+      slot.next = row;
+      if (!slot.inFlight) run(slot);
+    },
+    async flush() {
+      let retried = false;
+      for (;;) {
+        const busy = [...slots.values()].filter(s => s.inFlight);
+        if (busy.length) { await Promise.all(busy.map(s => s.inFlight)); continue; }
+        const waiting = [...slots.values()].filter(s => s.next);
+        if (!waiting.length) return;
+        if (retried) throw new Error(`${waiting.length} answer(s) did not save`);
+        retried = true;
+        waiting.forEach(run);
+      }
+    },
+    pending: () => [...slots.values()].filter(s => s.inFlight || s.next).length,
+  };
+}
