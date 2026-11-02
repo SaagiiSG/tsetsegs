@@ -7233,6 +7233,7 @@ export type Database = {
         Args: { phone: string; student_id: string }
         Returns: boolean
       }
+      student_phone_enrolled: { Args: { _phone: string }; Returns: boolean }
       student_phone_registered: {
         Args: { _batch_id: string; _phone: string }
         Returns: boolean
