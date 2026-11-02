@@ -144,5 +144,25 @@ export async function startModuleClock(client: any, attemptId: string): Promise<
   const { data, error: readError } = await client.from('bluebook_attempts')
     .select('module_started_at').eq('id', attemptId).single();
   if (readError) throw readError;
+  if (!data?.module_started_at) throw new Error('module clock did not start');
   return data.module_started_at;
 }
+
+/** Save and Exit: leave only once every answer is saved; otherwise stay on the page and say so. */
+export async function leaveWhenSaved(flush: () => Promise<void>, leave: () => void, onUnsaved: () => void): Promise<boolean> {
+  try {
+    await flush();
+  } catch {
+    onUnsaved();
+    return false;
+  }
+  leave();
+  return true;
+}
+
+/** beforeunload handler: the browser asks "Leave site?" while answers are still saving. */
+export const unsavedGuard = (pending: () => number) => (e: BeforeUnloadEvent) => {
+  if (!pending()) return;
+  e.preventDefault();
+  e.returnValue = '';
+};

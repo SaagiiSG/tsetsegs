@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue, nextZoom, startModuleClock } from './bluebookTest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue, nextZoom, startModuleClock, leaveWhenSaved, unsavedGuard } from './bluebookTest';
 
 const rw1 = { id: 'r1', section: 'reading_writing', module_number: 1 };
 const rw2 = { id: 'r2', section: 'reading_writing', module_number: 2 };
@@ -73,7 +73,7 @@ describe('figure zoom', () => {
 
 describe('module clock', () => {
   // A chainable stand-in for the Supabase client that records each call.
-  const fakeClient = (stored: string) => {
+  const fakeClient = (stored: string | null) => {
     const calls: Array<[string, unknown[]]> = [];
     const chain: any = new Proxy({}, {
       get: (_t, name: string) => {
@@ -90,5 +90,32 @@ describe('module clock', () => {
     expect(Object.keys(update[1][0] as object)).toEqual(['module_started_at']);
     expect(calls).toContainEqual(['is', ['module_started_at', null]]);
     expect(calls).toContainEqual(['eq', ['id', 'a1']]);
+  });
+  it('fails loudly when no start was stored, so the loader retries instead of running an untimed module', async () => {
+    const { client } = fakeClient(null);
+    await expect(startModuleClock(client, 'a1')).rejects.toThrow();
+  });
+});
+
+describe('leaving with unsaved answers', () => {
+  it('stays and warns when the last answers did not save', async () => {
+    const left = vi.fn(), warned = vi.fn();
+    expect(await leaveWhenSaved(() => Promise.reject(new Error('offline')), left, warned)).toBe(false);
+    expect(left).not.toHaveBeenCalled();
+    expect(warned).toHaveBeenCalled();
+  });
+  it('leaves once everything is saved', async () => {
+    const left = vi.fn(), warned = vi.fn();
+    expect(await leaveWhenSaved(() => Promise.resolve(), left, warned)).toBe(true);
+    expect(left).toHaveBeenCalled();
+    expect(warned).not.toHaveBeenCalled();
+  });
+  it('asks before the tab closes while answers are still saving', () => {
+    const pending = { preventDefault: vi.fn(), returnValue: undefined as unknown };
+    unsavedGuard(() => 2)(pending as unknown as BeforeUnloadEvent);
+    expect(pending.preventDefault).toHaveBeenCalled();
+    const clear = { preventDefault: vi.fn(), returnValue: undefined as unknown };
+    unsavedGuard(() => 0)(clear as unknown as BeforeUnloadEvent);
+    expect(clear.preventDefault).not.toHaveBeenCalled();
   });
 });

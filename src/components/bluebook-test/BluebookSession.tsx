@@ -251,7 +251,8 @@ export function BluebookSession(props: BluebookSessionProps) {
   const label = sectionLabel(modules, module);
   const count = questions?.length ?? 0;
   const items = (questions ?? []).map(q => ({ answered: !!answers[q.id]?.answer_submitted, marked: !!answers[q.id]?.is_marked }));
-  const finishModule = () => dispatch({ type: 'moduleDone', next: nextStep(modules, module.id) });
+  // Check Your Work's Next ends the module; the reducer ignores it right after opening (a double click on the last Next).
+  const finishModule = () => dispatch({ type: 'reviewNext', next: nextStep(modules, module.id), at: Date.now() });
 
   const tools: Tool[] = isMath ? [
     { key: 'calc', label: 'Calculator', icon: <Calculator />, active: snap === 'left', onClick: toggleCalculator },
@@ -343,11 +344,11 @@ export function BluebookSession(props: BluebookSessionProps) {
             <NavigatorContent title={`${label} Questions`} items={items} current={index}
               onPick={i => { setIndex(i); setNavOpen(false); }}
               onClose={() => setNavOpen(false)}
-              onReviewPage={() => { setNavOpen(false); dispatch({ type: 'openReview' }); }} />
+              onReviewPage={() => { setNavOpen(false); dispatch({ type: 'openReview', at: Date.now() }); }} />
           ),
         }}
         onBack={index > 0 ? () => setIndex(i => i - 1) : undefined}
-        onNext={() => (index < count - 1 ? setIndex(i => i + 1) : dispatch({ type: 'openReview' }))}
+        onNext={() => (index < count - 1 ? setIndex(i => i + 1) : dispatch({ type: 'openReview', at: Date.now() }))}
       >
         <div ref={bodyRef} className={cn(!isMC && 'md:h-full')}>{body}</div>
       </BluebookFrame>

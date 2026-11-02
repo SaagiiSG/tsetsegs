@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { BluebookSession, type SessionModule, type SessionQuestion } from '@/components/bluebook-test/BluebookSession';
 import { buildBluebookResults } from '@/lib/bluebookReview';
-import { createSaveQueue, startModuleClock } from '@/lib/bluebookTest';
+import { createSaveQueue, leaveWhenSaved, startModuleClock, unsavedGuard } from '@/lib/bluebookTest';
 
 interface ModuleQuestion {
   id: string;
@@ -145,6 +146,13 @@ export default function StudentBluebookTest() {
     if (error) throw error;
   }), [attemptId]);
 
+  // Closing or refreshing the tab while answers are still saving asks first.
+  useEffect(() => {
+    const guard = unsavedGuard(queue.pending);
+    window.addEventListener('beforeunload', guard);
+    return () => window.removeEventListener('beforeunload', guard);
+  }, [queue]);
+
   const saveAnswer = useCallback((questionId: string, change: Partial<Answer>) => {
     if (!moduleId) return;
     const current = answersRef.current[questionId];
@@ -174,12 +182,15 @@ export default function StudentBluebookTest() {
 
   const onStartClock = useCallback(async () => {
     const started = await startModuleClock(supabase, attemptId);
+    // A refetch still in flight (window focus) would otherwise write the old null start back over this one.
+    await queryClient.cancelQueries({ queryKey: ['bluebook-attempt', attemptId] });
     queryClient.setQueryData(['bluebook-attempt', attemptId], (a: typeof attempt) => a && { ...a, module_started_at: started });
   }, [attemptId, queryClient]);
 
-  // Move the attempt to the next module. Its clock stays unset until that module's questions are on screen.
+  // Move the attempt to the next module once every answer is saved (a failure throws, and the session retries).
+  // The next module's clock stays unset until its questions are on screen.
   const onAdvance = useCallback(async (nextModuleId: string) => {
-    await queue.flush().catch(() => { /* still retrying in the background */ });
+    await queue.flush();
     const { error } = await supabase
       .from('bluebook_attempts')
       .update({
@@ -221,14 +232,16 @@ export default function StudentBluebookTest() {
     return results;
   }, [attempt?.test_id, attemptId, logActivity, queue]);
 
-  // Save and Exit, and closing the results. Answers save as they're typed, so this only waits for the last ones.
+  // Save and Exit, and closing the results. Answers save as they're typed, so this only waits for the last ones;
+  // if they can't be saved, the student stays on the test (it keeps retrying) instead of losing them.
   const onExit = useCallback(async () => {
-    await queue.flush().catch(() => { /* still retrying in the background */ });
-    // Invalidate dashboard caches so scores sync automatically
-    queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
-    queryClient.invalidateQueries({ queryKey: ['bluebook-attempts'] });
-    queryClient.invalidateQueries({ queryKey: ['bluebook-tests'] });
-    navigate('/practice/bluebook');
+    await leaveWhenSaved(queue.flush, () => {
+      // Invalidate dashboard caches so scores sync automatically
+      queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['bluebook-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['bluebook-tests'] });
+      navigate('/practice/bluebook');
+    }, () => toast.error("Some answers haven't saved yet. Check your connection, then try Save and Exit again."));
   }, [navigate, queryClient, queue]);
 
   if (attemptError) {

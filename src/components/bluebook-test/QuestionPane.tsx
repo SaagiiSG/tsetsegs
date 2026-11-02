@@ -130,21 +130,21 @@ export function SprDirections() {
         <li>If your answer is a <strong>mixed number</strong> (such as <MathText text={'$3\\frac{1}{2}$'} />), enter it as an improper fraction (7/2) or its decimal equivalent (3.5).</li>
         <li>Don’t enter <strong>symbols</strong> such as a percent sign, comma, or dollar sign.</li>
       </ul>
-      <table className="mx-auto mt-10 border-collapse text-center text-[16px] leading-[1.6]">
+      <table className="mx-auto mt-10 w-full border-collapse md:w-auto text-center text-[16px] leading-[1.6]">
         <caption className="pb-2">Examples</caption>
         <thead>
           <tr>
-            <th scope="col" className="w-[110px] border border-[var(--bb-ink)] px-4 py-6 font-normal">Answer</th>
-            <th scope="col" className="w-[170px] border border-[var(--bb-ink)] px-4 py-6 font-normal">Acceptable ways to enter answer</th>
-            <th scope="col" className="w-[170px] border border-[var(--bb-ink)] px-4 py-6 font-normal">Unacceptable: will NOT receive credit</th>
+            <th scope="col" className="md:w-[110px] border border-[var(--bb-ink)] px-2 py-4 md:px-4 md:py-6 font-normal">Answer</th>
+            <th scope="col" className="md:w-[170px] border border-[var(--bb-ink)] px-2 py-4 md:px-4 md:py-6 font-normal">Acceptable ways to enter answer</th>
+            <th scope="col" className="md:w-[170px] border border-[var(--bb-ink)] px-2 py-4 md:px-4 md:py-6 font-normal">Unacceptable: will NOT receive credit</th>
           </tr>
         </thead>
         <tbody>
           {EXAMPLES.map(([answer, ok, bad]) => (
             <tr key={answer}>
-              <td className="border border-[var(--bb-ink)] px-4 py-6"><MathText text={answer} /></td>
-              <td className="space-y-1 border border-[var(--bb-ink)] px-4 py-6">{ok.map(v => <Chip key={v}>{v}</Chip>)}</td>
-              <td className="space-y-1 border border-[var(--bb-ink)] px-4 py-6">{bad.map(v => <Chip key={v}>{v}</Chip>)}</td>
+              <td className="border border-[var(--bb-ink)] px-2 py-4 md:px-4 md:py-6"><MathText text={answer} /></td>
+              <td className="space-y-1 border border-[var(--bb-ink)] px-2 py-4 md:px-4 md:py-6">{ok.map(v => <Chip key={v}>{v}</Chip>)}</td>
+              <td className="space-y-1 border border-[var(--bb-ink)] px-2 py-4 md:px-4 md:py-6">{bad.map(v => <Chip key={v}>{v}</Chip>)}</td>
             </tr>
           ))}
         </tbody>

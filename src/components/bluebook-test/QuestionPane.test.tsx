@@ -53,6 +53,11 @@ describe('SprDirections', () => {
     expect(html).toContain('Unacceptable: will NOT receive credit');
     expect(html).toContain('Don’t enter <strong>symbols</strong> such as a percent sign, comma, or dollar sign.');
   });
+  it('the examples table only fixes its column widths from tablet size up, so it fits a phone', () => {
+    const html = renderToStaticMarkup(<SprDirections />);
+    expect(html).toContain('md:w-[170px]');
+    expect(html).not.toMatch(/[" ]w-\[\d+px\]/);
+  });
 });
 
 describe('QuestionHeader on a typed answer', () => {
