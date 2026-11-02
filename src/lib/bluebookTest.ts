@@ -129,3 +129,20 @@ export function createSaveQueue(save: (row: SaveRow) => Promise<void>, retryMs =
 
 /** Figure zoom steps 25% at a time, between 50% and 200%. */
 export const nextZoom = (z: number, dir: 1 | -1) => Math.min(200, Math.max(50, z + dir * 25));
+
+/**
+ * Start the module clock once the questions are on screen. Only the first writer wins (`is null`), so a
+ * second tab or a refresh can't reset the time; the stored start is returned either way.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the generated client type isn't needed for two calls
+export async function startModuleClock(client: any, attemptId: string): Promise<string> {
+  const { error } = await client.from('bluebook_attempts')
+    .update({ module_started_at: new Date().toISOString() })
+    .eq('id', attemptId)
+    .is('module_started_at', null);
+  if (error) throw error;
+  const { data, error: readError } = await client.from('bluebook_attempts')
+    .select('module_started_at').eq('id', attemptId).single();
+  if (readError) throw readError;
+  return data.module_started_at;
+}

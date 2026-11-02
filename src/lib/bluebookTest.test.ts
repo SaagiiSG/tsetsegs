@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue, nextZoom } from './bluebookTest';
+import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue, nextZoom, startModuleClock } from './bluebookTest';
 
 const rw1 = { id: 'r1', section: 'reading_writing', module_number: 1 };
 const rw2 = { id: 'r2', section: 'reading_writing', module_number: 2 };
@@ -69,4 +69,26 @@ describe('save queue', () => {
 
 describe('figure zoom', () => {
   it('zoom steps 25% between 50 and 200', () => { expect(nextZoom(100, 1)).toBe(125); expect(nextZoom(200, 1)).toBe(200); expect(nextZoom(50, -1)).toBe(50); expect(nextZoom(75, -1)).toBe(50); });
+});
+
+describe('module clock', () => {
+  // A chainable stand-in for the Supabase client that records each call.
+  const fakeClient = (stored: string) => {
+    const calls: Array<[string, unknown[]]> = [];
+    const chain: any = new Proxy({}, {
+      get: (_t, name: string) => {
+        if (name === 'then') return (res: (v: unknown) => void) => res(calls.some(([n]) => n === 'single') ? { data: { module_started_at: stored }, error: null } : { error: null });
+        return (...args: unknown[]) => { calls.push([name, args]); return chain; };
+      },
+    });
+    return { client: { from: (t: string) => { calls.push(['from', [t]]); return chain; } }, calls };
+  };
+  it('writes the start only if nobody has, then returns the stored start', async () => {
+    const { client, calls } = fakeClient('2026-11-01T10:00:00Z');
+    expect(await startModuleClock(client, 'a1')).toBe('2026-11-01T10:00:00Z');
+    const update = calls.find(([n]) => n === 'update');
+    expect(Object.keys(update[1][0] as object)).toEqual(['module_started_at']);
+    expect(calls).toContainEqual(['is', ['module_started_at', null]]);
+    expect(calls).toContainEqual(['eq', ['id', 'a1']]);
+  });
 });

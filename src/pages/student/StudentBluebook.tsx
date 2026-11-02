@@ -203,7 +203,7 @@ export default function StudentBluebook() {
           current_module: 1,
           current_module_id: firstModuleId,
           started_at: new Date().toISOString(),
-          module_started_at: new Date().toISOString()
+          module_started_at: null
         })
         .select()
         .single();
@@ -252,7 +252,7 @@ export default function StudentBluebook() {
         current_module: 1,
         current_module_id: firstModuleId,
         started_at: new Date().toISOString(),
-        module_started_at: new Date().toISOString()
+        module_started_at: null
       })
       .select()
       .single();
