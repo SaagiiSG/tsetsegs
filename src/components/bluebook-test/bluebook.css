@@ -95,13 +95,19 @@
   outline-offset: 2px;
 }
 
-/* Ring of eight dots that fade in turn. */
-.bluebook .bb-spinner {
+/* Ring of eight dots that fade and shrink in turn, like Bluebook's. */
+.bluebook .bb-spinner,
+.bb-spinner {
   position: relative;
   width: 44px;
   height: 44px;
 }
-.bluebook .bb-spinner > span {
+.bb-spinner > span {
+  position: absolute;
+  inset: 0;
+}
+.bb-spinner > span::before {
+  content: '';
   position: absolute;
   top: 0;
   left: 50%;
@@ -110,14 +116,24 @@
   margin-left: -4px;
   border-radius: 9999px;
   background: currentColor;
-  transform-origin: 4px 22px;
+  opacity: 0.1;
   animation: bb-dot 0.96s linear infinite;
-  opacity: 0.15;
+  animation-delay: var(--d);
 }
 @keyframes bb-dot {
-  0% { opacity: 1; }
-  100% { opacity: 0.15; }
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.1; transform: scale(0.35); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bluebook .bb-spinner > span { animation-duration: 2.4s; }
+  .bb-spinner > span::before { animation-duration: 2.4s; }
+}
+
+/* Start loader: the hairline figure in light lines on Bluebook's loading grey. */
+.bb-loader {
+  --hairline-plate: #2c2c2c;
+  --hairline-hi: #ffffff;
+  --hairline-edge: #d6d6d6;
+  --hairline-mid: #8e8e8e;
+  --hairline-lo: #5c5c5c;
+  background: #2c2c2c;
 }

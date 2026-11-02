@@ -31,7 +31,7 @@ export function DotSpinner({ className }: { className?: string }) {
   return (
     <div className={cn('bb-spinner', className)} role="status" aria-label="Loading">
       {Array.from({ length: 8 }, (_, i) => (
-        <span key={i} style={{ transform: `rotate(${i * 45}deg)`, animationDelay: `${i * 0.12}s` }} />
+        <span key={i} style={{ transform: `rotate(${i * 45}deg)`, ['--d' as string]: `${i * 0.12 - 0.96}s` }} />
       ))}
     </div>
   );

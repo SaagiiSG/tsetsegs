@@ -89,3 +89,6 @@ export function topicFigures(n: number | null, area: Area | null): HairlineSpec[
   const own = (n !== null && OWN[n]) || [];
   return own.length ? own : BY_AREA[area];
 }
+
+/** Every approved figure once, for places that pick one at random (the Bluebook start loader). */
+export const ALL_FIGURES: HairlineSpec[] = [...new Set(Object.values(OWN).flat())];
