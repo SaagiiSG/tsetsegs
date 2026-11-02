@@ -33,10 +33,11 @@ export default function Educators() {
     { v: "510", l: text("сурагч дасгал хийсэн", "students practiced"), c: "lv-pink" },
     ...(solved ? [{ v: solved, l: text("2025 оны 12-р сараас хойш бодсон бодлого", "problems solved since December 2025"), c: "lv-blue", wide: true }] : []),
   ];
+  // Saagii's all-time counts (2 Nov 2026). They aren't in the database; he confirms they're correct.
   const scores = [
-    { v: "2", l: text("төгс 800", "perfect 800s"), c: "lv-green" },
-    { v: "8", l: text("750+ авсан", "scored 750+"), c: "lv-blue" },
-    { v: "14", l: text("700+ авсан", "scored 700+"), c: "lv-violet" },
+    { v: "5", l: text("1500+ авсан", "scored 1500+"), c: "lv-blue" },
+    { v: "26", l: text("төгс 800", "perfect 800s"), c: "lv-green" },
+    { v: "720", l: text("700+ авсан", "scored 700+"), c: "lv-violet" },
   ];
   const statCard = (r: { v: string; l: string; c: string; wide?: boolean }, i: number) => (
     <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className={`lv-card p-4 sm:p-5 ${r.wide ? "col-span-2 md:col-span-1" : ""}`}><p className={`inline-block rounded-full px-3 py-1 font-mono text-xl font-semibold sm:text-2xl md:text-3xl ${r.c}`}>{r.v}</p><p className="mt-3 text-sm text-muted-foreground">{r.l}</p></motion.div>
@@ -109,9 +110,8 @@ export default function Educators() {
         <section id="results" className="scroll-mt-20 py-10"><div className="lv-container">
           <p className="text-sm font-medium text-muted-foreground">{text("Цэцэгс дэх дасгал, 2026 оны 10-р сарын 21 хүртэлх 30 хоногт", "Practice at Tsetsegs in the 30 days to October 21, 2026")}</p>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">{practice.map(statCard)}</div>
-          <p className="mt-8 text-sm font-medium text-muted-foreground">{text("2026 оны 8-р сарын SAT, математик", "August 2026 SAT, math section")}</p>
+          <p className="mt-8 text-sm font-medium text-muted-foreground">{text("Цэцэгсийн сурагчдын SAT оноо", "Tsetsegs students on the SAT")}</p>
           <div className="mt-4 grid grid-cols-3 gap-3">{scores.map(statCard)}</div>
-          <p className="mt-4 text-xs text-muted-foreground">{text("2026 оны 8-р сарын SAT-ын дараа манай багш нарын бүртгэсэн оноо.", "Scores our teachers recorded after the August 2026 SAT.")}</p>
           <StudentStories text={text} />
         </div></section>
 
