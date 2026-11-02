@@ -51,7 +51,7 @@ export function useCalculatorSnap() {
 
 type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | null;
 
-export function DesmosCalculator() {
+export function DesmosCalculator({ dockOnOpen }: { dockOnOpen?: SnapSide } = {}) {
   const isMobile = useIsMobile();
   // Once the mobile pane has been opened we keep it mounted (translated off-canvas)
   // so the Desmos iframe — and any typed expressions — survive switching back and forth.
@@ -233,6 +233,13 @@ export function DesmosCalculator() {
       window.removeEventListener(CALCULATOR_TOGGLE_EVENT, handleToggle);
     };
   }, []);
+
+  // Bluebook docks the calculator as a side panel: opening docks it, closing (from the toolbar too) undocks.
+  useEffect(() => {
+    if (!dockOnOpen || isMobile) return;
+    setSnapSide(isOpen ? dockOnOpen : null);
+    dispatchSnapEvent(isOpen ? dockOnOpen : null);
+  }, [isOpen, dockOnOpen, isMobile]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (windowRef.current) {

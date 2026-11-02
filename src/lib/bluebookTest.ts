@@ -126,3 +126,6 @@ export function createSaveQueue(save: (row: SaveRow) => Promise<void>, retryMs =
     pending: () => [...slots.values()].filter(s => s.inFlight || s.next).length,
   };
 }
+
+/** Figure zoom steps 25% at a time, between 50% and 200%. */
+export const nextZoom = (z: number, dir: 1 | -1) => Math.min(200, Math.max(50, z + dir * 25));

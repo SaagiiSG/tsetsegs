@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue } from './bluebookTest';
+import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue, nextZoom } from './bluebookTest';
 
 const rw1 = { id: 'r1', section: 'reading_writing', module_number: 1 };
 const rw2 = { id: 'r2', section: 'reading_writing', module_number: 2 };
@@ -65,4 +65,8 @@ describe('save queue', () => {
     await expect(q.flush()).rejects.toThrow();
     expect(q.pending()).toBe(1);
   });
+});
+
+describe('figure zoom', () => {
+  it('zoom steps 25% between 50 and 200', () => { expect(nextZoom(100, 1)).toBe(125); expect(nextZoom(200, 1)).toBe(200); expect(nextZoom(50, -1)).toBe(50); expect(nextZoom(75, -1)).toBe(50); });
 });

@@ -51,12 +51,14 @@ interface BluebookFrameProps {
   onNext?: () => void;
   dimmed?: boolean;
   bodyClassName?: string;
+  /** Panel laid over the right of the body (the Reference sheet); it doesn't scroll with the question. */
+  aside?: ReactNode;
   children: ReactNode;
 }
 
 export function BluebookFrame({
   sectionLabel, directions, remaining, timerHidden, onToggleTimer, tools, menu, studentName,
-  pill, onBack, onNext, dimmed, bodyClassName, children,
+  pill, onBack, onNext, dimmed, bodyClassName, aside, children,
 }: BluebookFrameProps) {
   useBluebookFonts();
   const snap = useCalculatorSnap();
@@ -140,11 +142,14 @@ export function BluebookFrame({
         </div>
       </div>
 
-      <main className={cn('relative min-h-0 flex-1 overflow-y-auto', push, bodyClassName)}>
-        {dimmed ? (
-          <div className="grid h-full place-items-center bg-black/[0.06] text-[var(--bb-ink)]"><DotSpinner /></div>
-        ) : children}
-      </main>
+      <div className={cn('relative min-h-0 flex-1', push)}>
+        <main className={cn('absolute inset-0 overflow-y-auto', bodyClassName)}>
+          {dimmed ? (
+            <div className="grid h-full place-items-center bg-black/[0.06] text-[var(--bb-ink)]"><DotSpinner /></div>
+          ) : children}
+        </main>
+        {!dimmed && aside}
+      </div>
 
       <footer className={cn('bb-bar shrink-0', push)}>
         <div className="bb-rule" />
