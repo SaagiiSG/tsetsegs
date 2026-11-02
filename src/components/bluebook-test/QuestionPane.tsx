@@ -5,8 +5,9 @@ import { answerPreview } from '@/lib/bluebookTest';
 import { cn } from '@/lib/utils';
 
 /** Grey strip over each question: number square, Mark for Review, and the ABC cross-out toggle. */
+/** `onToggleCrossOut` is left out for typed answers, which have no choices to cross out. */
 export function QuestionHeader({ number, marked, onToggleMark, crossOutMode, onToggleCrossOut }: {
-  number: number; marked: boolean; onToggleMark(): void; crossOutMode: boolean; onToggleCrossOut(): void;
+  number: number; marked: boolean; onToggleMark(): void; crossOutMode: boolean; onToggleCrossOut?: () => void;
 }) {
   return (
     <div>
@@ -17,7 +18,7 @@ export function QuestionHeader({ number, marked, onToggleMark, crossOutMode, onT
           <Bookmark className={cn('h-[19px] w-[19px] stroke-[1.75]', marked && 'bb-flag-on fill-[var(--bb-red)] text-[var(--bb-red)]')} />
           <span className={cn(marked && 'underline underline-offset-2')}>Mark for Review</span>
         </button>
-        <button type="button" onClick={onToggleCrossOut} aria-pressed={crossOutMode} aria-label="Cross out answer choices"
+        {onToggleCrossOut && <button type="button" onClick={onToggleCrossOut} aria-pressed={crossOutMode} aria-label="Cross out answer choices"
           className={cn(
             'bb-focus my-auto ml-auto grid h-[25px] w-[29px] place-items-center rounded-[4px] border-[1.5px] border-[var(--bb-ink)]',
             crossOutMode ? 'bg-[var(--bb-blue)] text-white' : 'text-[var(--bb-ink)] hover:bg-white/70',
@@ -26,7 +27,7 @@ export function QuestionHeader({ number, marked, onToggleMark, crossOutMode, onT
             ABC
             <span aria-hidden className="absolute -left-0.5 -right-0.5 top-1/2 h-[1.5px] -rotate-[28deg] bg-current" />
           </span>
-        </button>
+        </button>}
       </div>
       <div className="bb-rule" />
     </div>

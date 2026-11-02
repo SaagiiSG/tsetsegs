@@ -97,9 +97,8 @@ function TwoPane({ left, right }: { left: ReactNode; right: ReactNode }) {
       <ResizablePanel defaultSize={50} minSize={30} className="!overflow-y-auto">
         <div className="px-10 py-8">{left}</div>
       </ResizablePanel>
-      <ResizableHandle className="w-1 bg-[var(--bb-divider)] after:w-3">
-        <span aria-hidden className="z-10 grid h-[30px] w-[14px] place-items-center rounded-[3px] bg-[var(--bb-ink)] text-[9px] leading-none text-white">◂▸</span>
-      </ResizableHandle>
+      {/* The house handle's grip box, restyled into Bluebook's small black ◂▸ tab. */}
+      <ResizableHandle withHandle className="w-1 bg-[var(--bb-divider)] after:w-3 [&>div]:h-[30px] [&>div]:w-[14px] [&>div]:rounded-[3px] [&>div]:border-0 [&>div]:bg-[var(--bb-ink)] [&>div]:text-[9px] [&>div]:text-white [&>div]:after:content-['◂▸'] [&>div>svg]:hidden" />
       <ResizablePanel defaultSize={50} minSize={30} className="!overflow-y-auto">
         <div className="px-10 py-8">{right}</div>
       </ResizablePanel>
@@ -275,7 +274,7 @@ export function BluebookSession(props: BluebookSessionProps) {
   if (stage.name === 'review') {
     return screen(
       <>
-        <BluebookFrame {...frame}
+        <BluebookFrame {...frame} bodyClassName="bg-[var(--bb-quiet)]"
           onBack={() => { setIndex(count - 1); dispatch({ type: 'backToQuestions' }); }}
           onNext={finishModule}>
           <div ref={bodyRef} className="min-h-full">
@@ -292,7 +291,7 @@ export function BluebookSession(props: BluebookSessionProps) {
   const hasFigure = !!(question.figure_svg || question.question_image_url || question.question_image_url_2);
   const header = (
     <QuestionHeader number={index + 1} marked={!!a?.is_marked} onToggleMark={() => onToggleMark(question.id)}
-      crossOutMode={crossOutMode} onToggleCrossOut={() => setCrossOutMode(m => !m)} />
+      crossOutMode={crossOutMode} onToggleCrossOut={isMC ? () => setCrossOutMode(m => !m) : undefined} />
   );
   const stem = (
     <>
@@ -303,8 +302,8 @@ export function BluebookSession(props: BluebookSessionProps) {
             imgClassName={question.question_image_url_2 ? 'max-h-72 w-auto' : 'h-auto w-full max-w-[520px]'} />
         </FigureZoom>
       )}
-      {question.passage_text && <div className="bb-serif mb-4 text-[16px] leading-[1.6]"><MathText text={question.passage_text} /></div>}
-      <div className="bb-serif text-[16px] leading-[1.6]"><MathText text={question.question_text} /></div>
+      {question.passage_text && <div className="bb-serif mb-4 text-[16px] leading-[1.5]"><MathText text={question.passage_text} /></div>}
+      <div className="bb-serif text-[16px] leading-[1.5]"><MathText text={question.question_text} /></div>
     </>
   );
 

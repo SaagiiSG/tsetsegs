@@ -54,3 +54,10 @@ describe('SprDirections', () => {
     expect(html).toContain('Don’t enter <strong>symbols</strong> such as a percent sign, comma, or dollar sign.');
   });
 });
+
+describe('QuestionHeader on a typed answer', () => {
+  it('has no ABC button', () => {
+    const html = renderToStaticMarkup(<QuestionHeader number={2} marked={false} onToggleMark={() => {}} crossOutMode={false} />);
+    expect(html).not.toContain('Cross out answer choices');
+  });
+});
