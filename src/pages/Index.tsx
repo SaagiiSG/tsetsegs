@@ -10,6 +10,7 @@ import { HeroDemo } from "@/components/landing/HeroDemo";
 import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import "@/components/landing/landing.css";
 import { Clouds } from "@/components/landing/Clouds";
+import { StudentStories } from "@/components/landing/StudentStories";
 
 type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number };
 const FB = "https://www.facebook.com/tsetsegs.agency";
@@ -132,7 +133,7 @@ const Index = () => {
               <div className="lv-card p-6"><p className="font-mono text-3xl font-semibold">{s ? fmt(s.answers) : "—"}</p><p className="text-sm text-muted-foreground">{text("бодлого бодогдсон", "questions answered")}</p></div>
             </div>
           </div>
-          {/* Student story cards come back here once student consent is in. */}
+          <StudentStories text={text} />
         </div></section>
 
         <section className="lv-sky relative overflow-hidden pb-40 pt-24 text-center">

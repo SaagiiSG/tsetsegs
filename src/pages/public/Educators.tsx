@@ -5,6 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 import { Clouds } from "@/components/landing/Clouds";
+import { StudentStories } from "@/components/landing/StudentStories";
 import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import { EducatorRequestForm } from "@/components/educators/EducatorRequestForm";
 import { usePublicLanguage } from "@/hooks/usePublicLanguage";
@@ -111,6 +112,7 @@ export default function Educators() {
           <p className="mt-8 text-sm font-medium text-muted-foreground">{text("2026 оны 8-р сарын SAT, математик", "August 2026 SAT, math section")}</p>
           <div className="mt-4 grid grid-cols-3 gap-3">{scores.map(statCard)}</div>
           <p className="mt-4 text-xs text-muted-foreground">{text("2026 оны 8-р сарын SAT-ын дараа манай багш нарын бүртгэсэн оноо.", "Scores our teachers recorded after the August 2026 SAT.")}</p>
+          <StudentStories text={text} />
         </div></section>
 
         <section id="practice" className="lv-sky scroll-mt-20 py-20"><div className="lv-container grid items-center gap-10 lg:grid-cols-2">
