@@ -7,7 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeProvider } from "next-themes";
@@ -105,6 +105,9 @@ import NGEEBooking from "./pages/public/NGEEBooking";
 import ClassExam from "./pages/public/ClassExam";
 import ProctorExam from "./pages/public/ProctorExam";
 import LecturesHub from "./pages/public/LecturesHub";
+
+// Dev-only preview of the Bluebook test on sample data; the DEV check drops it (and its fixtures) from production builds.
+const BluebookPreview = import.meta.env.DEV ? lazy(() => import("./pages/dev/BluebookPreview")) : null;
 
 const queryClient = new QueryClient();
 
@@ -301,6 +304,7 @@ const MainApp = () => (
                   </Route>
                   {/* Bluebook test-taking - outside StudentLayout for full screen */}
                   <Route path="/practice/bluebook/test/:attemptId" element={<StudentBluebookTest />} />
+                  {BluebookPreview && <Route path="/dev/bluebook" element={<Suspense fallback={null}><BluebookPreview /></Suspense>} />}
 
                   {/* Course chooser (dual-enrolled students) */}
                   <Route path="/choose-course" element={<ChooseCourse />} />
