@@ -1,0 +1,123 @@
+/* Bluebook practice test look. Everything is scoped under .bluebook so nothing leaks into the app,
+   and portal content (popovers, menus, dialogs) carries the class too. Colours are sampled from the
+   reference recording (docs/superpowers/specs/2026-11-01-bluebook-simulator-design.md). */
+
+.bluebook {
+  --bb-bar: #e0e9f5;
+  --bb-navy: #171c57;
+  --bb-page: #fdfdfd;
+  --bb-ink: #19191b;
+  --bb-blue: #2942bd;
+  --bb-red: #b7293a;
+  --bb-yellow: #fcd400;
+  --bb-strip: #ececec;
+  --bb-choice: #444444;
+  --bb-quiet: #f7f7f7;
+  --bb-tooltip: #444444;
+  --bb-divider: #7b7b7b;
+  --bb-hl-blue: #e2f2fc;
+  --bb-hl-pink: #fcdff5;
+
+  /* Light shadcn values, so a dark-mode or student-theme student still gets the one Bluebook look. */
+  --background: 0 0% 99%;
+  --foreground: 240 4% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 4% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 4% 10%;
+  --primary: 230 64% 45%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 93%;
+  --secondary-foreground: 240 4% 10%;
+  --muted: 0 0% 93%;
+  --muted-foreground: 0 0% 35%;
+  --accent: 214 56% 92%;
+  --accent-foreground: 240 4% 10%;
+  --destructive: 353 63% 44%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 80%;
+  --input: 0 0% 27%;
+  --ring: 230 64% 45%;
+  --radius: 0.5rem;
+
+  color-scheme: light;
+  font-family: Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--bb-ink);
+  background: var(--bb-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+.bluebook .bb-serif,
+.bluebook.bb-serif {
+  font-family: 'Noto Serif', Georgia, 'Times New Roman', serif;
+}
+
+.bluebook .bb-bar {
+  background: var(--bb-bar);
+}
+
+/* Long dashes with short gaps, like a ruler edge. */
+.bluebook .bb-rule {
+  height: 2px;
+  flex-shrink: 0;
+  background: repeating-linear-gradient(90deg, var(--bb-ink) 0 22px, transparent 22px 26px);
+}
+
+.bluebook .bb-pill-blue,
+.bluebook .bb-pill-yellow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  min-width: 76px;
+  padding: 0 20px;
+  border-radius: 9999px;
+  font-size: 16px;
+  font-weight: 700;
+  transition: filter 120ms;
+}
+.bluebook .bb-pill-blue {
+  background: var(--bb-blue);
+  color: #fff;
+}
+.bluebook .bb-pill-yellow {
+  background: var(--bb-yellow);
+  color: var(--bb-ink);
+}
+.bluebook .bb-pill-blue:hover,
+.bluebook .bb-pill-yellow:hover {
+  filter: brightness(0.92);
+}
+.bluebook .bb-pill-blue:focus-visible,
+.bluebook .bb-pill-yellow:focus-visible,
+.bluebook .bb-focus:focus-visible {
+  outline: 2px solid var(--bb-blue);
+  outline-offset: 2px;
+}
+
+/* Ring of eight dots that fade in turn. */
+.bluebook .bb-spinner {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+.bluebook .bb-spinner > span {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 9999px;
+  background: currentColor;
+  transform-origin: 4px 22px;
+  animation: bb-dot 0.96s linear infinite;
+  opacity: 0.15;
+}
+@keyframes bb-dot {
+  0% { opacity: 1; }
+  100% { opacity: 0.15; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bluebook .bb-spinner > span { animation-duration: 2.4s; }
+}
