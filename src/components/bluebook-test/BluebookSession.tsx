@@ -18,6 +18,7 @@ import { BluebookFrame, type MenuItem, type Tool } from './BluebookFrame';
 import { FigureZoom, ReferencePanel } from './MathTools';
 import { CheckYourWork, NavigatorContent } from './QuestionGrid';
 import { AnswerChoices, GridIn, QuestionHeader, SprDirections } from './QuestionPane';
+import { Passage } from './Passage';
 import { ModuleOver, StandBy } from './Screens';
 import { IrisTransition, LOADER_MIN_MS, MODULE_OVER_MS, StartLoader, SWITCHING_MIN_MS, pickFigure } from './Transitions';
 
@@ -81,8 +82,17 @@ function MathDirections() {
   );
 }
 
+function ReadingDirections() {
+  return (
+    <div className="space-y-4">
+      <p>The questions in this section address a number of important reading and writing skills. Each question includes one or more passages, which may include a table or graph. Read each passage and question carefully, and then choose the best answer to the question based on the passage(s).</p>
+      <p>All questions in this section are multiple-choice with four answer choices. Each question has a single best answer.</p>
+    </div>
+  );
+}
+
 /** Two panes with Bluebook's grey divider and drag handle; stacked on phones. */
-function TwoPane({ left, right }: { left: ReactNode; right: ReactNode }) {
+function TwoPane({ left, right, leftSize = 50 }: { left: ReactNode; right: ReactNode; leftSize?: number }) {
   const isMobile = useIsMobile();
   if (isMobile) {
     return (
@@ -94,12 +104,12 @@ function TwoPane({ left, right }: { left: ReactNode; right: ReactNode }) {
   }
   return (
     <ResizablePanelGroup direction="horizontal" className="!h-full">
-      <ResizablePanel defaultSize={50} minSize={30} className="!overflow-y-auto">
-        <div className="px-10 py-8">{left}</div>
+      <ResizablePanel defaultSize={leftSize} minSize={30} className="!overflow-y-auto">
+        <div className="py-8 pl-[52px] pr-10">{left}</div>
       </ResizablePanel>
-      {/* The house handle's grip box, restyled into Bluebook's small black ◂▸ tab. */}
-      <ResizableHandle withHandle className="w-1 bg-[var(--bb-divider)] after:w-3 [&>div]:h-[30px] [&>div]:w-[14px] [&>div]:rounded-[3px] [&>div]:border-0 [&>div]:bg-[var(--bb-ink)] [&>div]:text-[9px] [&>div]:text-white [&>div]:after:content-['◂▸'] [&>div>svg]:hidden" />
-      <ResizablePanel defaultSize={50} minSize={30} className="!overflow-y-auto">
+      {/* The house handle's grip box, restyled into Bluebook's small black ◂▸ tab, which sits near the top. */}
+      <ResizableHandle withHandle className="w-1 !items-start bg-[var(--bb-divider)] after:w-3 [&>div]:mt-[142px] [&>div]:shrink-0 [&>div]:h-[30px] [&>div]:w-[14px] [&>div]:rounded-[3px] [&>div]:border-0 [&>div]:bg-[var(--bb-ink)] [&>div]:text-[11px] [&>div]:leading-none [&>div]:tracking-[-2px] [&>div]:text-white [&>div]:after:content-['◂▸'] [&>div>svg]:hidden" />
+      <ResizablePanel defaultSize={100 - leftSize} minSize={30} className="!overflow-y-auto">
         <div className="px-10 py-8">{right}</div>
       </ResizablePanel>
     </ResizablePanelGroup>
@@ -262,7 +272,7 @@ export function BluebookSession(props: BluebookSessionProps) {
 
   const frame = {
     sectionLabel: label,
-    directions: <MathDirections />,
+    directions: isMath ? <MathDirections /> : <ReadingDirections />,
     remaining, timerHidden, onToggleTimer: () => setTimerHidden(h => !h),
     tools, menu, studentName,
     aside: isMath ? <ReferencePanel open={refOpen} onClose={() => setRefOpen(false)} /> : null,
@@ -289,6 +299,9 @@ export function BluebookSession(props: BluebookSessionProps) {
 
   const a = answers[question.id];
   const isMC = question.question_type === 'multiple_choice';
+  // Reading & Writing (and any multiple-choice question with a passage) puts the passage beside the question.
+  const withPassage = isMC && !!question.passage_text;
+  const twoPane = !isMC || withPassage;
   const hasFigure = !!(question.figure_svg || question.question_image_url || question.question_image_url_2);
   const header = (
     <QuestionHeader number={index + 1} marked={!!a?.is_marked} onToggleMark={() => onToggleMark(question.id)}
@@ -303,22 +316,30 @@ export function BluebookSession(props: BluebookSessionProps) {
             imgClassName={question.question_image_url_2 ? 'max-h-72 w-auto' : 'h-auto w-full max-w-[520px]'} />
         </FigureZoom>
       )}
-      {question.passage_text && <div className="bb-serif mb-4 text-[16px] leading-[1.5]"><MathText text={question.passage_text} /></div>}
+      {question.passage_text && !withPassage && <div className="bb-serif mb-4 text-[16px] leading-[1.5]"><MathText text={question.passage_text} /></div>}
       <div className="bb-serif text-[16px] leading-[1.5]"><MathText text={question.question_text} /></div>
     </>
   );
 
-  const body = isMC ? (
+  const choices = (
+    <AnswerChoices options={question.multiple_choice_options} images={question.choice_images}
+      selected={a?.answer_submitted ?? null} crossed={crossed} crossOutMode={crossOutMode}
+      onSelect={l => onAnswer(question.id, l)} onToggleCross={toggleCross} />
+  );
+
+  const body = withPassage ? (
+    <TwoPane
+      leftSize={53}
+      left={<Passage text={question.passage_text} attemptId={attemptId} questionId={question.id} />}
+      right={<>{header}<div className="mt-4">{stem}</div><div className="mt-5">{choices}</div></>}
+    />
+  ) : isMC ? (
     // With the reference open, the column centres in what's left of the page, as in Bluebook.
     <div className={cn('px-4 pb-10 pt-6 md:pt-10', refOpen && 'md:pr-[496px]')}>
       <div className="mx-auto w-full max-w-[660px]">
         {header}
         <div className="mt-4">{stem}</div>
-        <div className="mt-5">
-          <AnswerChoices options={question.multiple_choice_options} images={question.choice_images}
-            selected={a?.answer_submitted ?? null} crossed={crossed} crossOutMode={crossOutMode}
-            onSelect={l => onAnswer(question.id, l)} onToggleCross={toggleCross} />
-        </div>
+        <div className="mt-5">{choices}</div>
       </div>
     </div>
   ) : (
@@ -337,7 +358,7 @@ export function BluebookSession(props: BluebookSessionProps) {
   return screen(
     <>
       <BluebookFrame {...frame}
-        bodyClassName={isMC ? undefined : 'md:overflow-hidden'}
+        bodyClassName={twoPane ? 'md:overflow-hidden' : undefined}
         pill={{
           label: `Question ${index + 1} of ${count}`, open: navOpen, onOpenChange: setNavOpen,
           content: (
@@ -350,7 +371,7 @@ export function BluebookSession(props: BluebookSessionProps) {
         onBack={index > 0 ? () => setIndex(i => i - 1) : undefined}
         onNext={() => (index < count - 1 ? setIndex(i => i + 1) : dispatch({ type: 'openReview', at: Date.now() }))}
       >
-        <div ref={bodyRef} className={cn(!isMC && 'md:h-full')}>{body}</div>
+        <div ref={bodyRef} className={cn(twoPane && 'md:h-full')}>{body}</div>
       </BluebookFrame>
       {calculator}
     </>,
