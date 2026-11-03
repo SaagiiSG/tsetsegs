@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue, nextZoom, startModuleClock, leaveWhenSaved, unsavedGuard } from './bluebookTest';
+import { sortModules, nextStep, sectionLabel, remainingSeconds, timerShown, formatClock, answerPreview, toggleLetter, readLocal, writeLocal, createSaveQueue, nextZoom, startModuleClock, leaveWhenSaved, unsavedGuard, addHighlight, highlightAt, highlightKey } from './bluebookTest';
 
 const rw1 = { id: 'r1', section: 'reading_writing', module_number: 1 };
 const rw2 = { id: 'r2', section: 'reading_writing', module_number: 2 };
@@ -118,4 +118,24 @@ describe('leaving with unsaved answers', () => {
     unsavedGuard(() => 0)(clear as unknown as BeforeUnloadEvent);
     expect(clear.preventDefault).not.toHaveBeenCalled();
   });
+});
+
+describe('highlights', () => {
+  const hl = (start: number, end: number, extra = {}) => ({ start, end, color: 'yellow' as const, underline: 'none' as const, note: '', ...extra });
+  it('a new highlight is yellow with no underline or note', () => expect(addHighlight([], 5, 9)).toEqual([hl(5, 9)]));
+  it('separate highlights stay separate, in order', () => expect(addHighlight([hl(20, 30)], 2, 8)).toEqual([hl(2, 8), hl(20, 30)]));
+  it('overlapping highlights merge into one, keeping the first one\'s colour and note', () =>
+    expect(addHighlight([hl(10, 20, { color: 'pink', note: 'theme' }), hl(25, 30)], 15, 27)).toEqual([hl(10, 30, { color: 'pink', note: 'theme' })]));
+  it('a highlight inside another changes nothing', () =>
+    expect(addHighlight([hl(10, 40, { underline: 'dotted' })], 15, 20)).toEqual([hl(10, 40, { underline: 'dotted' })]));
+  it('a highlight over a smaller one swallows it', () =>
+    expect(addHighlight([hl(15, 20, { color: 'blue' })], 10, 40)).toEqual([hl(10, 40, { color: 'blue' })]));
+  it('finds the highlight under an offset; the start counts, the end does not', () => {
+    const list = [hl(2, 8), hl(20, 30)];
+    expect(highlightAt(list, 2)).toBe(0);
+    expect(highlightAt(list, 7)).toBe(0);
+    expect(highlightAt(list, 8)).toBe(-1);
+    expect(highlightAt(list, 29)).toBe(1);
+  });
+  it('stores per attempt and question', () => expect(highlightKey('a1', 'q1')).toBe('bb:hl:a1:q1'));
 });

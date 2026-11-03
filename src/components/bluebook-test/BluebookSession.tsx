@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Calculator, LogOut } from 'lucide-react';
+import { Calculator, Highlighter, LogOut, NotebookPen } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { QuestionFigures } from '@/components/QuestionFigures';
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
@@ -18,7 +18,7 @@ import { BluebookFrame, type MenuItem, type Tool } from './BluebookFrame';
 import { FigureZoom, ReferencePanel } from './MathTools';
 import { CheckYourWork, NavigatorContent } from './QuestionGrid';
 import { AnswerChoices, GridIn, QuestionHeader, SprDirections } from './QuestionPane';
-import { Passage } from './Passage';
+import { Passage, canHighlight } from './Passage';
 import { ModuleOver, StandBy } from './Screens';
 import { IrisTransition, LOADER_MIN_MS, MODULE_OVER_MS, StartLoader, SWITCHING_MIN_MS, pickFigure } from './Transitions';
 
@@ -131,6 +131,9 @@ export function BluebookSession(props: BluebookSessionProps) {
   const [crossed, setCrossed] = useState<string[]>([]);
   const [navOpen, setNavOpen] = useState(false);
   const [refOpen, setRefOpen] = useState(false);
+  const [hlMode, setHlMode] = useState(false);
+  const [hlTip, setHlTip] = useState(false);
+  const hlTipShown = useRef(false);
   const [results, setResults] = useState<BluebookResultsData | null>(null);
   const [standbyError, setStandbyError] = useState(false);
   const snap = useCalculatorSnap();
@@ -231,6 +234,19 @@ export function BluebookSession(props: BluebookSessionProps) {
 
   useEffect(() => { bodyRef.current?.closest('main')?.scrollTo(0, 0); }, [index, stage.name]);
 
+  // Bluebook's "Highlight mode on" note shows the first time the tool is turned on, for a few seconds.
+  useEffect(() => {
+    if (!hlTip) return;
+    const t = setTimeout(() => setHlTip(false), 5000);
+    return () => clearTimeout(t);
+  }, [hlTip]);
+  const toggleHighlights = () => {
+    const on = !hlMode;
+    setHlMode(on);
+    setHlTip(on && !hlTipShown.current);
+    if (on) hlTipShown.current = true;
+  };
+
   // The loader always sits in the same place in the tree, so it can fade out over the test.
   const screen = (content: ReactNode) => (
     <>
@@ -267,7 +283,11 @@ export function BluebookSession(props: BluebookSessionProps) {
   const tools: Tool[] = isMath ? [
     { key: 'calc', label: 'Calculator', icon: <Calculator />, active: snap === 'left', onClick: toggleCalculator },
     { key: 'ref', label: 'Reference', icon: <span className="bb-serif text-[17px] font-bold italic leading-5">x²</span>, active: refOpen, onClick: () => setRefOpen(o => !o) },
-  ] : [];
+  ] : canHighlight() ? [{
+    key: 'hl', label: 'Highlights & Notes', active: hlMode, onClick: toggleHighlights,
+    icon: <span className="flex gap-1 [&_svg]:!h-[18px] [&_svg]:!w-[18px]"><Highlighter /><NotebookPen /></span>,
+    tip: hlTip ? <><strong className="block text-[16px]">Highlight mode on:</strong>Select text to create a highlight automatically.</> : undefined,
+  }] : [];
   const menu: MenuItem[] = [{ label: 'Save and Exit', icon: <LogOut />, onClick: onExit }];
 
   const frame = {
@@ -330,7 +350,7 @@ export function BluebookSession(props: BluebookSessionProps) {
   const body = withPassage ? (
     <TwoPane
       leftSize={53}
-      left={<Passage text={question.passage_text} attemptId={attemptId} questionId={question.id} />}
+      left={<Passage text={question.passage_text} attemptId={attemptId} questionId={question.id} highlightMode={hlMode} />}
       right={<>{header}<div className="mt-4">{stem}</div><div className="mt-5">{choices}</div></>}
     />
   ) : isMC ? (

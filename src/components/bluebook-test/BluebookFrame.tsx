@@ -5,12 +5,13 @@ import { ChevronDown, ChevronUp, MoreVertical } from 'lucide-react';
 import { Dialog, DialogClose, DialogOverlay, DialogPortal, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCalculatorSnap } from '@/components/student/DesmosCalculator';
 import { formatClock, timerShown } from '@/lib/bluebookTest';
 import { cn } from '@/lib/utils';
 import './bluebook.css';
 
-export type Tool = { key: string; label: string; icon: ReactNode; active?: boolean; onClick(): void };
+export type Tool = { key: string; label: string; icon: ReactNode; active?: boolean; onClick(): void; tip?: ReactNode };
 export type MenuItem = { label: string; icon: ReactNode; onClick(): void };
 
 const FONTS_HREF = 'https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Roboto:wght@400;500;700&display=swap';
@@ -107,11 +108,22 @@ export function BluebookFrame({
 
           <div className="flex items-center justify-end gap-1 md:gap-3">
             {tools.map(t => (
-              <button key={t.key} type="button" onClick={t.onClick} aria-pressed={!!t.active}
-                className="bb-focus hidden flex-col items-center gap-1 rounded px-1.5 pt-1 text-[13px] font-medium md:flex [&_svg]:h-5 [&_svg]:w-5">
-                {t.icon}
-                <span className={cn('border-b-[3px] pb-0.5', t.active ? 'border-[var(--bb-ink)]' : 'border-transparent')}>{t.label}</span>
-              </button>
+              // A tool's tip (Bluebook's dark "Highlight mode on" note) shows under it while set.
+              <Tooltip key={t.key} open={!!t.tip}>
+                <TooltipTrigger asChild>
+                  <button type="button" onClick={t.onClick} aria-pressed={!!t.active}
+                    className="bb-focus hidden flex-col items-center gap-1 rounded px-1.5 pt-1 text-[13px] font-medium md:flex [&_svg]:h-5 [&_svg]:w-5">
+                    {t.icon}
+                    <span className={cn('border-b-[3px] pb-0.5', t.active ? 'border-[var(--bb-ink)]' : 'border-transparent')}>{t.label}</span>
+                  </button>
+                </TooltipTrigger>
+                {t.tip && (
+                  <TooltipContent side="bottom" sideOffset={10}
+                    className="bluebook max-w-[260px] rounded-md border-0 bg-[var(--bb-tooltip)] px-4 py-3 text-[15px] leading-snug text-white">
+                    {t.tip}
+                  </TooltipContent>
+                )}
+              </Tooltip>
             ))}
             <DropdownMenu>
               <DropdownMenuTrigger className="bb-focus flex flex-col items-center gap-1 rounded px-1.5 pt-1 text-[13px] font-medium [&_svg]:h-5 [&_svg]:w-5">

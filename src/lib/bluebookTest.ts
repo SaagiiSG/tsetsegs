@@ -166,3 +166,20 @@ export const unsavedGuard = (pending: () => number) => (e: BeforeUnloadEvent) =>
   e.preventDefault();
   e.returnValue = '';
 };
+
+/** A passage highlight, as character offsets into the passage's text, so the rendered math stays untouched. */
+export type Highlight = { start: number; end: number; color: 'yellow' | 'blue' | 'pink'; underline: 'none' | 'solid' | 'dashed' | 'dotted'; note: string };
+
+/** Add a yellow highlight. Any it overlaps become one covering both, keeping the first one's colour, underline and note. */
+export function addHighlight(list: Highlight[], start: number, end: number): Highlight[] {
+  const overlaps = (h: Highlight) => h.start < end && start < h.end;
+  const hit = list.filter(overlaps).sort((a, b) => a.start - b.start);
+  const merged: Highlight = hit.length
+    ? { ...hit[0], start: Math.min(start, hit[0].start), end: Math.max(end, ...hit.map(h => h.end)) }
+    : { start, end, color: 'yellow', underline: 'none', note: '' };
+  return [...list.filter(h => !overlaps(h)), merged].sort((a, b) => a.start - b.start);
+}
+
+export const highlightAt = (list: Highlight[], offset: number) => list.findIndex(h => h.start <= offset && offset < h.end);
+
+export const highlightKey = (attemptId: string, questionId: string) => `bb:hl:${attemptId}:${questionId}`;

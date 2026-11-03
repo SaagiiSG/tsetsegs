@@ -41,10 +41,14 @@
   --radius: 0.5rem;
 
   color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Zero specificity, so a portal's own utility classes (the dark tooltip, white menus) still win. */
+:where(.bluebook) {
   font-family: Roboto, system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: var(--bb-ink);
   background: var(--bb-page);
-  -webkit-font-smoothing: antialiased;
 }
 
 .bluebook .bb-serif,
@@ -137,3 +141,11 @@
   --hairline-lo: #5c5c5c;
   background: #2c2c2c;
 }
+
+/* Passage highlights (CSS Custom Highlight API, registered by Passage.tsx). */
+::highlight(bb-yellow) { background-color: #fcd400; }
+::highlight(bb-blue) { background-color: #e2f2fc; }
+::highlight(bb-pink) { background-color: #fcdff5; }
+::highlight(bb-u-solid) { text-decoration: underline solid #19191b 2px; text-underline-offset: 3px; }
+::highlight(bb-u-dashed) { text-decoration: underline dashed #19191b 2px; text-underline-offset: 3px; }
+::highlight(bb-u-dotted) { text-decoration: underline dotted #19191b 2px; text-underline-offset: 3px; }
