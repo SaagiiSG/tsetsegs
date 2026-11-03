@@ -190,22 +190,17 @@ export function BluebookSession(props: BluebookSessionProps) {
     return () => { live = false; };
   }, [stage]);
 
-  // Resume Testing Now: once clicked, move the attempt to the next section, then show its dimmed frame.
-  const [resumeAsked, setResumeAsked] = useState(false);
+  // The break moves the attempt on as it starts (its clock stays unset), so a refresh mid-break can't reopen the
+  // finished module. It keeps retrying past the break; `switching` waits until the move has landed.
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
-    if (stage.name !== 'resume' || !resumeAsked) return;
-    let live = true;
+    if (stage.name !== 'break') return;
+    expectModule.current = stage.moduleId;
     const target = stage.moduleId;
-    expectModule.current = target;
-    untilDone(() => latest.current.onAdvance(target), () => live).then(() => {
-      if (!live) return;
-      setIndex(0);
-      setNavOpen(false);
-      setResumeAsked(false);
-      dispatch({ type: 'resumeClicked' });
-    });
-    return () => { live = false; };
-  }, [stage, resumeAsked]);
+    void untilDone(() => latest.current.onAdvance(target), () => mounted.current);
+  }, [stage]);
+  const resumeTesting = () => { setIndex(0); setNavOpen(false); dispatch({ type: 'resumeClicked' }); };
 
   // Stand By: save everything and score. A failure waits for "Try again".
   useEffect(() => {
@@ -244,6 +239,7 @@ export function BluebookSession(props: BluebookSessionProps) {
     const t = setTimeout(() => setHlTip(false), 5000);
     return () => clearTimeout(t);
   }, [hlTip]);
+  useEffect(() => { setHlMode(false); setHlTip(false); }, [module?.section]);
   const toggleHighlights = () => {
     const on = !hlMode;
     setHlMode(on);
@@ -261,7 +257,7 @@ export function BluebookSession(props: BluebookSessionProps) {
 
   if (stage.name === 'moduleOver') return screen(<ModuleOver />);
   if (stage.name === 'break') return screen(<BreakScreen studentName={studentName} onResume={() => dispatch({ type: 'breakDone' })} />);
-  if (stage.name === 'resume') return screen(<ResumeScreen studentName={studentName} onResume={() => setResumeAsked(true)} />);
+  if (stage.name === 'resume') return screen(<ResumeScreen studentName={studentName} onResume={resumeTesting} />);
   if (stage.name === 'standby') return screen(<StandBy error={standbyError} onRetry={() => setStandbyError(false)} />);
   if (stage.name === 'iris') {
     return screen(
@@ -333,8 +329,8 @@ export function BluebookSession(props: BluebookSessionProps) {
 
   const a = answers[question.id];
   const isMC = question.question_type === 'multiple_choice';
-  // Reading & Writing (and any multiple-choice question with a passage) puts the passage beside the question.
-  const withPassage = isMC && !!question.passage_text;
+  // Reading & Writing puts the passage beside the question; Math stays one column, as in Bluebook.
+  const withPassage = !isMath && isMC && !!question.passage_text;
   const twoPane = !isMC || withPassage;
   const hasFigure = !!(question.figure_svg || question.question_image_url || question.question_image_url_2);
   const header = (

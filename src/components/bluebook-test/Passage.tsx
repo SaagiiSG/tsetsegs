@@ -181,7 +181,9 @@ export function LineReader({ onClose }: { onClose(): void }) {
   useEffect(() => {
     const move = (e: PointerEvent) => setY(e.clientY);
     const key = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      // Typing, menus, dialogs and the calculator keep their own keys; Esc closes an open menu or dialog first.
+      if ((e.target as Element).closest?.('input, textarea, [contenteditable], [role=menu], [role=dialog], .dcg-container')) return;
+      if (e.key === 'Escape') { if (!document.querySelector('[role=menu], [role=dialog]')) onClose(); }
       else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         // Caught first (capture) so the focused More button doesn't reopen its menu on ↓.
         e.preventDefault();

@@ -71,6 +71,7 @@ export const FIXTURE_QUESTIONS: Record<string, SessionQuestion[]> = {
     }),
     q('m2-2', { question_type: 'spr', question_text: 'What is the value of $\\frac{3}{4} + \\frac{1}{4}$?' }),
     q('m2-3', {
+      passage_text: 'A circular garden is being planned for the school courtyard.',
       question_text: 'A circle has radius $5$. What is its area?',
       multiple_choice_options: { A: '$10\\pi$', B: '$25\\pi$', C: '$5\\pi$', D: '$50\\pi$' },
     }),

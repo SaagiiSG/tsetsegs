@@ -128,6 +128,8 @@ describe('highlights', () => {
     expect(addHighlight([hl(10, 20, { color: 'pink', note: 'theme' }), hl(25, 30)], 15, 27)).toEqual([hl(10, 30, { color: 'pink', note: 'theme' })]));
   it('a highlight inside another changes nothing', () =>
     expect(addHighlight([hl(10, 40, { underline: 'dotted' })], 15, 20)).toEqual([hl(10, 40, { underline: 'dotted' })]));
+  it('merging two highlights keeps both notes', () =>
+    expect(addHighlight([hl(10, 20, { note: 'theme' }), hl(25, 30, { note: 'contrast' })], 15, 27)[0].note).toBe('theme\ncontrast'));
   it('a highlight over a smaller one swallows it', () =>
     expect(addHighlight([hl(15, 20, { color: 'blue' })], 10, 40)).toEqual([hl(10, 40, { color: 'blue' })]));
   it('finds the highlight under an offset; the start counts, the end does not', () => {

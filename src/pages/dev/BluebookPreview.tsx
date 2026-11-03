@@ -1,5 +1,5 @@
 // Dev-only: runs BluebookSession on fixture data, no database. /dev/bluebook?test=full or ?test=math.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { BluebookSession } from '@/components/bluebook-test/BluebookSession';
 import { FIXTURE_MODULES, FIXTURE_QUESTIONS } from './bluebookFixtures';
@@ -10,9 +10,14 @@ export default function BluebookPreview() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const modules = params.get('test') === 'math' ? FIXTURE_MODULES.filter(m => m.section === 'math') : FIXTURE_MODULES;
-  const [moduleId, setModuleId] = useState(modules[0].id);
-  const [startedAt, setStartedAt] = useState<string | null>(null);
-  const [answers, setAnswers] = useState<Answers>({});
+  // Kept in sessionStorage so a reload behaves like the real page, which reads the attempt back from the database.
+  const saved = JSON.parse(sessionStorage.getItem(`bb-preview:${params.get('test')}`) || 'null');
+  const [moduleId, setModuleId] = useState<string>(saved?.moduleId ?? modules[0].id);
+  const [startedAt, setStartedAt] = useState<string | null>(saved?.startedAt ?? null);
+  const [answers, setAnswers] = useState<Answers>(saved?.answers ?? {});
+  useEffect(() => {
+    sessionStorage.setItem(`bb-preview:${params.get('test')}`, JSON.stringify({ moduleId, startedAt, answers }));
+  }, [moduleId, startedAt, answers, params]);
   const set = (id: string, change: Partial<Answers[string]>) =>
     setAnswers(a => ({ ...a, [id]: { answer_submitted: null, is_marked: false, ...a[id], ...change } }));
 
