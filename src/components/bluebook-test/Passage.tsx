@@ -169,3 +169,35 @@ export function Passage({ text, attemptId, questionId, highlightMode }: { text: 
     </div>
   );
 }
+
+const LINE_PX = 24; // 16px text at 1.5 line height
+
+/**
+ * Bluebook's Line Reader: dims the screen except a three-line band that follows the pointer.
+ * ↑/↓ move it a line, Esc closes it. It never takes clicks, so the test stays usable underneath.
+ */
+export function LineReader({ onClose }: { onClose(): void }) {
+  const [y, setY] = useState(() => (typeof window === 'undefined' ? 300 : window.innerHeight / 2));
+  useEffect(() => {
+    const move = (e: PointerEvent) => setY(e.clientY);
+    const key = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        // Caught first (capture) so the focused More button doesn't reopen its menu on ↓.
+        e.preventDefault();
+        e.stopPropagation();
+        setY(v => Math.min(window.innerHeight, Math.max(0, v + (e.key === 'ArrowUp' ? -LINE_PX : LINE_PX))));
+      }
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('keydown', key, true);
+    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('keydown', key, true); };
+  }, [onClose]);
+  const half = (LINE_PX * 3) / 2;
+  return (
+    <div data-bb-line-reader aria-hidden className="pointer-events-none fixed inset-0 z-[45]">
+      <div className="absolute inset-x-0 top-0 bg-black/55" style={{ height: Math.max(0, y - half) }} />
+      <div className="absolute inset-x-0 bottom-0 bg-black/55" style={{ top: y + half }} />
+    </div>
+  );
+}

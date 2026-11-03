@@ -1,6 +1,6 @@
-import { useEffect, useReducer, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Calculator, Highlighter, LogOut, NotebookPen } from 'lucide-react';
+import { Calculator, Highlighter, LogOut, NotebookPen, ScanLine } from 'lucide-react';
 import { MathText } from '@/components/MathText';
 import { QuestionFigures } from '@/components/QuestionFigures';
 import { DesmosCalculator, toggleCalculator, useCalculatorSnap } from '@/components/student/DesmosCalculator';
@@ -18,7 +18,7 @@ import { BluebookFrame, type MenuItem, type Tool } from './BluebookFrame';
 import { FigureZoom, ReferencePanel } from './MathTools';
 import { CheckYourWork, NavigatorContent } from './QuestionGrid';
 import { AnswerChoices, GridIn, QuestionHeader, SprDirections } from './QuestionPane';
-import { Passage, canHighlight } from './Passage';
+import { LineReader, Passage, canHighlight } from './Passage';
 import { ModuleOver, StandBy } from './Screens';
 import { IrisTransition, LOADER_MIN_MS, MODULE_OVER_MS, StartLoader, SWITCHING_MIN_MS, pickFigure } from './Transitions';
 
@@ -132,6 +132,8 @@ export function BluebookSession(props: BluebookSessionProps) {
   const [navOpen, setNavOpen] = useState(false);
   const [refOpen, setRefOpen] = useState(false);
   const [hlMode, setHlMode] = useState(false);
+  const [lineReader, setLineReader] = useState(false);
+  const closeLineReader = useCallback(() => setLineReader(false), []);
   const [hlTip, setHlTip] = useState(false);
   const hlTipShown = useRef(false);
   const [results, setResults] = useState<BluebookResultsData | null>(null);
@@ -288,7 +290,10 @@ export function BluebookSession(props: BluebookSessionProps) {
     icon: <span className="flex gap-1 [&_svg]:!h-[18px] [&_svg]:!w-[18px]"><Highlighter /><NotebookPen /></span>,
     tip: hlTip ? <><strong className="block text-[16px]">Highlight mode on:</strong>Select text to create a highlight automatically.</> : undefined,
   }] : [];
-  const menu: MenuItem[] = [{ label: 'Save and Exit', icon: <LogOut />, onClick: onExit }];
+  const menu: MenuItem[] = [
+    { label: 'Line Reader', icon: <ScanLine />, onClick: () => setLineReader(on => !on) },
+    { label: 'Save and Exit', icon: <LogOut />, onClick: onExit },
+  ];
 
   const frame = {
     sectionLabel: label,
@@ -297,8 +302,13 @@ export function BluebookSession(props: BluebookSessionProps) {
     tools, menu, studentName,
     aside: isMath ? <ReferencePanel open={refOpen} onClose={() => setRefOpen(false)} /> : null,
   };
-  // The calculator stays mounted across the module and Check Your Work, so typed expressions survive.
-  const calculator = inFrame && isMath ? <DesmosCalculator dockOnOpen="left" /> : null;
+  // Overlays that stay mounted across the module and Check Your Work (the calculator keeps typed expressions).
+  const overlays = (
+    <>
+      {inFrame && isMath && <DesmosCalculator dockOnOpen="left" />}
+      {inFrame && lineReader && <LineReader onClose={closeLineReader} />}
+    </>
+  );
 
   if (stage.name === 'switching' || !question) return screen(<BluebookFrame {...frame} dimmed>{null}</BluebookFrame>);
 
@@ -312,7 +322,7 @@ export function BluebookSession(props: BluebookSessionProps) {
             <CheckYourWork title={`${label} Questions`} items={items} onPick={i => { setIndex(i); dispatch({ type: 'backToQuestions' }); }} />
           </div>
         </BluebookFrame>
-        {calculator}
+        {overlays}
       </>,
     );
   }
@@ -393,7 +403,7 @@ export function BluebookSession(props: BluebookSessionProps) {
       >
         <div ref={bodyRef} className={cn(twoPane && 'md:h-full')}>{body}</div>
       </BluebookFrame>
-      {calculator}
+      {overlays}
     </>,
   );
 }
