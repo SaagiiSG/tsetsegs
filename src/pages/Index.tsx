@@ -93,7 +93,7 @@ const Index = () => {
           <div className="mt-10 grid gap-4 md:grid-cols-3">{[
             { icon: Stethoscope, c: "lv-blue", t: text("Оношил", "Diagnose"), d: text("Практик тест таны түвшин, сул сэдвийг олно.", "Practice tests find your level and weak topics.") },
             { icon: Map, c: "lv-violet", t: text("Төлөвлө", "Plan"), d: text("Систем дараа нь юу сурахыг санал болгоно.", "The app tells you what to study next.") },
-            { icon: Target, c: "lv-pink", t: text("Дасгалла", "Practice"), d: text("Бодлого бүр оноо, streak, лигийн байр авчирна.", "Every question earns points, streaks and league rank.") },
+            { icon: Target, c: "lv-pink", t: text("Давт", "Practice"), d: text("Бодлого бүр оноо, streak, лигийн байр авчирна.", "Every question earns points, streaks and league rank.") },
           ].map((x, i) => (
             <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card overflow-hidden"><div className="lv-sky h-24 p-5"><span className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${x.c}`}><x.icon className="h-5 w-5" /></span></div><div className="p-5"><p className="font-mono text-xs text-muted-foreground">0{i + 1}</p><h3 className="mt-1 font-chillax text-2xl font-medium">{x.t}</h3><p className="mt-2 text-muted-foreground">{x.d}</p></div></motion.div>
           ))}</div>
