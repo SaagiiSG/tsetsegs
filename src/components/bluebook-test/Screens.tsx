@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { formatClock } from '@/lib/bluebookTest';
 import { DotSpinner } from './BluebookFrame';
 
 /** Between two modules of the same section. */
@@ -44,6 +46,66 @@ export function StandBy({ error, onRetry }: { error: boolean; onRetry(): void })
         ) : <DotSpinner />}
         <div className="mt-8"><UploadLaptop /></div>
       </div>
+    </div>
+  );
+}
+
+const BREAK_SECONDS = 600;
+const RULES = [
+  'Do not disturb students who are still testing.',
+  'Do not exit the app or close your laptop.',
+  'Do not access phones, smartwatches, textbooks, notes, or the internet.',
+  'Do not eat or drink near any testing device.',
+  'Do not speak in the testing room; outside the room, do not discuss the exam with anyone.',
+];
+
+/** The 10-minute break between Reading & Writing and Math. Resume Testing, or the countdown reaching 0, moves on. */
+export function BreakScreen({ studentName, onResume }: { studentName: string; onResume(): void }) {
+  const [left, setLeft] = useState(BREAK_SECONDS);
+  useEffect(() => {
+    const started = Date.now();
+    const id = setInterval(() => setLeft(Math.max(0, BREAK_SECONDS - Math.floor((Date.now() - started) / 1000))), 1000);
+    return () => clearInterval(id);
+  }, []);
+  useEffect(() => { if (left === 0) onResume(); }, [left, onResume]);
+
+  return (
+    <div className="bluebook fixed inset-0 overflow-y-auto bg-[#191919] text-white">
+      <div className="mx-auto flex min-h-full max-w-[1100px] flex-col gap-12 px-6 py-12 md:flex-row md:items-start md:gap-24 md:px-16 md:py-24">
+        <div className="flex shrink-0 flex-col items-center gap-8 md:w-[300px]">
+          <div className="w-full rounded-md border border-white/70 px-6 py-6 text-center">
+            <p className="text-[18px]">Remaining Break Time:</p>
+            <p className="mt-2 text-[56px] font-bold leading-none tabular-nums">{formatClock(left)}</p>
+          </div>
+          <button type="button" className="bb-pill-yellow" onClick={onResume}>Resume Testing</button>
+        </div>
+        <div className="max-w-[460px] text-[17px] leading-[1.5]">
+          <h1 className="text-[30px] font-medium tracking-[-0.01em] md:text-[34px]">Practice Test Break</h1>
+          <p className="mt-5">You can resume this practice test as soon as you’re ready to move on. On test day, you’ll wait until the clock counts down. Read below to see how breaks work on test day.</p>
+          <hr className="my-10 border-white/80" />
+          <h2 className="text-[30px] font-medium leading-tight tracking-[-0.01em] md:text-[34px]">Take a Break: Do Not Close Your Device</h2>
+          <p className="mt-5">After the break, a <strong>Resume Testing Now</strong> button will appear and you’ll start the next section.</p>
+          <p className="mt-6 font-bold">Follow these rules during the break:</p>
+          <ol className="mt-4 list-decimal space-y-4 pl-6">
+            {RULES.map(r => <li key={r}>{r}</li>)}
+          </ol>
+        </div>
+      </div>
+      <p className="fixed bottom-8 left-6 text-[19px] font-medium md:left-12">{studentName}</p>
+    </div>
+  );
+}
+
+/** After the break: the next section waits until the student is ready, with its timer not yet started. */
+export function ResumeScreen({ studentName, onResume }: { studentName: string; onResume(): void }) {
+  return (
+    <div className="bluebook fixed inset-0 grid place-items-center bg-[#191919] px-6 text-center text-white">
+      <div>
+        <h1 className="text-[28px] font-medium tracking-[-0.01em] md:text-[32px]">Resume Testing Now</h1>
+        <p className="mt-4 text-[18px] font-light md:text-[20px]">Your testing timer has not started counting down yet.</p>
+        <button type="button" className="bb-pill-yellow mt-8 text-[15px]" onClick={onResume}>Resume Testing</button>
+      </div>
+      <p className="fixed bottom-8 left-6 text-[19px] font-medium md:left-12">{studentName}</p>
     </div>
   );
 }

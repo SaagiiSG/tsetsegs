@@ -19,7 +19,7 @@ import { FigureZoom, ReferencePanel } from './MathTools';
 import { CheckYourWork, NavigatorContent } from './QuestionGrid';
 import { AnswerChoices, GridIn, QuestionHeader, SprDirections } from './QuestionPane';
 import { LineReader, Passage, canHighlight } from './Passage';
-import { ModuleOver, StandBy } from './Screens';
+import { BreakScreen, ModuleOver, ResumeScreen, StandBy } from './Screens';
 import { IrisTransition, LOADER_MIN_MS, MODULE_OVER_MS, StartLoader, SWITCHING_MIN_MS, pickFigure } from './Transitions';
 
 export type SessionModule = FlowModule & { time_limit_minutes: number };
@@ -190,20 +190,22 @@ export function BluebookSession(props: BluebookSessionProps) {
     return () => { live = false; };
   }, [stage]);
 
-  // shortcut: phase 1 has no break screen yet, so R&W → Math moves straight on; Task 15 adds BreakScreen/ResumeScreen.
+  // Resume Testing Now: once clicked, move the attempt to the next section, then show its dimmed frame.
+  const [resumeAsked, setResumeAsked] = useState(false);
   useEffect(() => {
-    if (stage.name === 'break') { dispatch({ type: 'breakDone' }); return; }
-    if (stage.name !== 'resume') return;
+    if (stage.name !== 'resume' || !resumeAsked) return;
     let live = true;
     const target = stage.moduleId;
     expectModule.current = target;
     untilDone(() => latest.current.onAdvance(target), () => live).then(() => {
       if (!live) return;
       setIndex(0);
+      setNavOpen(false);
+      setResumeAsked(false);
       dispatch({ type: 'resumeClicked' });
     });
     return () => { live = false; };
-  }, [stage]);
+  }, [stage, resumeAsked]);
 
   // Stand By: save everything and score. A failure waits for "Try again".
   useEffect(() => {
@@ -257,7 +259,9 @@ export function BluebookSession(props: BluebookSessionProps) {
     </>
   );
 
-  if (stage.name === 'moduleOver' || stage.name === 'break' || stage.name === 'resume') return screen(<ModuleOver />);
+  if (stage.name === 'moduleOver') return screen(<ModuleOver />);
+  if (stage.name === 'break') return screen(<BreakScreen studentName={studentName} onResume={() => dispatch({ type: 'breakDone' })} />);
+  if (stage.name === 'resume') return screen(<ResumeScreen studentName={studentName} onResume={() => setResumeAsked(true)} />);
   if (stage.name === 'standby') return screen(<StandBy error={standbyError} onRetry={() => setStandbyError(false)} />);
   if (stage.name === 'iris') {
     return screen(

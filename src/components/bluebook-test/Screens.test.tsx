@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ALL_FIGURES } from '@/portal/topicFigures';
 import { pickFigure } from './Transitions';
-import { ModuleOver, StandBy } from './Screens';
+import { BreakScreen, ModuleOver, ResumeScreen, StandBy } from './Screens';
 
 describe('loader figures', () => {
   it('has every approved figure once', () => {
@@ -33,5 +33,26 @@ describe('StandBy', () => {
     const html = renderToStaticMarkup(<StandBy error onRetry={() => {}} />);
     expect(html).toContain('Some answers didn’t save. Check your connection.');
     expect(html).toContain('Try again');
+  });
+});
+
+describe('BreakScreen', () => {
+  it('counts down ten minutes and lists the break rules', () => {
+    const html = renderToStaticMarkup(<BreakScreen studentName="Saagii Sergelen" onResume={() => {}} />);
+    for (const s of [
+      'Remaining Break Time:', '10:00', 'Resume Testing', 'Practice Test Break', 'Take a Break: Do Not Close Your Device', 'Saagii Sergelen',
+      'Do not disturb students who are still testing.',
+      'Do not exit the app or close your laptop.',
+      'Do not access phones, smartwatches, textbooks, notes, or the internet.',
+      'Do not eat or drink near any testing device.',
+      'Do not speak in the testing room; outside the room, do not discuss the exam with anyone.',
+    ]) expect(html).toContain(s);
+  });
+});
+
+describe('ResumeScreen', () => {
+  it('says the timer has not started', () => {
+    const html = renderToStaticMarkup(<ResumeScreen studentName="Saagii Sergelen" onResume={() => {}} />);
+    for (const s of ['Resume Testing Now', 'Your testing timer has not started counting down yet.', 'Resume Testing', 'Saagii Sergelen']) expect(html).toContain(s);
   });
 });
