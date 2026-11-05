@@ -118,7 +118,8 @@ function StoryRow({ title, items }: { title: string; items: Story[] }) {
           <figure className="lv-card flex h-full flex-col p-2">
             <div className={`aspect-[6/5] overflow-hidden rounded-2xl ${s.tile}`}><img src={s.photo} alt={s.name} loading="lazy" className="h-full w-full object-cover object-top" /></div>
             <figcaption className="px-3 pt-4 text-lg font-medium">{s.name}</figcaption>
-            <blockquote className="px-3 pb-5 pt-2 text-sm leading-relaxed">“{s.quote}”</blockquote>
+            {/* Same height on every card. Long quotes scroll; the fade hints there's more. */}
+            <blockquote className="h-[22rem] overflow-y-auto px-3 pb-8 pt-2 text-sm leading-relaxed [mask-image:linear-gradient(to_bottom,black_calc(100%-2rem),transparent)]">“{s.quote}”</blockquote>
             <div className="mt-auto rounded-2xl bg-muted p-4">
               <p className="flex items-center gap-2 text-sm font-medium"><BrandMark className="h-5 w-5" />flowersos</p>
               <dl className="mt-3 flex items-end justify-between gap-3">{s.scores.map(([l, v], i) => (
