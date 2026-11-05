@@ -8,12 +8,14 @@ import nyamsambuu from "@/assets/students/nyamsambuu.webp";
 import temuulen from "@/assets/students/temuulen.webp";
 import yeskyendir from "@/assets/students/yeskyendir.webp";
 import zayat from "@/assets/students/zayat.webp";
+import amine from "@/assets/students/amine.webp";
 
 type T = (mn: string, en: string) => string;
 
 // Sent by Misheel on 2 Nov 2026 with the students' consent. Quotes are the students' own words;
 // the English or Mongolian side is our translation. Gegee's and Nyamsambuu's were drafted by us and OK'd by them (2 Nov).
 // Temuulen, Yeskyendir and Zayat came from Saagii (2 Nov). He OK'd fixing Temuulen's grammar and trimming Zayat's, tying it to the platform.
+// Amine came from Saagii (5 Nov); her English is verbatim.
 // Two rows: full-test scores and Math-only scores. A new story goes in the list it fits, highest score first.
 const stories = (text: T) => ({
   full: [
@@ -22,6 +24,13 @@ const stories = (text: T) => ({
       quote: text(
         "SAT-ын бэлтгэл хөтөлбөр миний сул талыг олоход маш их тусалсан. English хэсэгт байнга 500 орчим авдаг байсан ч хөтөлбөрийн тусламжтайгаар эцэст нь 700-д хүрсэн. Багш маань надтай ганцаарчлан ажиллаж, үргэлж дэмжиж байсан. Эцэст нь English-д 750, Math-д 790 авч, нийт 1540 оноо авсан. Энэ хөтөлбөргүйгээр би үүнийг хийж чадахгүй байсан.",
         "The SAT prep program really helped me find my weak spots. I was stuck at around 500 in English, and the program finally helped me break through to 700. My teacher worked with me one on one and was really supportive. In the end I got 750 in English and 790 in Math, a 1540 in total. I couldn't have done it without this program.",
+      ),
+    },
+    {
+      name: "Amine", photo: amine, tile: "lv-orange", scores: [["Math", "800"], ["English", "720"], [text("Нийт", "Total"), "1520"]],
+      quote: text(
+        "Энэ вэбсайт миний мөрөөдлийн оноонд хүрэх платформоос хавьгүй илүү зүйл байсан. Энд би гэр бүлтэй болж, яг надад тохирсон дэмжлэг авсан. Багш нар маань бидний үнэлгээний шалгалтын дүнг ашиглан хичээлээ төлөвлөдөг байсан болохоор нэг сэдвийг дахин дахин давтахын оронд бидэнд үнэхээр хэрэгтэй зүйл дээр төвлөрдөг байлаа. Шалгалтын бэлтгэлийн хамгийн чухал хэсэг бол практик тест гэж би боддог. College Board-ын албан ёсны 8 тестийг бодож дуусгасны дараа дахин бодох нь тус болдоггүй, учир нь хариултыг нь санаж эхэлдэг тул оноо чинь бодит бус гардаг. Харин энд бидэнд үргэлж шинэ практик тест байсан, багш нар маань ч маш их мэдлэг, материалтай, халамжтай, үргэлж урам өгдөг байсан. Энэ бол зүгээр нэг вэбсайт биш, ирээдүйн сурагчид манай гэр бүлд нэгдэж, гайхалтай үр дүнд хүрэх боломжтой хамт олон юм. Үүний нэг хэсэг байсандаа би маш их баярлаж байна!",
+        "This website was far more than a platform for reaching my dream score. It gave me a family and truly personalized support. Our teachers used our assessment results to tailor their lessons, so we focused on what we actually needed instead of repeating the same topics again and again. I believe the most important part of exam preparation is practice tests, and after finishing the 8 official College Board tests, retaking them doesn’t help because you end up remembering the answers, which makes your results biased. Here, we always had fresh practice tests, and the teachers were incredibly resourceful, caring, and encouraging throughout. More than just a website, this is a community where future students can join our family and achieve great results. I’m so grateful to have been part of it!",
       ),
     },
     {
