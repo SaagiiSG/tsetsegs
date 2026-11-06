@@ -9,7 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import CenterPortalApp from '@/portal/CenterPortalApp';
 import { DemoBar } from './DemoBar';
-import { finishDemo, loadDemo, setPortalLanguage } from './demoStore';
+import { DEMO_THEME_KEY, finishDemo, loadDemo, setPortalLanguage } from './demoStore';
 import { demoKeyOk, type DemoRole } from './storageKey';
 
 export default function DemoPortal({ role }: { role: DemoRole }) {
@@ -41,7 +41,7 @@ export default function DemoPortal({ role }: { role: DemoRole }) {
   if (!copy || ending || !session) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">{ending || !copy ? 'Ending demo…' : 'Loading…'}</div>;
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="light" storageKey={DEMO_THEME_KEY}>
         <TooltipProvider>
           <Toaster />
           <Sonner />

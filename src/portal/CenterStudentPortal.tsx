@@ -465,14 +465,19 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
   const [showExp, setShowExp] = useState(false);
   const [forfeit, setForfeit] = useState(false);
   const startedAt = useRef(Date.now());
+  const checking = useRef(false); // a fast double tap ran submit twice before `tries` updated and saved two answers
   useEffect(() => { setPicked(''); setTyped(''); setResult(null); setTries(0); setShowExp(false); setForfeit(false); startedAt.current = Date.now(); }, [q.id]);
   const choices = normaliseChoices(q.multiple_choice_options, q.choice_images);
   const submit = async () => {
-    const given = choices.length ? picked : typed;
-    const ok = isCorrect(q, given);
-    // Only the first try counts, and peeking at the explanation first forfeits it.
-    if (tries === 0 && !forfeit) await record(q.id, ok, (Date.now() - startedAt.current) / 1000, given);
-    setTries(t => t + 1); setResult(ok ? 'correct' : 'wrong');
+    if (checking.current) return;
+    checking.current = true;
+    try {
+      const given = choices.length ? picked : typed;
+      const ok = isCorrect(q, given);
+      // Only the first try counts, and peeking at the explanation first forfeits it.
+      if (tries === 0 && !forfeit) await record(q.id, ok, (Date.now() - startedAt.current) / 1000, given);
+      setTries(t => t + 1); setResult(ok ? 'correct' : 'wrong');
+    } finally { checking.current = false; }
   };
   const openExplanation = () => {
     if (!showExp && result !== 'correct' && q.rationale && !forfeit) {

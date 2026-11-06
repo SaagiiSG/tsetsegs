@@ -49,7 +49,8 @@ function normalizeMathSrc(src: string): string {
 }
 
 function renderKatex(src: string, display: boolean): string {
-  src = normalizeMathSrc(src);
+  // A \$ protected in step 1 can land inside a math span ($\$15$); give KaTeX its own \$ back.
+  src = normalizeMathSrc(src.replace(new RegExp(ESCAPED_DOLLAR, 'g'), '\\$'));
   try {
     return katex.renderToString(src, {
       throwOnError: false,

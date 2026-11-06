@@ -22,10 +22,11 @@ test('start errors read as plain sentences', () => {
   expect(demoStartError(500)).toMatch(/couldn't start/);
 });
 
-test('lang: the URL wins, then the visitor preference, then Mongolian', () => {
+test('lang: the URL wins, then the visitor preference, then the device (English unless Mongolian)', () => {
   expect(demoEntry('?lang=mon', 'eng').lang).toBe('mon');
   expect(demoEntry('', 'eng').lang).toBe('eng');
-  expect(demoEntry('', null).lang).toBe('mon');
+  expect(demoEntry('', null, 'eng').lang).toBe('eng');
+  expect(demoEntry('', null, 'mon').lang).toBe('mon');
 });
 test('the ended URL keeps ref, lang, role and practice-only', () => {
   expect(endedUrl({ ...sample, ref: 'websummit' }, 'teacher')).toBe('/demo?ended=1&lang=eng&ref=websummit&role=teacher');

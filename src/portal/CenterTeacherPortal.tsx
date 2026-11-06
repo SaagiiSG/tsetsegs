@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Copy, KeyRound, LogOut, QrCode, Users, TrendingUp, LayoutDashboard,
@@ -77,9 +78,10 @@ function InviteDialog({ name, code, onClose }: { name: string; code: string; onC
 
 /** Big liquid class card with Students / Analytics tabs — mirrors the main dashboard's ClassCardBig. */
 function CenterClassCard({
-  cls, students, statsMap, attMap, date, onCycle, onInspect, onInvite, onRename, canRename, onOpen,
+  cls, students, loading, statsMap, attMap, date, onCycle, onInspect, onInvite, onRename, canRename, onOpen,
 }: {
   cls: CenterClass;
+  loading: boolean;
   students: CenterStudent[];
   statsMap: Record<string, StudentStats>;
   attMap: Record<string, string>;
@@ -117,9 +119,11 @@ function CenterClassCard({
       </div>
 
       <div className="relative flex items-center gap-4 text-sm text-foreground/70">
+        {loading ? <Skeleton className="h-4 w-64" /> : <>
         <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" />{students.length} student{students.length !== 1 ? 's' : ''}</span>
         <span className="font-mono text-xs">{totals.n} questions · {totals.n ? `${pct(totals.c, totals.n)}%` : '—'} accuracy</span>
-        {atRisk > 0 && <span className="flex items-center gap-1 text-xs text-status-watch"><Flame className="h-3.5 w-3.5" />{atRisk} need{atRisk !== 1 ? '' : 's'} attention</span>}
+        </>}
+        {!loading && atRisk > 0 && <span className="flex items-center gap-1 text-xs text-status-watch"><Flame className="h-3.5 w-3.5" />{atRisk} need{atRisk !== 1 ? '' : 's'} attention</span>}
       </div>
 
       <div className="relative flex gap-1 border-b border-border/60" role="tablist" aria-label={`${cls.name} details`}>
@@ -131,7 +135,9 @@ function CenterClassCard({
 
       {tab === 'students' && (
         <div className="relative overflow-x-auto">
-          {students.length === 0 ? (
+          {loading ? (
+            <div className="space-y-2 py-2">{[0, 1, 2].map(i => <Skeleton key={i} className="h-8 w-full" />)}</div>
+          ) : students.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No students yet — share the class QR code to enroll them.</p>
           ) : (
             <table className="w-full text-sm">
@@ -241,7 +247,7 @@ export default function CenterTeacherPortal() {
     queryKey: ['center-teacher-students', center.id, classIds.join(',')],
     queryFn: async () => {
       return allPages(p => supabase.from('tenant_students')
-        .select('id, class_id, name, phone, user_id, sat_month').eq('institution_id', center.id).eq('active', true).order('name').order('id').range(p, p + 999), 5000) as Promise<CenterStudent[]>;
+        .select('id, class_id, name, phone, user_id, sat_month').eq('institution_id', center.id).eq('active', true).in('class_id', classIds).order('name').order('id').range(p, p + 999), 5000) as Promise<CenterStudent[]>;
     },
   });
   const allStudents = studentsQuery.data ?? [];
@@ -283,6 +289,7 @@ export default function CenterTeacherPortal() {
 
   const statsMap = useMemo(() => {
     const m: Record<string, StudentStats> = {};
+    if (!historyQuery.data) return m; // zeros before the history loads read as stale and flag every student
     for (const id of allStudentIds) m[id] = { n: 0, c: 0, present: 0, sessions: 0 };
     for (const a of historyQuery.data?.attempts ?? []) { const s = m[a.student_id]; if (!s) continue; s.n++; if (a.is_correct) s.c++; s.last ??= a.created_at; }
     for (const a of historyQuery.data?.att ?? []) { const s = m[a.student_id]; if (!s) continue; s.sessions++; if (a.status === 'present' || a.status === 'late') s.present++; }
@@ -366,6 +373,7 @@ export default function CenterTeacherPortal() {
       <CenterClassCard
         cls={c}
         students={allStudents.filter(s => s.class_id === c.id)}
+        loading={studentsQuery.isLoading || historyQuery.isLoading}
         statsMap={statsMap}
         attMap={attByClass[c.id] ?? {}}
         date={date}

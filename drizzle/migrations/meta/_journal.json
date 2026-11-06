@@ -834,6 +834,13 @@
       "when": 1793621644119,
       "tag": "0118_student_account_creation_phone_check",
       "breakpoints": true
+    },
+    {
+      "idx": 119,
+      "version": "7",
+      "when": 1794007856888,
+      "tag": "0119_demo_limit_30_and_68_slice",
+      "breakpoints": true
     }
   ]
 }

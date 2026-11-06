@@ -24,6 +24,7 @@ import CenterPortalApp from "./portal/CenterPortalApp";
 import DemoPortal from './demo/DemoPortal';
 import DemoStart from './demo/DemoStart';
 import { demoRoleFromPath } from './demo/storageKey';
+import { DEMO_THEME_KEY } from './demo/demoStore';
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import StudentReveal from "./pages/StudentReveal";
@@ -375,7 +376,7 @@ const App = () => {
   const path = window.location.pathname;
   if (path === '/demo' || path.startsWith('/demo/')) {
     const demoRole = demoRoleFromPath(path);
-    return demoRole ? <DemoPortal role={demoRole} /> : <ThemeProvider attribute="class" defaultTheme="dark" enableSystem><DemoStart /></ThemeProvider>;
+    return demoRole ? <DemoPortal role={demoRole} /> : <ThemeProvider attribute="class" defaultTheme="light" storageKey={DEMO_THEME_KEY}><DemoStart /></ThemeProvider>;
   }
   const centerSlug = resolveCenterSlug();
   if (centerSlug) {

@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { demoRole } from '@/lib/educatorApplications';
 import { sourceFromSearch } from '@/lib/educatorLanding';
-import { PUBLIC_LANGUAGE_KEY } from '@/lib/publicLanguage';
+import { PUBLIC_LANGUAGE_KEY, resolvePublicLanguage, type PublicLanguage } from '@/lib/publicLanguage';
 import type { DemoRole } from './storageKey';
 
 export type DemoCopy = {
@@ -19,14 +19,16 @@ const store = {
 
 const COPY_KEY = 'flowersos-demo-v2';
 const VISITOR_KEY = 'flowersos-demo-visitor';
+// The demo's own light/dark choice, apart from the site's `theme`: every demo opens white and forgets it on end (Saagii, 6 Nov).
+export const DEMO_THEME_KEY = 'flowersos-demo-theme';
 
-export const demoEntry = (search: string, storedLang: string | null = store.get(PUBLIC_LANGUAGE_KEY)) => {
+export const demoEntry = (search: string, storedLang: string | null = store.get(PUBLIC_LANGUAGE_KEY), device?: PublicLanguage) => {
   const p = new URLSearchParams(search);
   const practiceOnly = p.get('signup') === 'practice';
   return {
     role: demoRole(p.get('role')),
     practiceOnly,
-    lang: (p.has('lang') ? p.get('lang') : storedLang) === 'eng' ? 'eng' : 'mon',
+    lang: resolvePublicLanguage(p.get('lang'), storedLang, undefined, device),
     ref: sourceFromSearch(search),
     autoStart: practiceOnly || p.get('preview') === 'educator',
   };
@@ -52,6 +54,7 @@ export const loadDemo = () => parseDemo(store.get(COPY_KEY), Date.now());
 export const saveDemo = (c: DemoCopy) => store.set(COPY_KEY, JSON.stringify(c));
 export const clearDemo = () => {
   store.remove(COPY_KEY);
+  store.remove(DEMO_THEME_KEY);
   store.keys().filter(k => k.startsWith('sb-demo-')).forEach(store.remove);
 };
 

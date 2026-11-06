@@ -86,8 +86,9 @@ export function CenterRankings({ studentId }: { studentId: string }) {
 
   const me = entries.find(e => e.userId === studentId);
   const cutoff = TIER_PROMOTION_CUTOFFS[me?.currentTier ?? 'unranked'] ?? 10;
-  const pointsToAdvance = me && me.rank > cutoff ? Math.max(0, (entries[cutoff - 1]?.totalPoints ?? 0) - me.totalPoints + 1) : null;
-  const pointsToTop1 = me && me.rank > 1 ? Math.max(0, (entries[0]?.totalPoints ?? 0) - me.totalPoints + 1) : null;
+  // 0 = already there ("✓ Secured" / "You're #1!"); null only when she isn't on the board.
+  const pointsToAdvance = me ? (me.rank > cutoff ? Math.max(0, (entries[cutoff - 1]?.totalPoints ?? 0) - me.totalPoints + 1) : 0) : null;
+  const pointsToTop1 = me ? (me.rank > 1 ? Math.max(0, (entries[0]?.totalPoints ?? 0) - me.totalPoints + 1) : 0) : null;
   const ladder = <TierLadder currentTier={me?.currentTier ?? currentTier} unlockedAt={unlockedAt} standing={me?.rank ?? null} />;
   const fade = { initial: { opacity: 0, x: -20 }, animate: { opacity: 1, x: 0 }, transition: { duration: 0.2 } };
 
