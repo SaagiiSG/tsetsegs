@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { figureSlots, topicFigures } from './topicFigures';
-import { TOPICS } from './videoTopics';
+import { ENGLISH_AREAS, TOPICS } from './videoTopics';
 
 const s = (side: 'left' | 'right', anchor: number | 'end') => ({ side, anchor });
 describe('figureSlots', () => {
@@ -68,6 +68,11 @@ describe('topicFigures', () => {
       expect(new Set(names).size).toBe(names.length);
       expect(names.length).toBeGreaterThanOrEqual(2);
     }
+  });
+  it('English topics show their area set (approved 7 Nov)', () => {
+    expect(ENGLISH_AREAS.map(a => topicFigures(null, a).map(f => f.name))).toEqual([
+      ['magnifier', 'pinboard'], ['puzzle', 'blueprint'], ['bridge', 'signpost'], ['coupler', 'mesh'],
+    ]);
   });
   it('gives More videos no figures', () => expect(topicFigures(null, null)).toEqual([]));
 });

@@ -52,6 +52,14 @@ import spinner from './hairline/spinner.js';
 import tokens from './hairline/tokens.js';
 import scoop from './hairline/scoop.js';
 import bracket from './hairline/bracket.js';
+import magnifier from './hairline/magnifier.js';
+import pinboard from './hairline/pinboard.js';
+import puzzle from './hairline/puzzle.js';
+import blueprint from './hairline/blueprint.js';
+import bridge from './hairline/bridge.js';
+import signpost from './hairline/signpost.js';
+import coupler from './hairline/coupler.js';
+import mesh from './hairline/mesh.js';
 
 /** Where a figure sits: beside the video row it starts at (it leans away from the path), or in its own row after the chest. */
 export type FigureSlot = { side: 'left' | 'right'; anchor: number | 'end' };
@@ -76,12 +84,16 @@ const OWN: Partial<Record<number, HairlineSpec[]>> = {
 };
 
 // shortcut: topics 7 and 23 have no videos (30 Oct), so no figures of their own; they borrow their area's set. Draw theirs if they get videos.
-// shortcut: the English areas have no figures yet (7 Nov), so their maps show none; add each area's set once Saagii approves it.
 const BY_AREA: Partial<Record<Area, HairlineSpec[]>> = {
   'Advanced Math': [parabola, balance, unitcircle, scatter],
   Algebra: [balance, scatter, parabola, unitcircle],
   'Geometry & Trig': [unitcircle, parabola, scatter, balance],
   'Problem Solving & Data': [scatter, unitcircle, balance, parabola],
+  // English: no fixed topic list yet, so each area's set covers its topics (approved by Saagii, 7 Nov)
+  'Information & Ideas': [magnifier, pinboard],
+  'Craft & Structure': [puzzle, blueprint],
+  'Expression of Ideas': [bridge, signpost],
+  'Standard English Conventions': [coupler, mesh],
 };
 
 /** The figures a topic's map shows, in slot order: its own (repeated if it gains slots), else its area's; none for "More videos". */
