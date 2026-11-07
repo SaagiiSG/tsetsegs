@@ -6,6 +6,11 @@ export const CONCEPT_DOMAINS = [
   'Problem Solving & Data',
   'Geometry & Trig',
   'Desmos Skills',
+  // English: the student page shows these under the English tab.
+  'Information & Ideas',
+  'Craft & Structure',
+  'Expression of Ideas',
+  'Standard English Conventions',
 ] as const;
 
 export interface ConceptVideo {

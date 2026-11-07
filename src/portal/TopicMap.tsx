@@ -13,7 +13,10 @@ export type Video = { id: string; title: string; description: string | null; mod
 
 // Zig-zag offsets (in rem) like a winding path: four lean right, then four lean left.
 const OFFSETS = [0, 3, 4, 3, 0, -3, -4, -3];
-const WAVE: Record<Area, string> = { 'Advanced Math': CARD_WAVES.violet, Algebra: CARD_WAVES.blue, 'Problem Solving & Data': CARD_WAVES.orange, 'Geometry & Trig': CARD_WAVES.pink };
+const WAVE: Record<Area, string> = {
+  'Advanced Math': CARD_WAVES.violet, Algebra: CARD_WAVES.blue, 'Problem Solving & Data': CARD_WAVES.orange, 'Geometry & Trig': CARD_WAVES.pink,
+  'Information & Ideas': CARD_WAVES.blue, 'Craft & Structure': CARD_WAVES.violet, 'Expression of Ideas': CARD_WAVES.orange, 'Standard English Conventions': CARD_WAVES.pink,
+};
 // "More videos" (modules outside the 26 topics) has no area: a quiet slate.
 export const MORE = { light: '#8C96AB', dark: '#B4BCCB' };
 // As wide as the free side allows (half the map + the bend's lean − half a caption), at most 280px.

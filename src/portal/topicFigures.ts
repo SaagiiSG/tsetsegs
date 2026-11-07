@@ -76,7 +76,8 @@ const OWN: Partial<Record<number, HairlineSpec[]>> = {
 };
 
 // shortcut: topics 7 and 23 have no videos (30 Oct), so no figures of their own; they borrow their area's set. Draw theirs if they get videos.
-const BY_AREA: Record<Area, HairlineSpec[]> = {
+// shortcut: the English areas have no figures yet (7 Nov), so their maps show none; add each area's set once Saagii approves it.
+const BY_AREA: Partial<Record<Area, HairlineSpec[]>> = {
   'Advanced Math': [parabola, balance, unitcircle, scatter],
   Algebra: [balance, scatter, parabola, unitcircle],
   'Geometry & Trig': [unitcircle, parabola, scatter, balance],
@@ -87,5 +88,5 @@ const BY_AREA: Record<Area, HairlineSpec[]> = {
 export function topicFigures(n: number | null, area: Area | null): HairlineSpec[] {
   if (!area) return [];
   const own = (n !== null && OWN[n]) || [];
-  return own.length ? own : BY_AREA[area];
+  return own.length ? own : BY_AREA[area] ?? [];
 }

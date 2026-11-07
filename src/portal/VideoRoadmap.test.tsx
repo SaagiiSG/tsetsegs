@@ -71,4 +71,18 @@ describe('concept videos page', () => {
     expect(out).not.toContain('No videos yet.');
     expect(out).not.toMatch(/watched/);
   });
+  it('shows one subject at a time: Math by default, English under ?subject=english', () => {
+    const mixed = { data: [...(videos.data as object[]), { ...v('w1', 'Words in Context', 5), domain: 'Craft & Structure' }], isLoading: false } as unknown as UseQueryResult<unknown[]>;
+    const math = render('/student/videos', mixed), eng = render('/student/videos?subject=english', mixed, []);
+    expect(math).not.toContain('Words in Context');
+    expect(math).toContain('/4 watched');
+    expect(eng).not.toContain('Exponents');
+    expect(mapTitle(eng)).toBe('Words in Context');
+    expect(eng).toContain('/1 watched');
+  });
+  it('says English videos are coming soon when there are none', () => {
+    const html = render('/student/videos?subject=english');
+    expect(html).toContain('English videos are coming soon.');
+    expect(html).not.toContain('Exponents');
+  });
 });
