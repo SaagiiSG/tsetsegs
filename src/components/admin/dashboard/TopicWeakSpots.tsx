@@ -17,8 +17,8 @@ function getAccuracyTextColor(accuracy: number): string {
 }
 
 export function TopicWeakSpots({ data }: TopicWeakSpotsProps) {
-  // A weak spot is a topic under 80% accuracy (Saagii, 6 Nov); 99% topics topped the list before.
-  const weak = data.filter(t => t.accuracy < 80);
+  // A weak spot is a topic at 80% accuracy or lower (Saagii, 6 Nov); 99% topics topped the list before.
+  const weak = data.filter(t => t.accuracy <= 80);
   if (weak.length === 0) {
     return (
       <section className="min-w-0 border-t py-5">
@@ -30,7 +30,7 @@ export function TopicWeakSpots({ data }: TopicWeakSpotsProps) {
         </div>
         <div>
           <p className="text-sm text-muted-foreground text-center py-8">
-            {data.length ? 'Every topic is at 80% or higher' : 'No topic data available yet'}
+            {data.length ? 'Every topic is above 80%' : 'No topic data available yet'}
           </p>
         </div>
       </section>
