@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 
 type T = (mon: string, eng: string) => string;
 
-/** On both landing pages. The student page passes no video chip: videos aren't promised publicly to students. */
+/** On both landing pages; each page passes its own chips. */
 export function DesmosSection({ text, chips }: { text: T; chips: { l: string | null; c: string }[] }) {
   const reduce = useReducedMotion();
   const reveal = reduce ? {} : { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" }, transition: { duration: .4 } };

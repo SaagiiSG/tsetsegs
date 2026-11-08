@@ -12,7 +12,7 @@ import "@/components/landing/landing.css";
 import { Clouds } from "@/components/landing/Clouds";
 import { StudentStories } from "@/components/landing/StudentStories";
 import { DesmosSection } from "@/components/landing/DesmosSection";
-import { mathExplanationsLabel } from "@/lib/educatorLanding";
+import { mathExplanationsLabel, videoCountLabel } from "@/lib/educatorLanding";
 
 type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number; math_explanations: number };
 const FB = "https://www.facebook.com/tsetsegs.agency";
@@ -110,7 +110,8 @@ const Index = () => {
           </div></div>
         ))}</section>
 
-        <DesmosSection text={text} chips={[{ l: mathExplanationsLabel(s?.math_explanations ?? null, lang), c: "lv-violet" }]} />
+        {/* 155 videos is Saagii's number (8 Nov): it counts the English lessons coming later. */}
+        <DesmosSection text={text} chips={[{ l: mathExplanationsLabel(s?.math_explanations ?? null, lang), c: "lv-violet" }, { l: videoCountLabel(155, lang), c: "lv-blue" }]} />
 
         <section className="lv-sky py-20"><div className="lv-container grid items-center gap-10 lg:grid-cols-2">
           <motion.div {...reveal}><h2 className="lv-h2">{text("Сурах нь тоглоом шиг", "Studying that feels like a game")}</h2><p className="lv-lead mt-4 max-w-md">{text("7 хоногийн лиг, Bronze-оос Ruby хүртэлх зэрэг, streak ба тэмдэг. Ruby-д зөвхөн #1 үлдэнэ.", "Weekly leagues, ranks from Bronze to Ruby, streaks and badges. Only #1 keeps Ruby.")}</p></motion.div>
@@ -131,7 +132,7 @@ const Index = () => {
           <p className="lv-lead mt-4 max-w-2xl">{text("Нэрийг нь зөвшөөрөл авсны дараа нэмнэ. Доорх тоо бүх сурагчийн нийлбэр.", "Names appear only with consent. The numbers below are totals across all students.")}</p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             <div className="lv-card p-6 md:col-span-2"><p className="text-sm text-muted-foreground">{text("Дундаж Math оноо", "Average Math score")}</p>
-              <div className="mt-6 flex items-end gap-6">{[{ l: text("Эхний", "First"), v: 482 }, { l: text("Сүүлийн", "Latest"), v: 482 + (s?.avg_gain ?? 88) }, { l: text("Шилдэг", "Best"), v: 482 + BEST_GAIN }].map((b, i) => (
+              <div className="mt-6 flex items-end gap-6">{[{ l: text("Эхний", "First"), v: 482 }, { l: text("Дунд", "Midway"), v: 482 + (s?.avg_gain ?? 88) }, { l: text("Шилдэг", "Best"), v: 482 + BEST_GAIN }].map((b, i) => (
                 <div key={i} className="flex-1 text-center"><motion.div className={`mx-auto w-full max-w-[90px] rounded-t-xl ${["lv-blue", "lv-violet", "lv-green"][i]}`} initial={{ height: 0 }} whileInView={{ height: (b.v - 300) / 2 }} viewport={{ once: true }} transition={{ duration: .6, delay: i * .1 }} /><p className="mt-2 font-mono text-xl font-semibold">{b.v}</p><p className="text-xs text-muted-foreground">{b.l}</p></div>
               ))}</div></div>
             <div className="grid gap-4">
@@ -149,7 +150,7 @@ const Index = () => {
       </main>
 
       <footer className="border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
-        <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep · 1105 & 905</p></div>
+        <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p><address className="mt-1 max-w-xs not-italic">{text("Улаанбаатар, Хан-Уул дүүрэг, 15-р хороо, Их Наяд Зүүн Өндөр, 1114", "1114, Ikh Nayad East Tower, 15-r khoroo, Khan‑Uul district, Ulaanbaatar, Mongolia")}</address></div>
         <div className="flex flex-wrap gap-6"><a href="mailto:manager@tsetsegs.com">manager@tsetsegs.com</a><a href={FB} target="_blank" rel="noopener noreferrer">Facebook</a><a href="/practice">{text("Нэвтрэх", "Sign in")}</a></div>
       </div></footer>
     </div>

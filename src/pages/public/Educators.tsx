@@ -74,7 +74,6 @@ export default function Educators() {
 
   const faq = [
     { q: text("Үнэ хэд вэ?", "How much does it cost?"), a: text("Төвийн хэмжээнээс хамаарна. Үнийн талаар уулзалтаар ярилцана.", "It depends on the size of your center. We go through pricing on the call.") },
-    { q: text("ACT-д бэлддэг үү?", "Does it cover the ACT?"), a: text("Үгүй. Платформ зөвхөн дижитал SAT-д зориулагдсан.", "No. The platform is built for the digital SAT.") },
     { q: text("Ямар хэл дээр вэ?", "What language is it in?"), a: text("Англи. Асуулт, тайлбар, видео хичээл бүгд англи хэл дээр.", "English. Questions, explanations and video lessons are all in English.") },
   ];
 
@@ -180,7 +179,7 @@ export default function Educators() {
       </main>
 
       <footer id="signin" className="scroll-mt-20 border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
-        <div><a href="/" className="flex h-11 items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p><a href="mailto:manager@tsetsegs.com" className="inline-flex h-11 items-center">manager@tsetsegs.com</a></div>
+        <div><a href="/" className="flex h-11 items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p><address className="mt-1 max-w-xs not-italic">{text("Улаанбаатар, Хан-Уул дүүрэг, 15-р хороо, Их Наяд Зүүн Өндөр, 1114", "1114, Ikh Nayad East Tower, 15-r khoroo, Khan‑Uul district, Ulaanbaatar, Mongolia")}</address><a href="mailto:manager@tsetsegs.com" className="inline-flex h-11 items-center">manager@tsetsegs.com</a></div>
         <div className="space-y-2">
           <p className="font-medium text-foreground">{text("Аль хэдийн хэрэглэгч үү?", "Already a customer?")}</p>
           <div className="flex gap-6"><a href={`/login?role=admin&lang=${lang}`} className="inline-flex h-11 items-center">{text("Админ нэвтрэх", "Admin sign in")}</a><a href={`/login?role=teacher&lang=${lang}`} className="inline-flex h-11 items-center">{text("Багш нэвтрэх", "Teacher sign in")}</a></div>
