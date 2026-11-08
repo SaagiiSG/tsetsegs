@@ -11,10 +11,14 @@ import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import "@/components/landing/landing.css";
 import { Clouds } from "@/components/landing/Clouds";
 import { StudentStories } from "@/components/landing/StudentStories";
+import { DesmosSection } from "@/components/landing/DesmosSection";
+import { mathExplanationsLabel } from "@/lib/educatorLanding";
 
-type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number };
+type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number; math_explanations: number };
 const FB = "https://www.facebook.com/tsetsegs.agency";
 const fmt = (n?: number) => (n ?? 0).toLocaleString("en-US");
+// Saagii's numbers (8 Nov): best Math 680, i.e. +198 over the first 482. Hardcoded like the 720 card; the live best_gain is lower.
+const BEST_GAIN = 198;
 
 const Index = () => {
   const navigate = useNavigate();
@@ -36,10 +40,10 @@ const Index = () => {
   );
 
   const proof = [
-    { v: s ? fmt(s.students) : "—", l: text("бодит тест өгч, бодлого бодсон сурагч", "students with real practice tests with questions"), c: "lv-blue" },
-    { v: s ? `+${s.best_gain}` : "—", l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
+    { v: s ? fmt(s.students) : "—", l: text("хэрэглэгч", "users"), c: "lv-blue" },
+    { v: `+${BEST_GAIN}`, l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
     { v: s ? `${s.gained100_pct}%` : "—", l: text("нь 100+ оноо ахисан", "gained 100+ points"), c: "lv-violet" },
-    { v: "720", l: text("сурагч 700+ оноо авсан", "students scored 700+"), c: "lv-orange" },
+    { v: "720", l: text("сурагч Math 700+ оноо авсан", "students scored 700+ Math"), c: "lv-orange" },
   ];
 
   const features = [
@@ -77,7 +81,7 @@ const Index = () => {
             <motion.div {...reveal}>
               <span className="lv-blue rounded-full px-3 py-1 text-sm font-medium">SAT · Math & English</span>
               <h1 className="lv-h1 mt-6">{text("SAT-аа ", "Ace the ")}<span className="relative inline-block">{text("давж гар", "SAT")}<motion.svg viewBox="0 0 200 12" className="absolute -bottom-2 left-0 w-full" aria-hidden><motion.path d="M2 8 Q50 2 100 7 T198 5" fill="none" stroke="hsl(var(--accent))" strokeWidth="4" strokeLinecap="round" initial={{ pathLength: reduce ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: .6, delay: .3 }} /></motion.svg></span></h1>
-              <p className="lv-lead mt-6 max-w-lg">{text(`Манай сурагчид дунджаар Math-д +${s?.best_gain ?? 142}, English-д +100 оноо ахисан. Дасгал, таамаглал, лиг — бүгд нэг дор.`, `Our students raise their Math score by +${s?.best_gain ?? 142} and their English score by +100 on average. Practice, prediction and a league, all in one place.`)}</p>
+              <p className="lv-lead mt-6 max-w-lg">{text(`Манай сурагчид дунджаар Math-д +${BEST_GAIN}, English-д +100 оноо ахисан. Дасгал, таамаглал, лиг — бүгд нэг дор.`, `Our students raise their Math score by +${BEST_GAIN} and their English score by +100 on average. Practice, prediction and a league, all in one place.`)}</p>
               <div className="mt-8"><CTA /></div>
             </motion.div>
             <HeroDemo text={text} />
@@ -106,6 +110,8 @@ const Index = () => {
           </div></div>
         ))}</section>
 
+        <DesmosSection text={text} chips={[{ l: mathExplanationsLabel(s?.math_explanations ?? null, lang), c: "lv-violet" }]} />
+
         <section className="lv-sky py-20"><div className="lv-container grid items-center gap-10 lg:grid-cols-2">
           <motion.div {...reveal}><h2 className="lv-h2">{text("Сурах нь тоглоом шиг", "Studying that feels like a game")}</h2><p className="lv-lead mt-4 max-w-md">{text("7 хоногийн лиг, Bronze-оос Ruby хүртэлх зэрэг, streak ба тэмдэг. Ruby-д зөвхөн #1 үлдэнэ.", "Weekly leagues, ranks from Bronze to Ruby, streaks and badges. Only #1 keeps Ruby.")}</p></motion.div>
           <motion.div {...reveal} className="lv-card flex flex-wrap items-end justify-center gap-3 p-6">{(["bronze", "silver", "gold", "platinum", "diamond", "ruby"] as const).map((t, i) => (
@@ -125,7 +131,7 @@ const Index = () => {
           <p className="lv-lead mt-4 max-w-2xl">{text("Нэрийг нь зөвшөөрөл авсны дараа нэмнэ. Доорх тоо бүх сурагчийн нийлбэр.", "Names appear only with consent. The numbers below are totals across all students.")}</p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             <div className="lv-card p-6 md:col-span-2"><p className="text-sm text-muted-foreground">{text("Дундаж Math оноо", "Average Math score")}</p>
-              <div className="mt-6 flex items-end gap-6">{[{ l: text("Эхний", "First"), v: 482 }, { l: text("Сүүлийн", "Latest"), v: 482 + (s?.avg_gain ?? 88) }, { l: text("Шилдэг", "Best"), v: 482 + (s?.best_gain ?? 142) }].map((b, i) => (
+              <div className="mt-6 flex items-end gap-6">{[{ l: text("Эхний", "First"), v: 482 }, { l: text("Сүүлийн", "Latest"), v: 482 + (s?.avg_gain ?? 88) }, { l: text("Шилдэг", "Best"), v: 482 + BEST_GAIN }].map((b, i) => (
                 <div key={i} className="flex-1 text-center"><motion.div className={`mx-auto w-full max-w-[90px] rounded-t-xl ${["lv-blue", "lv-violet", "lv-green"][i]}`} initial={{ height: 0 }} whileInView={{ height: (b.v - 300) / 2 }} viewport={{ once: true }} transition={{ duration: .6, delay: i * .1 }} /><p className="mt-2 font-mono text-xl font-semibold">{b.v}</p><p className="text-xs text-muted-foreground">{b.l}</p></div>
               ))}</div></div>
             <div className="grid gap-4">

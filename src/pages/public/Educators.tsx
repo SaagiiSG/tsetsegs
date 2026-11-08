@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 import { Clouds } from "@/components/landing/Clouds";
 import { StudentStories } from "@/components/landing/StudentStories";
+import { DesmosSection } from "@/components/landing/DesmosSection";
 import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import { EducatorRequestForm } from "@/components/educators/EducatorRequestForm";
 import { usePublicLanguage } from "@/hooks/usePublicLanguage";
@@ -33,11 +34,12 @@ export default function Educators() {
     { v: "510", l: text("сурагч дасгал хийсэн", "students practiced"), c: "lv-pink" },
     ...(solved ? [{ v: solved, l: text("2025 оны 12-р сараас хойш бодсон бодлого", "problems solved since December 2025"), c: "lv-blue", wide: true }] : []),
   ];
-  // Saagii's all-time counts (2 Nov 2026). They aren't in the database; he confirms they're correct.
+  // Saagii's all-time counts (2 Nov 2026; 1500+ raised to 10+ on 8 Nov). They aren't in the database; he confirms they're correct.
+  // Except 800s: since 8 Nov that card is live, the same number as the student page.
   const scores = [
-    { v: "5", l: text("1500+ авсан", "scored 1500+"), c: "lv-blue" },
-    { v: "26", l: text("төгс 800", "perfect 800s"), c: "lv-green" },
-    { v: "720", l: text("700+ авсан", "scored 700+"), c: "lv-violet" },
+    { v: "10+", l: text("сурагч 1500+ авсан", "students scored 1500+"), c: "lv-blue" },
+    { v: stats.club800 != null ? stats.club800.toLocaleString("en-US") : "—", l: text("сурагч Math 800 авсан", "students hit a perfect 800 Math"), c: "lv-green" },
+    { v: "720", l: text("сурагч Math 700+ оноо авсан", "students scored 700+ Math"), c: "lv-violet" },
   ];
   const statCard = (r: { v: string; l: string; c: string; wide?: boolean }, i: number) => (
     <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className={`lv-card p-4 sm:p-5 ${r.wide ? "col-span-2 md:col-span-1" : ""}`}><p className={`inline-block rounded-full px-3 py-1 font-mono text-xl font-semibold sm:text-2xl md:text-3xl ${r.c}`}>{r.v}</p><p className="mt-3 text-sm text-muted-foreground">{r.l}</p></motion.div>
@@ -129,14 +131,7 @@ export default function Educators() {
           ))}</motion.div>
         </div></section>
 
-        <section id="desmos" className="scroll-mt-20 py-20"><motion.div {...reveal} className="lv-container"><div className="max-w-3xl">
-          <h2 className="lv-h2">{text("Desmos-оор SAT математикийг секундэд", "SAT math in seconds, with Desmos")}</h2>
-          <p className="lv-lead mt-4">{text("Desmos дижитал SAT-д суулгагдсан. Манай багш нар SAT математикийг түүгээр секундэд бодож, сурагчдадаа ч мөн адил заадаг. Тэдний бичсэн математикийн тайлбар Desmos-ын товчлолыг боломжтой бүх газарт харуулдаг.", "Desmos is built into the digital SAT. Our teachers use it to solve SAT math in seconds and teach their students to do the same. Their math explanations show the Desmos shortcut wherever there is one.")}</p>
-          {(mathExplanations || videos) && <div className="mt-6 flex flex-wrap gap-2">
-            {mathExplanations && <span className="lv-violet rounded-full px-4 py-2 text-sm font-medium">{mathExplanations}</span>}
-            {videos && <span className="lv-blue rounded-full px-4 py-2 text-sm font-medium">{videos}</span>}
-          </div>}
-        </div></motion.div></section>
+        <DesmosSection text={text} chips={[{ l: mathExplanations, c: "lv-violet" }, { l: videos, c: "lv-blue" }]} />
 
         <section id="center" className="scroll-mt-20 py-20"><div className="lv-container">
           <motion.h2 {...reveal} className="lv-h2 max-w-2xl">{text("Төвөө бүхэлд нь нэг дороос удирд", "Run your whole center in one place")}</motion.h2>
