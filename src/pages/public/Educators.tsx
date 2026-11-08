@@ -23,7 +23,8 @@ export default function Educators() {
   const source = sourceFromSearch(window.location.search);
   // The page renders after the browser's own jump to a #section (e.g. the demo's Book a call), so jump again once it exists.
   useEffect(() => { if (window.location.hash) document.getElementById(window.location.hash.slice(1))?.scrollIntoView(); }, []);
-  const videos = videoCountLabel(stats.videos, lang);
+  // 155 is Saagii's number (8 Nov), the same as the student page: it counts the English lessons coming later.
+  const videos = videoCountLabel(155, lang);
 
   const mathExplanations = mathExplanationsLabel(stats.mathExplanations, lang);
 
