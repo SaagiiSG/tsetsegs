@@ -2,8 +2,9 @@ import { usePublicLanguage } from "@/hooks/usePublicLanguage";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ArrowUpRight, BookOpen, Calculator, Zap, RotateCcw, BarChart3, Trophy, Flame, PenLine, Radio, Users, CalendarCheck, MonitorPlay, Target, Map, Stethoscope } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, BookOpen, Calculator, Zap, RotateCcw, BarChart3, Trophy, Flame, PenLine, Radio, Users, CalendarCheck, MonitorPlay, Target, Map, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/BrandMark";
 import { supabase } from "@/integrations/supabase/client";
 import { HeroDemo } from "@/components/landing/HeroDemo";
@@ -19,6 +20,14 @@ const FB = "https://www.facebook.com/tsetsegs.agency";
 const fmt = (n?: number) => (n ?? 0).toLocaleString("en-US");
 // Saagii's numbers (8 Nov): best Math 680, i.e. +198 over the first 482. Hardcoded like the 720 card; the live best_gain is lower.
 const BEST_GAIN = 198;
+// Solo plans (Saagii, 10 Nov): Free needs no card, both paid plans open with a 7-day trial. English only: Mongolian visitors are center students.
+const FREE_PLAN = ["Practice questions with step-by-step explanations", "Speed mode, 10 sessions a day", "1 full practice test", "The first lesson of every video topic", "Analytics and a predicted SAT score", "Mistake review", "Streaks, badges and the global league"];
+const PREMIUM_PLAN = ["Every practice set, including the hardest problems for 800", "Unlimited speed mode", "Every practice test", "All 155 video lessons"];
+const PLANS = [
+  { name: "Free", price: "$0", per: "forever", note: "No card needed", cta: "Start free", list: FREE_PLAN },
+  { name: "Monthly", price: "$19", per: "/month", note: "7-day free trial", cta: "Start free trial", list: PREMIUM_PLAN },
+  { name: "Yearly", price: "$39", per: "/year", note: "7-day free trial · about $3.25 a month", cta: "Start free trial", list: PREMIUM_PLAN, best: true },
+];
 
 const Index = () => {
   const navigate = useNavigate();
@@ -66,7 +75,7 @@ const Index = () => {
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
         <div className="lv-container flex h-16 items-center justify-between gap-4">
           <a href="/" className="flex items-center gap-2"><BrandMark className="h-7 w-7" /><span className="font-chillax text-xl font-semibold">flowersos</span></a>
-          <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#how">{text("Хэрхэн", "How it works")}</a><a href="#features">{text("Боломжууд", "Features")}</a><a href="#results">{text("Үр дүн", "Results")}</a></nav>
+          <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#how">{text("Хэрхэн", "How it works")}</a><a href="#features">{text("Боломжууд", "Features")}</a><a href="#results">{text("Үр дүн", "Results")}</a>{lang === "eng" && <a href="#pricing">Pricing</a>}</nav>
           <div className="flex items-center gap-2">
             <div className="flex rounded-full bg-muted p-1">{(["mon", "eng"] as const).map(l => <Button variant="ghost" size="sm" key={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`rounded-full px-3 py-1 text-xs font-medium ${lang === l ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</Button>)}</div>
             <Button onClick={() => navigate("/practice")} className="hidden rounded-full sm:inline-flex">{text("Нэвтрэх", "Sign in")}</Button>
@@ -142,6 +151,20 @@ const Index = () => {
           </div>
           <StudentStories text={text} />
         </div></section>
+
+        {lang === "eng" && <section id="pricing" className="py-20"><div className="lv-container">
+          <motion.h2 {...reveal} className="lv-h2">Pricing</motion.h2>
+          <p className="lv-lead mt-4 max-w-2xl">Practice free for as long as you like. Premium unlocks everything, and both plans start with a 7-day free trial.</p>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">{PLANS.map(p => (
+            <motion.div key={p.name} {...reveal} className={`lv-card flex flex-col p-6 ${p.best ? "ring-2 ring-accent" : ""}`}>
+              <div className="flex items-center justify-between gap-2"><p className="font-semibold">{p.name}</p>{p.best && <Badge className="rounded-full">Best value</Badge>}</div>
+              <p className="mt-4"><span className="font-mono text-4xl font-semibold">{p.price}</span> <span className="text-muted-foreground">{p.per}</span></p>
+              <p className="mt-1 text-sm text-muted-foreground">{p.note}</p>
+              <ul className="mt-6 flex-1 space-y-2 text-sm">{p.name !== "Free" && <li className="font-medium">Everything in Free, plus:</li>}{p.list.map(f => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{f}</li>)}</ul>
+              <Button asChild variant={p.best ? "default" : "outline"} className="mt-6 rounded-full"><a href={`/solo?lang=${lang}`}>{p.cta}</a></Button>
+            </motion.div>
+          ))}</div>
+        </div></section>}
 
         <section className="lv-sky relative overflow-hidden pb-40 pt-24 text-center">
           <Clouds />
