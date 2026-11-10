@@ -21,8 +21,8 @@ const fmt = (n?: number) => (n ?? 0).toLocaleString("en-US");
 // Saagii's numbers (8 Nov): best Math 680, i.e. +198 over the first 482. Hardcoded like the 720 card; the live best_gain is lower.
 const BEST_GAIN = 198;
 // Solo plans (Saagii, 10 Nov): Free needs no card, both paid plans open with a 7-day trial. English only: Mongolian visitors are center students.
-const FREE_PLAN = ["Practice questions with step-by-step explanations", "Speed mode, 10 sessions a day", "1 full practice test", "The first lesson of every video topic", "Analytics and a predicted SAT score", "Mistake review", "Streaks, badges and the global league"];
-const PREMIUM_PLAN = ["Every practice set, including the hardest problems for 800", "Unlimited speed mode", "Every practice test", "All 155 video lessons"];
+const FREE_PLAN = ["SAT practice questions", "Speed mode, 10 sessions a day", "1 full practice test", "The first lesson of every video topic", "Analytics and a predicted SAT score", "Mistake review", "Streaks, badges and the global league"];
+const PREMIUM_PLAN = ["Step-by-step explanations for every question", "Every practice set, including the hardest problems for 800", "Unlimited speed mode", "Every practice test", "All 155 video lessons"];
 const PLANS = [
   { name: "Free", price: "$0", per: "forever", note: "No card needed", cta: "Start free", list: FREE_PLAN },
   { name: "Monthly", price: "$19", per: "/month", note: "7-day free trial", cta: "Start free trial", list: PREMIUM_PLAN },
