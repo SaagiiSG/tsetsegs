@@ -34,6 +34,10 @@
 - **Never narrow staff:**
   - `is_free_solo_user()` is false for platform staff and for anyone who is a member or student of a non-solo center.
   - `solo_join()` refuses those accounts, and accounts linked to a main-app `student_accounts` row.
+- **No solo accounts from Mongolia (Saagii, 10 Nov):**
+  - Client: when `deviceLanguage()` (`src/lib/publicLanguage.ts`) is `'mon'`, `/solo` shows the block screen, not the sign-in buttons.
+  - Server: `solo_join()` refuses to create a new solo student when `current_setting('request.headers', true)::json->>'cf-ipcountry'` is `MN`. A missing header lets the join through. An existing solo student still gets their id back.
+  - Block copy (Mongolian first, then English): "Solo бүртгэл зөвхөн Монголоос гадна байгаа сурагчдад зориулагдсан. Монголд flowersos нь Flowers-ийн SAT сургалттай хамт ирдэг." / "Solo accounts are for students outside Mongolia. In Mongolia, flowersos comes with the Flowers SAT course." Button: "Flowers SAT course" linking to `/?lang=mon`.
 - **Keep every existing "Demo check ... keep this line when rewriting" clause** when rewriting a policy.
 - **Locked items:**
   - CTA copy: "Try Premium free for 7 days".
@@ -57,6 +61,7 @@
 3. **A free solo user calls the API directly for a non-free question, test or video.** Zero rows. Task 2 tests (a)–(c).
 4. **The 11th speed run in 24 hours.** The run insert is refused, and the lobby already shows "0 of 10 left" with Start disabled. Task 2 test (d) and Task 4 test.
 5. **`solo_join()` called twice, or by two tabs at once.** One `tenant_students` row and one `solo_students` row. Task 1 test (c).
+6. **A student in Ulaanbaatar opens `/solo`.** On a Mongolian device they see the block screen and no sign-in buttons. If they get past it (an English device on another time zone), a new join from a Mongolian IP is refused, while an existing solo student's join still works. Task 1 test (h) and Task 3 test.
 
 ---
 
@@ -82,13 +87,14 @@
        - any `tenant_students` row in another institution
        - a main-app account link: find how a main student's Google link is stored (grep `auth_user_id` / `user_id` on `student_accounts`, and `src/components/student/ConnectedEmailCard.tsx`)
     3. Returns the existing solo student id if there is one.
-    4. Otherwise inserts a `tenant_students` row:
+    4. Refuses a new join from Mongolia: when `nullif(current_setting('request.headers', true), '')::json->>'cf-ipcountry'` is `MN`, `RAISE EXCEPTION 'Solo accounts are for students outside Mongolia'`. A missing header doesn't refuse.
+    5. Otherwise inserts a `tenant_students` row:
        - the solo institution
        - `user_id = auth.uid()`
        - `name` = first word of the token's `full_name` / `name` / the email local part, plus ' ' plus the upper-cased first letter of the last word when there are two or more words
        - `phone = 'solo-' || auth.uid()`
        - `class_id NULL`, `active true`, `email_verified_at = now()`
-    5. Upserts `solo_students` (`user_id`, full name, email, provider from `auth.jwt()`), with plan left to the trigger.
+    6. Upserts `solo_students` (`user_id`, full name, email, provider from `auth.jwt()`), with plan left to the trigger.
   - `admin_customer_set_blocked`: refuses the solo center. `CREATE OR REPLACE`, copied from drizzle 0018 with one early `RAISE EXCEPTION`.
   - Seed the first sprint for the solo center, copying how `ToolPages.tsx:96-130` starts Season 1: 21 days from today, `auto_next = true`, season 1, sprint 1.
   - `NOTICE '0122 applied: solo center'`.
@@ -104,6 +110,7 @@
     - (e) a uid linked to `student_accounts` raises
     - (f) `is_free_solo_user()` is true for the new solo student, false after setting plan premium with a future `premium_until`, and false for staff
     - (g) `admin_customer_set_blocked(solo id, ...)` raises
+    - (h) with `request.headers` set to `{"cf-ipcountry":"MN"}`, a new uid's join raises the Mongolia message and creates no rows; the student from (b) still gets their id back under the same header; with no header set, a new uid joins
 - [ ] **Step 3: Add the journal entry and snapshot.** Run `npx tsc --noEmit -p tsconfig.app.json`. Expected: exit 0.
 - [ ] **Step 4: Commit** `feat(db): solo center, solo_join and the free-solo check (0122)`
 
@@ -171,13 +178,15 @@
     - An email field calls `supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: origin + '/solo' } })`.
     - After sending, show a 6-digit code field (`supabase.auth.verifyOtp({ email, token, type: 'email' })`) and say "or tap the link in the email".
     - Plus a "Free, no card needed" line and a link to `/?lang=eng#pricing`.
+  - `SoloBlocked`, in `SoloSignIn.tsx`: when `deviceLanguage() === 'mon'`, `SoloPortal` renders it in place of `SoloSignIn` (only when there's no session yet). It shows the block copy from Global Constraints and a `Button asChild` to `/?lang=mon`. A join error whose message mentions Mongolia shows the same screen.
 
-- [ ] **Step 1: Write the failing test.** `storageKey.test.ts`: `soloAuthOptions('/solo')`, `soloAuthOptions('/solo/student/speed')` and `soloAuthOptions('/practice')` give `{ storageKey: 'sb-solo-auth-token' }`, the same, and `{}`.
+- [ ] **Step 1: Write the failing test.** `storageKey.test.ts`: `soloAuthOptions('/solo')`, `soloAuthOptions('/solo/student/speed')` and `soloAuthOptions('/practice')` give `{ storageKey: 'sb-solo-auth-token' }`, the same, and `{}`. Also `src/solo/SoloSignIn.test.tsx` (`renderToStaticMarkup`): `<SoloBlocked />` contains "outside Mongolia" and `href="/?lang=mon"`, and no "Continue with Google".
 - [ ] **Step 2: Run** `npx vitest run src/solo`. Expected: FAIL.
 - [ ] **Step 3: Implement the files above.**
 - [ ] **Step 4: Run** `npx vitest run` and `npx tsc --noEmit -p tsconfig.app.json`. Expected: pass, exit 0.
 - [ ] **Step 5: Look at it.**
   - Run `npx vite --port 8137`, then drive Chrome over CDP (scratchpad driver) to `/solo` at 390px and 1280px, and screenshot the sign-in page.
+  - Then emulate Mongolia time (CDP `Emulation.setTimezoneOverride` with `Asia/Ulaanbaatar`), reload `/solo`, and screenshot the block screen.
   - In the same browser, `localStorage` must hold no `sb-solo-auth-token` key before sign-in, and a main-domain key must be untouched.
   - Joining can't be tested until 0122 is live. The join-error state must show cleanly if the RPC is missing.
 - [ ] **Step 6: Commit** `feat(solo): /solo sign-in and the solo portal on the center portal`

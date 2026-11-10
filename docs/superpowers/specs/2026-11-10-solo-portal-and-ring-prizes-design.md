@@ -107,6 +107,10 @@ The solo portal **is the center portal**, running for one built-in center called
     - a placeholder phone
     - `email_verified_at` set, so the center Google nag never shows
   - It also creates the `solo_students` row, and never touches staff tables.
+- **No solo accounts from Mongolia (Saagii, 10 Nov).** Mongolian students get the platform by paying for the Flowers SAT course, so solo account creation is blocked for them. We can only see location, not nationality, so "Mongolian" means (my call):
+  - **On the device:** the existing `deviceLanguage()` (`src/lib/publicLanguage.ts`) returns `'mon'`, meaning the device is on Mongolia time or set to Mongolian. `/solo` then shows a block screen in Mongolian and English instead of the sign-in buttons: "Solo accounts are for students outside Mongolia. In Mongolia, flowersos comes with the Flowers SAT course." It links to `/?lang=mon`.
+  - **On the server:** `solo_join()` refuses to create a solo student when the request's Cloudflare country header (`current_setting('request.headers', true)::json->>'cf-ipcountry'`) is `MN`. A missing header lets the join through, so a header change can't lock everyone out. A VPN gets past both checks; that's accepted.
+  - Only creating a solo account is blocked. An existing solo student who travels to Mongolia keeps their account.
 - **Names on the board:**
   - Solo students are strangers to each other, so the board shows **first name + last initial**, e.g. "Saran S.".
   - The full name stays in `solo_students`.
