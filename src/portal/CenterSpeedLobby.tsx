@@ -20,10 +20,10 @@ function Picker<T extends number>({ label, values, value, onChange, render }: { 
   return (
     <div className="flex flex-col items-center gap-2">
       <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
-      <div className="flex flex-col gap-1">
+      <div className="grid w-full grid-cols-4 gap-1 md:flex md:w-auto md:flex-col">
         {values.map(v => (
           <button key={v} onClick={() => onChange(v)}
-            className={`min-w-28 rounded-2xl px-5 py-2 font-mono transition-all active:scale-[0.97] ${v === value ? 'bg-accent text-2xl font-semibold text-accent-foreground' : 'text-lg text-muted-foreground/60 hover:text-foreground'}`}>{render(v)}</button>
+            className={`whitespace-nowrap rounded-2xl px-2 py-2 font-mono transition-all active:scale-[0.97] md:min-w-28 md:px-5 ${v === value ? 'bg-accent text-base font-semibold text-accent-foreground md:text-2xl' : 'text-sm text-muted-foreground/60 hover:text-foreground md:text-lg'}`}>{render(v)}</button>
         ))}
       </div>
     </div>
@@ -50,16 +50,16 @@ export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart:
   const chipRating = lastRating === 'Excellent' || lastRating === 'Good';
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-center gap-4">
         <span className="sky-tile sky-tile-solid"><Zap /></span>
-        <div className="flex-1"><h1 className="text-2xl font-bold tracking-tight">Speed Practice</h1><p className="text-sm sky-body">Challenge yourself with timed sessions</p></div>
+        <div className="min-w-48 flex-1"><h1 className="text-2xl font-bold tracking-tight">Speed Practice</h1><p className="text-sm sky-body">Challenge yourself with timed sessions</p></div>
         {[['Best acc', `${bestAcc}%`], ['Sessions', String(runs.length)]].map(([l, v]) => (
-          <div key={l} className="sky-card !p-0 px-5 py-3 text-center"><p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{l}</p><p className="font-mono text-2xl font-semibold">{v}</p></div>
+          <div key={l} className="sky-card !px-5 !py-3 text-center"><p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{l}</p><p className="font-mono text-2xl font-semibold">{v}</p></div>
         ))}
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="order-last grid gap-4 md:order-none lg:grid-cols-[2fr_1fr]">
         <section className="sky-card sky-wash" style={{ '--wash': 'hsl(207 90% 96%)' } as React.CSSProperties}>
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <h2 className="flex-1 font-semibold">Last {range} days performance</h2>
@@ -124,7 +124,7 @@ export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart:
           <div className="mt-4 space-y-2">
             {runs.length === 0 && <p className="text-sm text-muted-foreground">No sessions yet.</p>}
             {runs.map(r => (
-              <div key={r.id} className="sky-card !p-0 rounded-2xl p-3">
+              <div key={r.id} className="sky-card !p-3 rounded-2xl">
                 <div className="flex justify-between text-sm"><span className="font-medium">{r.subject === 'english' ? 'English' : 'Math'} · {r.category ? catName[r.category] ?? 'Topic' : 'All mixed'}</span><span className="text-muted-foreground">{new Date(r.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span></div>
                 <div className="mt-2 flex gap-4 font-mono text-sm"><span>{r.correct}/{r.total}</span><span>{acc(r)}%</span><span>{perQ(r)}s / problem</span>{r.duration_seconds && <span className="text-muted-foreground">{fmt(r.duration_seconds)}</span>}</div>
               </div>

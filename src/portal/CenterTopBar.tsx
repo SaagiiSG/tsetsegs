@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Flame, Trophy } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { TodayPointsChip } from '@/components/student/TodayPointsChip';
 import { TIER_DISPLAY_NAMES, type TierType } from '@/data/badgeDefinitions';
+import { TIER_ASSETS } from '@/components/student/leaderboard/tierAssets';
 import { useCenter } from './centerContext';
 import { useCenterSprints } from './admin/ToolPages';
 import { CenterRingHistoryDialog, CenterStreakDialog, MiniRing, SKY_RING, useCenterRingHistory, useCenterStreak } from './CenterStreak';
@@ -41,7 +42,7 @@ export function RankChip({ rank, onClick }: { rank: Rank | null; onClick?: () =>
   if (!rank) return null;
   return (
     <button type="button" onClick={onClick} className="max-md:!hidden student-chip shrink-0" title="Leaderboard" aria-label={`Rank ${rank.place}, ${TIER_DISPLAY_NAMES[rank.tier]}`}>
-      <Trophy className="h-3.5 w-3.5 text-primary" />
+      <img src={TIER_ASSETS[rank.tier].image} alt="" className="-my-1 h-5 w-5 object-contain" />
       <span className="tabular-nums">{`#${rank.place}`}</span>
       <span className="text-[9px] text-muted-foreground">{TIER_DISPLAY_NAMES[rank.tier]}</span>
     </button>
