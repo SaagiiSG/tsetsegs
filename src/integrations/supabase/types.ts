@@ -5850,6 +5850,41 @@ export type Database = {
           },
         ]
       }
+      tenant_ring_prizes: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          points: number
+          ring: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id: string
+          points: number
+          ring: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          points?: number
+          ring?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_ring_prizes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_sat_attempts: {
         Row: {
           answers: Json
@@ -7076,6 +7111,10 @@ export type Database = {
           seat_number: number
         }[]
       }
+      ring_prize_points: {
+        Args: { _goal: number; _ring: string }
+        Returns: number
+      }
       sat_prediction_accuracy: {
         Args: never
         Returns: {
@@ -7290,6 +7329,10 @@ export type Database = {
       tenant_center_blocked: {
         Args: { _institution: string }
         Returns: boolean
+      }
+      tenant_claim_ring_prize: {
+        Args: { _institution: string; _ring: string; _tz_offset_min: number }
+        Returns: number
       }
       tenant_claim_with_google: {
         Args: { _phone: string; _slug: string }

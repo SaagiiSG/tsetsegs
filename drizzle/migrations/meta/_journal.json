@@ -848,6 +848,13 @@
       "when": 1794012864943,
       "tag": "0120_apply_pending_0119",
       "breakpoints": true
+    },
+    {
+      "idx": 121,
+      "version": "7",
+      "when": 1794354350546,
+      "tag": "0121_ring_prizes",
+      "breakpoints": true
     }
   ]
 }
