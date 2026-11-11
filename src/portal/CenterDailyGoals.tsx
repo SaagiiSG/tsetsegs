@@ -43,6 +43,10 @@ export function useCenterGoals(studentId: string) {
   });
 }
 
+/** A speed run fills the ring only if something in it was right, so an empty run row can't. */
+export const speedRunsToday = (runs: { created_at: string; correct: number }[], start: Date) =>
+  runs.filter(r => r.correct > 0 && new Date(r.created_at) >= start).length;
+
 /** Today's progress: speed runs completed + distinct hard/medium correct questions. */
 export function useCenterDailyProgress(studentId: string, attempts: { question_id: string; is_correct: boolean; created_at: string }[], meta: Record<string, QMeta>) {
   const runs = useQuery({
@@ -61,7 +65,7 @@ export function useCenterDailyProgress(studentId: string, attempts: { question_i
       const d = (meta[a.question_id]?.difficulty_level ?? '').toLowerCase();
       if (d === 'hard') hard.add(a.question_id); else if (d === 'medium') medium.add(a.question_id);
     }
-    const speed = (runs.data ?? []).filter(r => new Date(r.created_at) >= start).length;
+    const speed = speedRunsToday(runs.data ?? [], start);
     return { speed, hard: hard.size, medium: medium.size, runs: runs.data ?? [], ready: !!runs.data, failed: runs.isError && !runs.data };
   }, [attempts, meta, runs.data, runs.isError]);
 }

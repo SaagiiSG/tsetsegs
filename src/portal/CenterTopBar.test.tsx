@@ -15,5 +15,10 @@ describe('top bar chips', () => {
     const radii = [...html(<RingChip p={[1, 0.4, 1]} closed={2} />).matchAll(/ r="([^"]+)"/g)].map(m => Number(m[1]));
     expect(radii).toHaveLength(6); expect(radii.every(r => r > 0)).toBe(true);
   });
+  it('shows what is left to win, then what was earned', () => {
+    const open = html(<RingChip p={[1, 0, 0]} closed={1} left={70} />);
+    expect(open).toContain('1/3'); expect(open).toContain('+70'); expect(open).toMatch(/class="max-md:!hidden student-chip/);
+    expect(html(<RingChip p={[1, 1, 1]} closed={3} earned={90} left={0} />)).toContain('+90');
+  });
   it('shows no rank chip until the rank is real', () => expect(html(<RankChip rank={null} />)).toBe(''));
 });

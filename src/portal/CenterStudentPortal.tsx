@@ -46,6 +46,9 @@ import { CenterRankings } from './CenterRankings';
 import { CenterProfileView, CenterBadgeGrid } from './CenterProfileView';
 import { centerBadges, type CenterBadge } from './centerProfile';
 import { CenterBadgeWatcher } from './CenterBadgeWatcher';
+import { RingPrizeCelebration } from '@/components/student/RingPrizeCelebration';
+import { useCenterRingPrizes } from './useCenterRingPrizes';
+import type { PrizeKey } from '@/lib/ringPrizes';
 import { usePopupTurn } from './popupGate';
 import { RoadmapPreview } from './RoadmapPreview';
 import { topicUnits } from './videoTopics';
@@ -211,6 +214,7 @@ export default function CenterStudentPortal() {
             <div className="max-w-[1400px] mx-auto space-y-5">
               {me.data.student.class_id && <StudentLive studentId={me.data.student.id} classId={me.data.student.class_id} />}
               <MyBadgeWatcher me={me.data} />
+              <RingPrizeCelebration />
               <Routes>
                 <Route index element={<HomePage me={me.data} />} />
                 <Route path="practice" element={<PracticePage me={me.data} />} />
@@ -308,6 +312,7 @@ export function HomePage({ me }: { me: Me }) {
     try { localStorage.setItem(goalSeenKey, '1'); } catch { /* ignore */ }
   }, [goalTurn, goalSeenKey]);
   const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
+  const { paid, prizes } = useCenterRingPrizes(me.student.id, g);
   const [nudgeDue, setNudgeDue] = useState(false);
   const nudgeKey = `center_ring_nudge_${me.student.id}`;
   // Once per local day; never opens on top of the "Set your daily ring" dialog (goalOpen is a dependency, so it opens after that closes),
@@ -355,6 +360,7 @@ export function HomePage({ me }: { me: Me }) {
             onShowHistory={() => setRingOpen(true)}
             colors={SKY_RING}
             decor={AURORA}
+            prizes={Object.fromEntries((Object.keys(prizes) as PrizeKey[]).map(k => [k, { points: prizes[k], paid: paid.has(k) }])) as Record<PrizeKey, { points: number; paid: boolean }>}
             className="sky-card !p-0"
           />}
         </div>

@@ -10,12 +10,14 @@ export function todayPoints(
   attempts: { created_at: string; is_correct: boolean; points: number | null }[],
   runs: { created_at: string; correct: number }[],
   now: Date = new Date(),
+  prizes: { created_at: string; points: number }[] = [],
 ): number {
   const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const today = (s: string) => new Date(s).getTime() >= midnight;
   return (
     attempts.filter((a) => today(a.created_at)).reduce((n, a) => n + attemptPoints(a), 0) +
-    runs.filter((r) => today(r.created_at)).reduce((n, r) => n + runPoints(r), 0)
+    runs.filter((r) => today(r.created_at)).reduce((n, r) => n + runPoints(r), 0) +
+    prizes.filter((r) => today(r.created_at)).reduce((n, r) => n + r.points, 0)
   );
 }
 

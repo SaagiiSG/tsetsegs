@@ -40,15 +40,18 @@ export function CenterRankings({ studentId }: { studentId: string }) {
   const myPoints = useQuery({ queryKey: ['center-sprint-points', center.id, active?.id, studentId], enabled: !!active,
     queryFn: async () => {
       const from = active!.starts_on, to = dayAfter(active!.ends_on);
-      const [attempts, runs] = await Promise.all([
+      const [attempts, runs, prizes] = await Promise.all([
         allPages(p => supabase.from('tenant_attempts').select('id, created_at, points, is_correct').eq('institution_id', center.id).eq('student_id', studentId)
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
         allPages(p => supabase.from('tenant_speed_runs').select('id, created_at, correct').eq('institution_id', center.id).eq('student_id', studentId)
+          .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
+        allPages(p => supabase.from('tenant_ring_prizes').select('id, created_at, points').eq('institution_id', center.id).eq('student_id', studentId)
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
       ]);
       return [
         ...attempts.map(a => ({ created_at: a.created_at, points: a.points ?? (a.is_correct ? 10 : 0) })),
         ...runs.map(r => ({ created_at: r.created_at, points: r.correct * 10 })),
+        ...prizes.map(r => ({ created_at: r.created_at, points: r.points })),
       ];
     } });
   const pointHistory = useMemo(() => active && myPoints.data ? sprintPointsByDay(myPoints.data, active.starts_on, active.ends_on) : undefined, [active, myPoints.data]);
