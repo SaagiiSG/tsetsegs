@@ -143,6 +143,9 @@ This copies the demo-slice pattern (drizzle 0108): read rules already say "demo 
 - **Locked items:**
   - Locked sets, tests and videos show a small lock and "Try Premium free for 7 days".
   - Until checkout exists, that button goes to the pricing section.
+- **Finishing the free questions (Saagii, 11 Nov):**
+  - A free solo student never earns the CB master badge. Solving the 30 free questions isn't the whole set.
+  - When they finish the free questions, they see a congratulations page for completing the free section, with the "Try Premium free for 7 days" button.
 - **Explanations:**
   - Hidden on screen for free solo students.
   - **Known gap:** the explanation text sits in the same question row the free student can read, so a determined student could fetch it. Closing this needs a server-only explanation read, which is follow-up work before launch.
