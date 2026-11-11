@@ -373,7 +373,7 @@ const CenterJoinRedirect = () => {
 };
 
 const App = () => {
-  const soloHome = soloHostRedirect(window.location.hostname);
+  const soloHome = soloHostRedirect(window.location.hostname, window.location.search);
   if (soloHome) { window.location.replace(soloHome); return null; }
   const path = window.location.pathname;
   if (path === '/demo' || path.startsWith('/demo/')) {

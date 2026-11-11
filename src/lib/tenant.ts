@@ -16,8 +16,11 @@ export function centerSlugForHost(hostname: string): string | null | undefined {
   return undefined;
 }
 
-export const soloHostRedirect = (hostname: string) =>
-  hostname.toLowerCase() === `solo.${ROOT_DOMAIN}` ? `https://${ROOT_DOMAIN}/solo` : null;
+// solo.flowersos.co, and ?center=solo on a preview host, would open the solo center as a plain center portal.
+export const soloHostRedirect = (hostname: string, search = '') =>
+  (hostname.toLowerCase() === `solo.${ROOT_DOMAIN}`
+    || (centerSlugForHost(hostname) === undefined && new URLSearchParams(search).get('center')?.toLowerCase() === 'solo'))
+    ? `https://${ROOT_DOMAIN}/solo` : null;
 
 export function resolveCenterSlug(): string | null {
   if (typeof window === 'undefined') return null;
@@ -29,7 +32,9 @@ export function resolveCenterSlug(): string | null {
     if (param) sessionStorage.setItem(KEY, param.toLowerCase());
     else sessionStorage.removeItem(KEY);
   }
-  return sessionStorage.getItem(KEY);
+  const remembered = sessionStorage.getItem(KEY);
+  // A tab that remembered ?center=solo before redirecting must not mount the solo center later.
+  return remembered === 'solo' ? null : remembered;
 }
 
 export const centerPortalUrl = (slug: string) => `https://${slug}.${ROOT_DOMAIN}`;

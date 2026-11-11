@@ -8,6 +8,15 @@ it('solo.flowersos.co is no center portal; it goes to flowersos.co/solo', () => 
   expect(soloHostRedirect('Solo.FlowersOS.co')).toBe('https://flowersos.co/solo');
 });
 
+it('?center=solo on a preview host goes to flowersos.co/solo too', () => {
+  for (const h of ['tsetsegs.lovable.app', 'localhost', 'id-preview--x.lovable.app'])
+    expect(soloHostRedirect(h, '?center=solo')).toBe('https://flowersos.co/solo');
+  expect(soloHostRedirect('localhost', '?foo=1&center=SOLO')).toBe('https://flowersos.co/solo');
+  // Other preview slugs, and ?center= on production hosts (which ignore it), don't redirect.
+  for (const q of ['?center=sky', '?center=', '?center=solo-prep', '', '?solo=1']) expect(soloHostRedirect('tsetsegs.lovable.app', q)).toBeNull();
+  for (const h of ['flowersos.co', 'www.flowersos.co', 'sky.flowersos.co']) expect(soloHostRedirect(h, '?center=solo')).toBeNull();
+});
+
 it('every other host resolves as before, and never redirects', () => {
   expect(centerSlugForHost('sky.flowersos.co')).toBe('sky');
   expect(centerSlugForHost('Sky.FlowersOS.co')).toBe('sky');
