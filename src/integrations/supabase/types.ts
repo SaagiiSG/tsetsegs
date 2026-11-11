@@ -5853,6 +5853,7 @@ export type Database = {
       tenant_ring_prizes: {
         Row: {
           created_at: string
+          day: string
           id: string
           institution_id: string
           points: number
@@ -5861,6 +5862,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          day: string
           id?: string
           institution_id: string
           points: number
@@ -5869,6 +5871,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          day?: string
           id?: string
           institution_id?: string
           points?: number
@@ -7110,6 +7113,10 @@ export type Database = {
           review_session_id: string
           seat_number: number
         }[]
+      }
+      ring_prize_day: {
+        Args: { _at: string; _tz_offset_min: string }
+        Returns: string
       }
       ring_prize_points: {
         Args: { _goal: number; _ring: string }

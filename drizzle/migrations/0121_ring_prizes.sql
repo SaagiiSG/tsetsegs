@@ -6,14 +6,17 @@
 -- Center students claim through tenant_claim_ring_prize() into tenant_ring_prizes, which the center board counts as
 -- practice points. Main students insert a 'ring_prize' point_transactions row, priced by student_points_allowed()
 -- through guard_point_transaction (0024), which also adds it to league points.
--- A ring pays at most once per local day, and never twice within 20 hours (so moving the offset can't farm it).
+-- A ring pays once per local day: the date at the student's offset when it was paid. A claim is refused while that ring
+-- has a payout dated today or later, so moving the offset west can't pay a ring twice (moving east pays a day early, once).
 -- The center profile counts prizes too, so it agrees with the board again. Safe to run twice.
 SET lock_timeout = '3s';
 
 -- Widen point_transactions.category to allow 'ring_prize' (latest list: supabase/migrations/20260807155004).
 ALTER TABLE public.point_transactions DROP CONSTRAINT IF EXISTS point_transactions_category_check;
+-- NOT VALID, then VALIDATE: the row scan needs only SHARE UPDATE EXCLUSIVE (the DROP's lock still lasts until commit).
 ALTER TABLE public.point_transactions ADD CONSTRAINT point_transactions_category_check
-  CHECK (category = ANY (ARRAY['questions','section_bonus','speed_session','badge','bank_completion','streak_daily','flowers_challenge','class_test','challenge','ring_prize']));
+  CHECK (category = ANY (ARRAY['questions','section_bonus','speed_session','badge','bank_completion','streak_daily','flowers_challenge','class_test','challenge','ring_prize'])) NOT VALID;
+ALTER TABLE public.point_transactions VALIDATE CONSTRAINT point_transactions_category_check;
 
 CREATE OR REPLACE FUNCTION public.ring_prize_points(_ring text, _goal int)
 RETURNS int LANGUAGE sql IMMUTABLE SET search_path = public AS $$
@@ -26,6 +29,14 @@ RETURNS int LANGUAGE sql IMMUTABLE SET search_path = public AS $$
     ELSE 0 END
 $$;
 
+-- The student's local date at _at for the offset the page sent (minutes east of UTC): junk counts as 0, clamped to
+-- -840..840. Both claims date today and every past payout with it, so the two always agree.
+CREATE OR REPLACE FUNCTION public.ring_prize_day(_at timestamptz, _tz_offset_min text)
+RETURNS date LANGUAGE sql IMMUTABLE SET search_path = public AS $$
+  SELECT ((_at AT TIME ZONE 'UTC') + make_interval(mins => least(840, greatest(-840, coalesce(
+    CASE WHEN _tz_offset_min ~ '^-?[0-9]{1,6}$' THEN _tz_offset_min::int END, 0)))))::date
+$$;
+
 -- ============ Center: prizes table and claim ============
 CREATE TABLE IF NOT EXISTS public.tenant_ring_prizes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -33,9 +44,13 @@ CREATE TABLE IF NOT EXISTS public.tenant_ring_prizes (
   student_id uuid NOT NULL REFERENCES public.tenant_students(id) ON DELETE CASCADE,
   ring text NOT NULL CHECK (ring IN ('speed', 'hard', 'medium', 'all')),
   points int NOT NULL CHECK (points >= 0),
-  created_at timestamptz NOT NULL DEFAULT now()
+  day date NOT NULL, -- the student's local date when it was paid (ring_prize_day)
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (student_id, ring, day)
 );
 CREATE INDEX IF NOT EXISTS tenant_ring_prizes_student_idx ON public.tenant_ring_prizes (student_id, created_at DESC);
+-- tenant_student_board reads prizes by center and window, like 0087's indexes on attempts and speed runs.
+CREATE INDEX IF NOT EXISTS tenant_ring_prizes_institution_created_idx ON public.tenant_ring_prizes (institution_id, created_at);
 -- Rows are written only by tenant_claim_ring_prize.
 REVOKE ALL ON public.tenant_ring_prizes FROM anon, authenticated;
 GRANT SELECT ON public.tenant_ring_prizes TO authenticated;
@@ -47,7 +62,7 @@ CREATE POLICY "Students read own ring prizes" ON public.tenant_ring_prizes FOR S
 
 CREATE OR REPLACE FUNCTION public.tenant_claim_ring_prize(_institution uuid, _ring text, _tz_offset_min int)
 RETURNS int LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE me uuid; tz_off int; day_start timestamptz; goal int; prog int; prize int;
+DECLARE me uuid; tz_off int; day_start timestamptz; today date; goal int; prog int; prize int;
 BEGIN
   me := public.tenant_my_student_id(_institution);
   IF me IS NULL THEN RAISE EXCEPTION 'Not allowed'; END IF;
@@ -57,12 +72,12 @@ BEGIN
   tz_off := least(840, greatest(-840, coalesce(_tz_offset_min, 0)));
   -- Truncated in UTC so the session's TimeZone setting can't move the student's midnight.
   day_start := date_trunc('day', now() + make_interval(mins => tz_off), 'UTC') - make_interval(mins => tz_off);
-  -- Once per ring per local day and per 20 hours, so raising the goal after a payout pays nothing more.
-  IF EXISTS (SELECT 1 FROM public.tenant_ring_prizes
-    WHERE student_id = me AND ring = _ring AND (created_at > now() - interval '20 hours' OR created_at >= day_start)) THEN RETURN 0; END IF;
+  today := public.ring_prize_day(now(), tz_off::text);
+  -- Once per ring per local day, so raising the goal after a payout pays nothing more.
+  IF EXISTS (SELECT 1 FROM public.tenant_ring_prizes WHERE student_id = me AND ring = _ring AND day >= today) THEN RETURN 0; END IF;
   IF _ring = 'all' THEN
     IF (SELECT count(DISTINCT ring) FROM public.tenant_ring_prizes
-        WHERE student_id = me AND ring IN ('speed', 'hard', 'medium') AND created_at >= day_start) < 3 THEN RETURN 0; END IF;
+        WHERE student_id = me AND ring IN ('speed', 'hard', 'medium') AND day = today) < 3 THEN RETURN 0; END IF;
     prize := public.ring_prize_points('all', 0);
   ELSE
     SELECT CASE _ring WHEN 'speed' THEN g.speed WHEN 'hard' THEN g.hard ELSE g.medium END INTO goal
@@ -80,7 +95,7 @@ BEGIN
     prize := public.ring_prize_points(_ring, goal);
     IF prog < goal OR prize = 0 THEN RETURN 0; END IF;
   END IF;
-  INSERT INTO public.tenant_ring_prizes (institution_id, student_id, ring, points) VALUES (_institution, me, _ring, prize);
+  INSERT INTO public.tenant_ring_prizes (institution_id, student_id, ring, points, day) VALUES (_institution, me, _ring, prize, today);
   RETURN prize;
 END $$;
 REVOKE ALL ON FUNCTION public.tenant_claim_ring_prize(uuid, text, int) FROM PUBLIC, anon;
@@ -92,7 +107,7 @@ GRANT EXECUTE ON FUNCTION public.tenant_claim_ring_prize(uuid, text, int) TO aut
 CREATE OR REPLACE FUNCTION public.student_points_allowed(p_student uuid, p_category text, p_points integer, p_meta jsonb, p_sprint uuid)
  RETURNS integer LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path TO 'public'
 AS $function$
-DECLARE qid uuid; att record; ring_key text; tz_off int; day_start timestamptz; intl boolean; goal int; prog int; prize int;
+DECLARE qid uuid; att record; ring_key text; tz_off int; day_start timestamptz; today date; intl boolean; goal int; prog int; prize int;
 BEGIN
   IF p_student IS NULL OR p_student IS DISTINCT FROM public.request_student_id() THEN
     RAISE EXCEPTION 'Please sign in again' USING ERRCODE = '42501';
@@ -138,13 +153,15 @@ BEGIN
     tz_off := least(840, greatest(-840, coalesce(
       CASE WHEN p_meta->>'tz_offset_min' ~ '^-?[0-9]{1,6}$' THEN (p_meta->>'tz_offset_min')::int END, 0)));
     day_start := date_trunc('day', now() + make_interval(mins => tz_off), 'UTC') - make_interval(mins => tz_off);
+    today := public.ring_prize_day(now(), p_meta->>'tz_offset_min');
+    -- Once per ring per local day; each payout's day is taken at the offset it was paid with (its own metadata).
     IF EXISTS (SELECT 1 FROM public.point_transactions
       WHERE student_account_id = p_student AND category = 'ring_prize' AND metadata->>'ring' = ring_key
-        AND (created_at > now() - interval '20 hours' OR created_at >= day_start)) THEN RETURN NULL; END IF;
+        AND public.ring_prize_day(created_at, metadata->>'tz_offset_min') >= today) THEN RETURN NULL; END IF;
     IF ring_key = 'all' THEN
       IF (SELECT count(DISTINCT metadata->>'ring') FROM public.point_transactions
-          WHERE student_account_id = p_student AND category = 'ring_prize'
-            AND metadata->>'ring' IN ('speed', 'hard', 'medium') AND created_at >= day_start) < 3 THEN RETURN NULL; END IF;
+          WHERE student_account_id = p_student AND category = 'ring_prize' AND metadata->>'ring' IN ('speed', 'hard', 'medium')
+            AND public.ring_prize_day(created_at, metadata->>'tz_offset_min') = today) < 3 THEN RETURN NULL; END IF;
       RETURN public.ring_prize_points('all', 0);
     END IF;
     SELECT cohort = 'intl', CASE ring_key WHEN 'speed' THEN daily_goal_speed WHEN 'hard' THEN daily_goal_hard ELSE daily_goal_medium END
