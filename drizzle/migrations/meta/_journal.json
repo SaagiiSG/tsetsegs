@@ -864,23 +864,37 @@
       "breakpoints": true
     },
     {
+      "idx": 123,
+      "version": "7",
+      "when": 1794429308788,
+      "tag": "0123_security_followup",
+      "breakpoints": true
+    },
+    {
+      "idx": 124,
+      "version": "7",
+      "when": 1794429910457,
+      "tag": "0124_apply_pending_0123",
+      "breakpoints": true
+    },
+    {
       "idx": 125,
       "version": "7",
-      "when": 1794429460001,
+      "when": 1794432738478,
       "tag": "0125_ring_prizes",
       "breakpoints": true
     },
     {
       "idx": 126,
       "version": "7",
-      "when": 1794429520001,
+      "when": 1794432739478,
       "tag": "0126_solo_center",
       "breakpoints": true
     },
     {
       "idx": 127,
       "version": "7",
-      "when": 1794429580001,
+      "when": 1794432740478,
       "tag": "0127_solo_free_tier",
       "breakpoints": true
     }
