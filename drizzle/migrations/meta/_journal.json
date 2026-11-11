@@ -897,6 +897,13 @@
       "when": 1794432740478,
       "tag": "0127_solo_free_tier",
       "breakpoints": true
+    },
+    {
+      "idx": 128,
+      "version": "7",
+      "when": 1794434780875,
+      "tag": "0128_apply_pending_0125_0127",
+      "breakpoints": true
     }
   ]
 }
