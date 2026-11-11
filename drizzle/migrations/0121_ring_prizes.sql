@@ -1,4 +1,4 @@
--- Daily ring prizes (Saagii, 10 Nov 2026). Closing a daily ring (Speed, Hard, Medium) pays once per 20 hours, and
+-- Daily ring prizes (Saagii, 10 Nov 2026). Closing a daily ring (Speed, Hard, Medium) pays once a day, and
 -- closing all three on the same day pays a 25-point bonus. The server counts the progress and decides the amount;
 -- the page only asks. Same numbers as src/lib/ringPrizes.ts: speed 10 per run, hard 5 and medium 2 per question,
 -- the goal counted toward the prize capped at 5 / 15 / 30. "Today" starts at the student's local midnight: the page
@@ -6,6 +6,14 @@
 -- Center students claim through tenant_claim_ring_prize() into tenant_ring_prizes, which the center board counts as
 -- practice points. Main students insert a 'ring_prize' point_transactions row, priced by student_points_allowed()
 -- through guard_point_transaction (0024), which also adds it to league points.
+-- A ring pays at most once per local day, and never twice within 20 hours (so moving the offset can't farm it).
+-- The center profile counts prizes too, so it agrees with the board again. Safe to run twice.
+SET lock_timeout = '3s';
+
+-- Widen point_transactions.category to allow 'ring_prize' (latest list: supabase/migrations/20260807155004).
+ALTER TABLE public.point_transactions DROP CONSTRAINT IF EXISTS point_transactions_category_check;
+ALTER TABLE public.point_transactions ADD CONSTRAINT point_transactions_category_check
+  CHECK (category = ANY (ARRAY['questions','section_bonus','speed_session','badge','bank_completion','streak_daily','flowers_challenge','class_test','challenge','ring_prize']));
 
 CREATE OR REPLACE FUNCTION public.ring_prize_points(_ring text, _goal int)
 RETURNS int LANGUAGE sql IMMUTABLE SET search_path = public AS $$
@@ -49,9 +57,9 @@ BEGIN
   tz_off := least(840, greatest(-840, coalesce(_tz_offset_min, 0)));
   -- Truncated in UTC so the session's TimeZone setting can't move the student's midnight.
   day_start := date_trunc('day', now() + make_interval(mins => tz_off), 'UTC') - make_interval(mins => tz_off);
-  -- Once per ring per 20 hours, so raising the goal after a payout pays nothing more.
+  -- Once per ring per local day and per 20 hours, so raising the goal after a payout pays nothing more.
   IF EXISTS (SELECT 1 FROM public.tenant_ring_prizes
-    WHERE student_id = me AND ring = _ring AND created_at > now() - interval '20 hours') THEN RETURN 0; END IF;
+    WHERE student_id = me AND ring = _ring AND (created_at > now() - interval '20 hours' OR created_at >= day_start)) THEN RETURN 0; END IF;
   IF _ring = 'all' THEN
     IF (SELECT count(DISTINCT ring) FROM public.tenant_ring_prizes
         WHERE student_id = me AND ring IN ('speed', 'hard', 'medium') AND created_at >= day_start) < 3 THEN RETURN 0; END IF;
@@ -132,7 +140,7 @@ BEGIN
     day_start := date_trunc('day', now() + make_interval(mins => tz_off), 'UTC') - make_interval(mins => tz_off);
     IF EXISTS (SELECT 1 FROM public.point_transactions
       WHERE student_account_id = p_student AND category = 'ring_prize' AND metadata->>'ring' = ring_key
-        AND created_at > now() - interval '20 hours') THEN RETURN NULL; END IF;
+        AND (created_at > now() - interval '20 hours' OR created_at >= day_start)) THEN RETURN NULL; END IF;
     IF ring_key = 'all' THEN
       IF (SELECT count(DISTINCT metadata->>'ring') FROM public.point_transactions
           WHERE student_account_id = p_student AND category = 'ring_prize'
@@ -201,6 +209,53 @@ SELECT sc.id, sc.name, sc.class_name, sc.ppts+sc.spts, sc.answered,
   row_number() OVER (ORDER BY sc.ppts+sc.spts DESC, sc.answered DESC, sc.name, sc.id), sc.tier, sc.ppts, sc.spts
 FROM scores sc ORDER BY sc.ppts+sc.spts DESC, sc.answered DESC, sc.name, sc.id;
 END $function$;
+
+-- ============ Center profile: prizes count, as on the board ============
+-- 0086's profile; only 'points' and 'activity' changed: both add tenant_ring_prizes (points, not answers).
+CREATE OR REPLACE FUNCTION public.tenant_student_profile(_institution uuid, _student uuid, _tz text DEFAULT 'UTC')
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$
+DECLARE s public.tenant_students; res jsonb;
+BEGIN
+IF NOT (public.tenant_my_student_id(_institution) IS NOT NULL OR public.tenant_has_role(_institution,'teacher') OR public.has_role(auth.uid(),'admin')) THEN RAISE EXCEPTION 'Not allowed'; END IF;
+SELECT * INTO s FROM public.tenant_students WHERE id=_student AND institution_id=_institution AND active;
+IF s.id IS NULL THEN RETURN NULL; END IF;
+IF _tz IS NULL OR NOT EXISTS (SELECT 1 FROM pg_timezone_names WHERE name = _tz) THEN _tz := 'UTC'; END IF;
+SELECT jsonb_build_object(
+  'name', s.name,
+  'class_name', (SELECT name FROM public.tenant_classes WHERE id=s.class_id),
+  'joined', s.created_at,
+  'tier', COALESCE((SELECT h.next_tier FROM public.tenant_rank_history h JOIN public.tenant_sprints hs ON hs.id=h.sprint_id WHERE h.student_id=s.id ORDER BY hs.ends_on DESC, h.created_at DESC LIMIT 1),'unranked'),
+  'practice_answered', (SELECT count(*) FROM public.tenant_attempts WHERE student_id=s.id),
+  'practice_correct', (SELECT count(*) FROM public.tenant_attempts WHERE student_id=s.id AND is_correct),
+  'math_correct', (SELECT count(*) FROM public.tenant_attempts a JOIN public.intl_questions q ON q.id=a.question_id WHERE a.student_id=s.id AND a.is_correct AND lower(coalesce(q.subject,'math'))<>'english'),
+  'english_correct', (SELECT count(*) FROM public.tenant_attempts a JOIN public.intl_questions q ON q.id=a.question_id WHERE a.student_id=s.id AND a.is_correct AND lower(q.subject)='english'),
+  'speed_runs', (SELECT count(*) FROM public.tenant_speed_runs WHERE student_id=s.id),
+  'speed_correct', (SELECT COALESCE(sum(correct),0) FROM public.tenant_speed_runs WHERE student_id=s.id),
+  'best_speed', (SELECT max(correct) FROM public.tenant_speed_runs WHERE student_id=s.id),
+  'active_days_30', (SELECT count(DISTINCT d) FROM (SELECT created_at::date d FROM public.tenant_attempts WHERE student_id=s.id AND created_at>now()-interval '30 days' UNION SELECT created_at::date FROM public.tenant_speed_runs WHERE student_id=s.id AND created_at>now()-interval '30 days') x),
+  'last_active', (SELECT max(t) FROM (SELECT max(created_at) t FROM public.tenant_attempts WHERE student_id=s.id UNION ALL SELECT max(created_at) FROM public.tenant_speed_runs WHERE student_id=s.id) y),
+  -- Same formula as tenant_student_board (0031), so the profile and the leaderboard never disagree.
+  'points', (SELECT COALESCE(sum(COALESCE(points, CASE WHEN is_correct THEN 10 ELSE 0 END)),0) FROM public.tenant_attempts WHERE student_id=s.id)
+          + (SELECT COALESCE(sum(correct),0)*10 FROM public.tenant_speed_runs WHERE student_id=s.id)
+          + (SELECT COALESCE(sum(points),0) FROM public.tenant_ring_prizes WHERE student_id=s.id),
+  -- Only the "Regular" badge (10 classes) needs it, so a classmate's full attendance count stays private.
+  'present', LEAST(10, (SELECT count(*) FROM public.tenant_attendance WHERE student_id=s.id AND status IN ('present','late'))),
+  'solved_ids', COALESCE((SELECT jsonb_agg(DISTINCT question_id) FROM public.tenant_attempts WHERE student_id=s.id AND is_correct), '[]'::jsonb),
+  'activity', COALESCE((SELECT jsonb_agg(jsonb_build_object('date', d, 'points', p, 'answers', n) ORDER BY d) FROM (
+     SELECT d, sum(p) p, sum(n) n FROM (
+       SELECT (created_at AT TIME ZONE _tz)::date d, COALESCE(points, CASE WHEN is_correct THEN 10 ELSE 0 END) p, 1 n
+         FROM public.tenant_attempts WHERE student_id=s.id AND created_at > now() - interval '371 days'
+       UNION ALL SELECT (created_at AT TIME ZONE _tz)::date, correct*10, 0
+         FROM public.tenant_speed_runs WHERE student_id=s.id AND created_at > now() - interval '371 days'
+       UNION ALL SELECT (created_at AT TIME ZONE _tz)::date, points, 0
+         FROM public.tenant_ring_prizes WHERE student_id=s.id AND created_at > now() - interval '371 days') x GROUP BY d) y), '[]'::jsonb),
+  'history', COALESCE((SELECT jsonb_agg(jsonb_build_object('sprint', hs.name, 'tier', h.tier, 'next_tier', h.next_tier, 'position', h.final_position, 'points', h.points) ORDER BY hs.ends_on, h.created_at)
+     FROM public.tenant_rank_history h JOIN public.tenant_sprints hs ON hs.id=h.sprint_id WHERE h.student_id=s.id), '[]'::jsonb)
+) INTO res;
+RETURN res;
+END $$;
+REVOKE ALL ON FUNCTION public.tenant_student_profile(uuid, uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.tenant_student_profile(uuid, uuid, text) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
 DO $$ BEGIN RAISE NOTICE '0121 applied: daily ring prizes'; END $$;
