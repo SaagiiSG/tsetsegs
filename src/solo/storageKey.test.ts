@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
-import { soloAuthOptions } from './storageKey';
+import clientSrc from '../integrations/supabase/client.ts?raw';
+import { onSoloPage, soloAuthOptions } from './storageKey';
 
 it('uses its own storage key on /solo paths only', () => {
   expect(soloAuthOptions('/solo')).toEqual({ storageKey: 'sb-solo-auth-token' });
@@ -8,6 +8,13 @@ it('uses its own storage key on /solo paths only', () => {
   for (const p of ['/practice', '/', '/soloist', '/demo/student']) expect(soloAuthOptions(p)).toEqual({});
 });
 
+it('a center host keeps /solo for its own routing, with the normal key', () => {
+  expect(onSoloPage('/solo', null)).toBe(true);
+  expect(onSoloPage('/solo', 'sky')).toBe(false);
+  expect(onSoloPage('/solo/student', 'sky')).toBe(false);
+  expect(soloAuthOptions('/solo', 'sky')).toEqual({});
+});
+
 it('is spread into the supabase client', () => {
-  expect(readFileSync('src/integrations/supabase/client.ts', 'utf8')).toContain('...soloAuthOptions()');
+  expect(clientSrc).toContain('...soloAuthOptions()');
 });

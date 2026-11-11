@@ -8,15 +8,18 @@
 -- Safe to run twice: the slice is emptied and refilled by the same rules.
 SET lock_timeout = '3s';
 
--- 1. The slice. Only the service role writes it; signed-in accounts read the ids, because the read rules below look it
--- up as the reader (same reason as demo_slice, 0108). It holds only ids, no content.
+-- 1. The slice. Only the service role writes it; solo students and staff read the ids, because the read rules below
+-- look it up as the reader (0121's demo_slice shape). Any active solo student, not only free ones: a solo student a
+-- center also added isn't free on the server, but the /solo client still filters by the slice. It holds only ids.
 CREATE TABLE IF NOT EXISTS public.solo_free_slice (item_id uuid PRIMARY KEY, kind text NOT NULL CHECK (kind IN ('question','test','video')));
 REVOKE ALL ON public.solo_free_slice FROM anon, authenticated;
 GRANT ALL ON public.solo_free_slice TO service_role;
 ALTER TABLE public.solo_free_slice ENABLE ROW LEVEL SECURITY;
 GRANT SELECT ON public.solo_free_slice TO authenticated;
 DROP POLICY IF EXISTS "Signed-in accounts read the solo free slice ids" ON public.solo_free_slice;
-CREATE POLICY "Signed-in accounts read the solo free slice ids" ON public.solo_free_slice FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Solo students and staff read the solo free slice ids" ON public.solo_free_slice;
+CREATE POLICY "Solo students and staff read the solo free slice ids" ON public.solo_free_slice FOR SELECT TO authenticated
+  USING ((SELECT public.tenant_my_student_id((SELECT public.solo_institution_id()))) IS NOT NULL OR (SELECT public.is_platform_staff()));
 
 -- 2. Fill it. Picks are by md5(id) order, so a rerun on the same bank picks the same rows. A domain with too few
 -- questions gives what it has and the NOTICE says so; a domain with none stops the migration (its name matches no
@@ -205,6 +208,9 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
 $$;
 REVOKE ALL ON FUNCTION public.solo_speed_runs_left() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.solo_speed_runs_left() TO authenticated;
+
+-- 8. Joining opens last (0125 left it closed): if anything above fails, no solo account can exist without the free tier.
+GRANT EXECUTE ON FUNCTION public.solo_join() TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
 DO $$ BEGIN RAISE NOTICE '0126 applied: solo free tier'; END $$;

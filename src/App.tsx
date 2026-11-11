@@ -18,10 +18,11 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
 import Educators from "./pages/public/Educators";
-import { resolveCenterSlug } from "./lib/tenant";
+import { resolveCenterSlug, soloHostRedirect } from "./lib/tenant";
 import CenterPortalApp from "./portal/CenterPortalApp";
 import DemoPortal from './demo/DemoPortal';
 import SoloPortal from './solo/SoloPortal';
+import { onSoloPage } from './solo/storageKey';
 import DemoStart from './demo/DemoStart';
 import { demoRoleFromPath } from './demo/storageKey';
 import { DEMO_THEME_KEY } from './demo/demoStore';
@@ -372,13 +373,15 @@ const CenterJoinRedirect = () => {
 };
 
 const App = () => {
+  const soloHome = soloHostRedirect(window.location.hostname);
+  if (soloHome) { window.location.replace(soloHome); return null; }
   const path = window.location.pathname;
   if (path === '/demo' || path.startsWith('/demo/')) {
     const demoRole = demoRoleFromPath(path);
     return demoRole ? <DemoPortal role={demoRole} /> : <ThemeProvider attribute="class" defaultTheme="light" storageKey={DEMO_THEME_KEY}><DemoStart /></ThemeProvider>;
   }
-  if (path === '/solo' || path.startsWith('/solo/')) return <SoloPortal />;
   const centerSlug = resolveCenterSlug();
+  if (onSoloPage(path, centerSlug)) return <SoloPortal />;
   if (centerSlug) {
     return (
       <QueryClientProvider client={queryClient}>

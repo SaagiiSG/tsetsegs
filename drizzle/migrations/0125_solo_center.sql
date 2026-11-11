@@ -84,8 +84,8 @@ BEGIN
   ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, provider = EXCLUDED.provider;
   RETURN sid;
 END $$;
-REVOKE ALL ON FUNCTION public.solo_join() FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.solo_join() TO authenticated;
+-- Closed until 0126 fills the free tier and opens it; authenticated by name too, since Supabase grants new functions to it.
+REVOKE ALL ON FUNCTION public.solo_join() FROM PUBLIC, anon, authenticated;
 
 -- 4. Never billing-blocked: 0018's function, refusing to block the solo center (unblocking it still works).
 CREATE OR REPLACE FUNCTION public.admin_customer_set_blocked(_id uuid, _blocked boolean)
