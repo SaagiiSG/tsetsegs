@@ -11,7 +11,7 @@ import { useCenterSprints } from './admin/ToolPages';
 import { CenterRingHistoryDialog, CenterStreakDialog, MiniRing, SKY_RING, useCenterRingHistory, useCenterStreak } from './CenterStreak';
 import { useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
 import { useCenterRingPrizeClaimer, useCenterRingPrizes } from './useCenterRingPrizes';
-import { prizeEarned, prizeLeft, type PrizeKey } from '@/lib/ringPrizes';
+import { prizeLeft, type PrizeKey } from '@/lib/ringPrizes';
 import { activeSprintId, rankFromBoard, ringStatus, todayPoints } from './studentStats';
 import type { QMeta } from './questionMeta';
 
@@ -84,7 +84,7 @@ export function CenterTopBar({ studentId, attempts, meta }: { studentId: string;
       <TodayPointsChip points={prog.ready ? todayPoints(attempts, prog.runs, new Date(), rows) : undefined} />
       <StreakChip days={streak.current} onClick={() => setStreakOpen(true)} />
       <RankChip rank={rank} onClick={() => navigate('/student/leaderboard')} />
-      {prog.ready && goalsRead.data && <RingChip p={[frac(prog.speed, goals.speed), frac(prog.hard, goals.hard), frac(prog.medium, goals.medium)]} closed={status.closed} left={left} earned={prizeEarned(goals, paid)} onClick={() => setRingOpen(true)} />}
+      {prog.ready && goalsRead.data && <RingChip p={[frac(prog.speed, goals.speed), frac(prog.hard, goals.hard), frac(prog.medium, goals.medium)]} closed={status.closed} left={left} earned={rows.reduce((n, r) => n + r.points, 0)} onClick={() => setRingOpen(true)} />}
       <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streak} history={history} goals={goals} />
       <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={history} goals={goals} />
     </div>

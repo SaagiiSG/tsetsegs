@@ -20,12 +20,14 @@ export function ringsToClaim(progress: Ring, goals: Ring, paid: ReadonlySet<Priz
 type Row = { ring: PrizeKey; points: number; created_at: string };
 
 function useRows(studentId: string) {
+  const { center } = useCenter();
+  const day = dayStartIso(); // in the key: a tab left open past midnight reads the new day on its next render
   return useQuery({
-    queryKey: ['center-ring-prizes', studentId],
+    queryKey: ['center-ring-prizes', studentId, day],
     enabled: !!studentId,
     retry: false, // 0121 may not be live: stay quiet
     queryFn: async (): Promise<Row[]> => {
-      const { data, error } = await supabase.from('tenant_ring_prizes').select('ring, points, created_at').eq('student_id', studentId).gte('created_at', dayStartIso());
+      const { data, error } = await supabase.from('tenant_ring_prizes').select('ring, points, created_at').eq('institution_id', center.id).eq('student_id', studentId).gte('created_at', day);
       if (error) throw error;
       return (data ?? []) as Row[];
     },

@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
-import { Settings2 } from 'lucide-react';
+import { Check, Settings2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PrizeKey } from '@/lib/ringPrizes';
 
