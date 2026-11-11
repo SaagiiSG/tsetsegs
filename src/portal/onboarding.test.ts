@@ -67,5 +67,8 @@ describe('steps', () => {
     expect(stepSixMessage({ is_correct: false, points: 0 }, 1, 'medium')).toBe('Not quite. Read how it works, then try once more.');
     expect(stepSixMessage({ is_correct: false, points: 0 }, 2, 'medium')).toBe("Good try — here's how it works");
     expect(stepSixMessage(null, 1, 'medium')).toBe("We couldn't save that answer. Check your connection and try again.");
+    // A free solo user gets no explanation, so the copy doesn't point at one.
+    expect(stepSixMessage({ is_correct: false, points: 0 }, 1, 'medium', true)).toBe('Not quite. Give it one more try.');
+    expect(stepSixMessage({ is_correct: false, points: 0 }, 2, 'medium', true)).toBe('Good try. Practice makes these click.');
   });
 });

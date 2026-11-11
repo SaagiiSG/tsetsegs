@@ -11,6 +11,7 @@ import { useSetTotals } from './CenterPracticeBrowser';
 import { useCenterSprints } from './admin/ToolPages';
 import { pct } from './questionMeta';
 import { centerBadges, toProfileView, type CenterBadge, type RawProfile } from './centerProfile';
+import { useSoloPlan } from './soloPlan';
 
 export function toStudentBadge(b: CenterBadge): StudentBadge {
   return {
@@ -43,6 +44,8 @@ export function CenterProfileView({ studentId, name }: { studentId: string; name
     },
   });
   const totals = useSetTotals();
+  // A free viewer's set lists are the free slice, so no master badge is judged against them, on anyone's profile.
+  const plan = useSoloPlan();
   const sprints = useCenterSprints();
   const raw = q.data;
   const sprintNumbers = useMemo(() => Object.fromEntries((sprints.data ?? []).map((s, i, l) => [s.name, l.length - i])), [sprints.data]);
@@ -50,8 +53,8 @@ export function CenterProfileView({ studentId, name }: { studentId: string; name
   const streak = useCenterStreak(useMemo(() => (v?.activeDays ?? []).map(d => ({ created_at: `${d}T12:00:00` })), [v]));
   const badges = useMemo(() => raw ? centerBadges({
     answered: raw.practice_answered, correct: raw.practice_correct, present: raw.present, solved: new Set(raw.solved_ids),
-    setIds: totals.data,
-  }) : [], [raw, totals.data]);
+    setIds: totals.data, masters: plan.premium,
+  }) : [], [raw, totals.data, plan.premium]);
 
   if (q.isLoading || sprints.isLoading) return <div className="py-6"><SkyListSkeleton rows={4} /></div>;
   if (q.error || sprints.error) return <p role="alert" className="py-8 text-center text-destructive">Could not load this profile.</p>;

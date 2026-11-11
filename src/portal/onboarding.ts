@@ -59,9 +59,11 @@ export function ringPlanCopy(goals: { hard: number; medium: number }, distinctMa
 
 export const questionSubjects = (weak: string | null) => (weak === 'reading_writing' ? ['english', 'English'] : ['math', 'Math']);
 
-/** The ring counts only correct medium/hard answers, so an easy one never claims ring progress. */
-export function stepSixMessage(result: { is_correct: boolean; points: number } | null, tryNo: 1 | 2, difficulty: string | null) {
+/** The ring counts only correct medium/hard answers, so an easy one never claims ring progress. A free solo user (`free`)
+ *  gets no explanation, so their copy doesn't point at one. */
+export function stepSixMessage(result: { is_correct: boolean; points: number } | null, tryNo: 1 | 2, difficulty: string | null, free = false) {
   if (!result) return "We couldn't save that answer. Check your connection and try again.";
+  if (!result.is_correct && free) return tryNo === 1 ? 'Not quite. Give it one more try.' : 'Good try. Practice makes these click.';
   if (!result.is_correct) return tryNo === 1 ? 'Not quite. Read how it works, then try once more.' : "Good try — here's how it works";
   const paid = result.points > 0 ? `+${result.points} points` : 'Correct';
   return ['medium', 'hard'].includes((difficulty ?? '').toLowerCase()) ? `${paid}, your ring moved` : paid;

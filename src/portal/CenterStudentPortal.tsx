@@ -63,8 +63,9 @@ import { CenterHelpPage } from './CenterHelp';
 import { motion, useMotionValue, animate, useDragControls, type PanInfo } from 'framer-motion';
 import { CenterOnboarding } from './CenterOnboarding';
 import { onboardingStep, latchGate, type GateLatch } from './onboarding';
-import { useSoloPlan } from './soloPlan';
-import { SoloLock } from './SoloLock';
+import { freeDraw, freeSectionDone, speedRunBlocked, useSoloPlan } from './soloPlan';
+import { FreeSectionDone, SoloLock } from './SoloLock';
+import { toast } from 'sonner';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -542,6 +543,13 @@ function PracticePage({ me }: { me: Me }) {
   const [domain, setDomain] = useState('all');
   const [difficulty, setDifficulty] = useState('all');
   const [q, setQ] = useState<Q | null | undefined>(undefined);
+  // A free solo user who has solved every free question in the subject gets the congratulations page in place of the next
+  // question. Read through a ref so answering doesn't redraw the question on screen.
+  const freeList = usePracticeQuestions(!plan.premium);
+  const sectionDone = useRef(false);
+  sectionDone.current = !plan.premium && !!freeList.data && freeSectionDone(freeList.data, me.attempts, subject);
+  const [congrats, setCongrats] = useState(false);
+  const drawReady = plan.ready && (plan.premium || !!freeList.data || freeList.isError);
 
   const domainOptions = useMemo(() => {
     const english = ['Information and Ideas', 'Craft and Structure', 'Expression of Ideas', 'Standard English Conventions'];
@@ -550,14 +558,16 @@ function PracticePage({ me }: { me: Me }) {
   useEffect(() => { setDomain('all'); }, [subject]);
 
   const loadQuestion = useCallback(async () => {
-    setQ(undefined);
+    setQ(undefined); setCongrats(false);
     if (pinned) {
       const { data } = await supabase.from('intl_questions').select(COLS).eq('id', pinned).maybeSingle();
       setQ((data as Q) ?? null); return;
     }
+    if (sectionDone.current) { setCongrats(true); return; }
     const sub = subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
+    const scope = await freeDraw(plan.premium);
     const base = () => {
-      let b = supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub);
+      let b = scope(supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub));
       if (subject === 'math') b = set === 'CB' ? b.or(CB_FILTER) : b.eq('question_set', set);
       if (domain !== 'all') b = b.eq('category_id', domain);
       if (difficulty !== 'all') b = b.ilike('difficulty_level', difficulty);
@@ -568,9 +578,9 @@ function PracticePage({ me }: { me: Me }) {
     const offset = Math.floor(Math.random() * count);
     const { data } = await base().range(offset, offset);
     setQ((data?.[0] as Q) ?? null);
-  }, [subject, domain, difficulty, set, pinned]);
+  }, [subject, domain, difficulty, set, pinned, plan.premium]);
   const solving = !!pinned || params.get('mode') === 'random';
-  useEffect(() => { if (solving && plan.ready) loadQuestion(); }, [loadQuestion, solving, plan.ready]);
+  useEffect(() => { if (solving && drawReady) loadQuestion(); }, [loadQuestion, solving, drawReady]);
 
   const setSet = (v: string) => { const p = new URLSearchParams(params); p.delete('q'); p.set('set', v); setParams(p); setSubject('math'); };
   const next = () => { if (pinned) { const p = new URLSearchParams(params); p.delete('q'); p.set('mode', 'random'); setParams(p); } else loadQuestion(); };
@@ -604,7 +614,7 @@ function PracticePage({ me }: { me: Me }) {
           <SelectContent>{DIFFS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select>
         {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button>}
       </div>
-      {plan.ready && !plan.premium && !pinned && subject === 'math' && set !== 'CB' ? <SoloLock title="Every Math set" /> : q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
+      {plan.ready && !plan.premium && !pinned && subject === 'math' && set !== 'CB' ? <SoloLock title="Every Math set" /> : congrats ? <FreeSectionDone subject={subject} /> : q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
       {subject === 'math' && <DesmosCalculator />}
     </div>
   );
@@ -626,6 +636,7 @@ function SpeedPage({ me }: { me: Me }) {
   const [picked, setPicked] = useState(''); const [typed, setTyped] = useState('');
   const [score, setScore] = useState<boolean[]>([]);
   const [timeUp, setTimeUp] = useState(false);
+  const [saving, setSaving] = useState(false); // the finished run is being saved, so the runs-left count is out of date
 
   const runs = useQuery({
     queryKey: ['center-speed-runs', me.student.id, 'list'],
@@ -642,7 +653,8 @@ function SpeedPage({ me }: { me: Me }) {
   const start = async (c: SpeedConfig = cfg!) => {
     setCfg(c);
     const sub = c.subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
-    const base = () => { let b = supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub); if (c.category) b = b.eq('category_id', c.category); return b; };
+    const scope = await freeDraw(plan.premium);
+    const base = () => { let b = scope(supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub)); if (c.category) b = b.eq('category_id', c.category); return b; };
     const { count } = await base().range(0, 0);
     const off = Math.max(0, Math.floor(Math.random() * Math.max(1, (count ?? 0) - 80)));
     const { data } = await base().range(off, off + 79);
@@ -653,8 +665,14 @@ function SpeedPage({ me }: { me: Me }) {
   const done = qs && (i >= qs.length || timeUp);
   useEffect(() => {
     if (!done || !qs?.length || !cfg) return;
+    setSaving(true);
     supabase.from('tenant_speed_runs').insert({ student_id: me.student.id, institution_id: center.id, subject, correct: score.filter(Boolean).length, total: Math.max(score.length, 1), duration_seconds: cfg.duration, total_time_seconds: cfg.duration - left, category: cfg.category }).select('correct').single()
-      .then(({ data }) => { if (data) emitPointsEarned(runPoints(data)); qc.invalidateQueries({ queryKey: ['center-speed-runs', me.student.id] }); });
+      .then(async ({ data, error }) => {
+        if (data) emitPointsEarned(runPoints(data));
+        if (error && free) toast.error(error.message); // the free plan's 11th run in 24 hours: "Free plan: 10 speed sessions a day"
+        await qc.invalidateQueries({ queryKey: ['center-speed-runs', me.student.id] });
+        setSaving(false);
+      });
   }, [done]);
   const answer = useCallback(async (given: string) => {
     if (!q) return;
@@ -679,7 +697,7 @@ function SpeedPage({ me }: { me: Me }) {
         <div className="flex justify-center gap-1">{[0, 1, 2].map(n => <Star key={n} className={`h-9 w-9 ${n < stars ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />)}</div>
         <p className="font-mono text-3xl">{c}/{qs.length}</p>
         <p className="text-sm sky-body">{timeUp ? 'Time is up. ' : ''}{stars === 3 ? 'Perfect pace.' : 'Run it again to climb a star.'}</p>
-        <div className="flex justify-center gap-2"><Button onClick={() => start()} disabled={free && allowance.data === 0}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Back to speed practice</Button></div>
+        <div className="flex justify-center gap-2"><Button onClick={() => start()} disabled={speedRunBlocked(free, allowance.data, saving || allowance.isFetching)}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Back to speed practice</Button></div>
       </Glass>
     );
   }
@@ -759,8 +777,10 @@ function VideosPage({ me }: { me: Me }) {
 /** The student's center badges, worked out in the browser. Null until the practice sets load, so a master badge isn't judged early. */
 function useMyCenterBadges(me: Me): CenterBadge[] | null {
   const totals = useSetTotals();
+  const plan = useSoloPlan();
   if (!totals.data) return null;
   return centerBadges({
+    masters: plan.premium,
     answered: me.attempts.length, correct: me.attempts.filter(a => a.is_correct).length,
     solved: new Set(me.attempts.filter(a => a.is_correct).map(a => a.question_id)),
     present: me.att.filter(a => a.status === 'present' || a.status === 'late').length, setIds: totals.data,

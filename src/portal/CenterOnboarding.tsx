@@ -24,7 +24,7 @@ import { isCorrect } from './LiveSession';
 import { centerSatProgress } from './centerSatSimulation';
 import type { QMeta } from './questionMeta';
 import { backStep, canSkip, defaultIntensity, helpMePick, questionSubjects, ringPlanCopy, satDateOptions, stepSixMessage, welcomeCopy } from './onboarding';
-import { useSoloPlan } from './soloPlan';
+import { freeDraw, useSoloPlan } from './soloPlan';
 import { SoloLock } from './SoloLock';
 
 export type RecordFn = (questionId: string, ok: boolean, seconds?: number, answer?: string) => Promise<{ is_correct: boolean; points: number } | null>;
@@ -89,8 +89,9 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
     if (step !== 6 || q) return; // coming back to step 6 keeps the question and the answer
     let live = true;
     (async () => {
-      const base = () => supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false)
-        .in('subject', questionSubjects(weak)).ilike('difficulty_level', 'medium');
+      const scope = await freeDraw(plan.premium);
+      const base = () => scope(supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false)
+        .in('subject', questionSubjects(weak)).ilike('difficulty_level', 'medium'));
       const { count } = await base().range(0, 0);
       const off = Math.floor(Math.random() * Math.max(1, (count ?? 0) - 20));
       const { data } = await base().range(off, off + 19);
@@ -128,7 +129,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
     setSaving(true);
     const res = await record(q.id, isCorrect(q, picked), (Date.now() - startedAt.current) / 1000, picked);
     setSaving(false);
-    setMsg(stepSixMessage(res, tryNo, q.difficulty_level));
+    setMsg(stepSixMessage(res, tryNo, q.difficulty_level, !plan.premium));
     setAnswerFailed(!res);
     if (!res) return; // not saved: same try again
     setTries(tryNo);

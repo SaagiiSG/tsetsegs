@@ -18,13 +18,13 @@ const short = (d: string) => d.replace(/ and .*/, '').replace(/Advanced Math/, '
 const CARD = { done: 'border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/15', tried: 'border-red-500/40 bg-red-500/10 hover:bg-red-500/15' };
 
 /** Every practice question (light columns). The home cards share this list so their counts match the tabs. */
-export function usePracticeQuestions() {
+export function usePracticeQuestions(enabled = true) {
   // A free solo user also reads the free test's question copies; only the free slice counts as practice.
   const plan = useSoloPlan();
   const free = !plan.premium;
   return useQuery({
     queryKey: ['center-practice-browser', free],
-    enabled: plan.ready,
+    enabled: plan.ready && enabled,
     staleTime: 5 * 60_000,
     queryFn: async () => {
       // A partial list would shrink the set totals and could award a master badge early, so any failed read fails the whole

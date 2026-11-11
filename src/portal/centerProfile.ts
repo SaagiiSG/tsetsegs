@@ -13,7 +13,8 @@ export function centerLevel(points: number): { level: number; progress: number; 
 
 export type CenterBadge = { key: string; name: string; desc: string; got: boolean; prog: [number, number]; rarity: BadgeRarity; icon: string };
 const MASTER_LOOK: Record<string, { rarity: BadgeRarity; icon: string }> = { SATMathTraining800: { rarity: 'legendary', icon: 'Crown' }, CB: { rarity: 'epic', icon: 'Diamond' } };
-export function centerBadges(i: { answered: number; correct: number; present: number; solved: Set<string>; setIds?: Record<string, string[]> }): CenterBadge[] {
+/** `masters: false` (a free solo user) leaves the set master badges out, so they're never shown or celebrated until Premium. */
+export function centerBadges(i: { answered: number; correct: number; present: number; solved: Set<string>; setIds?: Record<string, string[]>; masters?: boolean }): CenterBadge[] {
   const { answered: n, correct: c, present, solved } = i;
   const done = (k: string) => (i.setIds?.[k] ?? []).filter(id => solved.has(id)).length;
   return [
@@ -22,7 +23,7 @@ export function centerBadges(i: { answered: number; correct: number; present: nu
     { key: 'marathon', rarity: 'rare', icon: 'Mountain', name: 'Marathon', desc: 'Answer 500 questions', got: n >= 500, prog: [n, 500] },
     { key: 'sharpshooter', rarity: 'rare', icon: 'Target', name: 'Sharpshooter', desc: '80% accuracy over 50+ questions', got: n >= 50 && c / n >= 0.8, prog: [n >= 50 ? Math.round(100 * c / n) : n, n >= 50 ? 80 : 50] },
     { key: 'regular', rarity: 'uncommon', icon: 'Clock', name: 'Regular', desc: 'Attend 10 classes', got: present >= 10, prog: [present, 10] },
-    ...PRACTICE_SETS.map((s): CenterBadge => {
+    ...(i.masters === false ? [] : PRACTICE_SETS).map((s): CenterBadge => {
       const total = i.setIds?.[s.key]?.length ?? 0;
       return { key: `master_${s.key}`, ...(MASTER_LOOK[s.key] ?? { rarity: 'epic', icon: 'Gem' }), name: `${s.label} master`, desc: `Solve every ${s.label} question`, got: total > 0 && done(s.key) === total, prog: [done(s.key), total || 1] };
     }),

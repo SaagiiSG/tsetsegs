@@ -47,3 +47,11 @@ describe('center badge identity', () => it('badges carry key, rarity and icon', 
     ['regular', 'uncommon', 'Clock'], ['master_68', 'epic', 'Gem'], ['master_SATMathTraining800', 'legendary', 'Crown'], ['master_CB', 'epic', 'Diamond'],
   ]);
 }));
+
+describe('master badges on the free solo plan', () => it('are left out entirely, so they are never shown or celebrated', () => {
+  const input = { answered: 40, correct: 30, present: 0, solved: new Set(['a', 'b']), setIds: { '68': [], SATMathTraining800: [], CB: ['a', 'b'] } };
+  expect(centerBadges(input).find(b => b.key === 'master_CB')?.got).toBe(true);
+  const free = centerBadges({ ...input, masters: false });
+  expect(free.some(b => b.key.startsWith('master_'))).toBe(false);
+  expect(free.map(b => b.key)).toEqual(['first_steps', 'centurion', 'marathon', 'sharpshooter', 'regular']);
+}));
