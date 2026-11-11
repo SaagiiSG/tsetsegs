@@ -50,7 +50,7 @@ const Index = () => {
   );
 
   const proof = [
-    { v: s ? fmt(s.students) : "—", l: text("хэрэглэгч", "users"), c: "lv-blue" },
+    { v: s ? fmt(s.students) : "—", l: text("хэрэглэгч", "active users"), c: "lv-blue" },
     { v: `+${BEST_GAIN}`, l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
     { v: s ? `${s.gained100_pct}%` : "—", l: text("нь 100+ оноо ахисан", "gained 100+ points"), c: "lv-violet" },
     { v: "720", l: text("сурагч Math 700+ оноо авсан", "students scored 700+ Math"), c: "lv-orange" },

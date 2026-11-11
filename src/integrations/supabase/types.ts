@@ -6642,6 +6642,41 @@ export type Database = {
         Args: { p_points: number; p_sprint: string; p_student: string }
         Returns: undefined
       }
+      batch_by_link: {
+        Args: { _link: string }
+        Returns: {
+          batch_name: string | null
+          course_type: Database["public"]["Enums"]["course_type"]
+          created_at: string
+          english_schedule: Json | null
+          fb_group_link: string | null
+          id: string
+          is_international: boolean
+          math_schedule: Json | null
+          nickname: string | null
+          room: string | null
+          schedule: string
+          start_date: string
+          teacher: string | null
+          unique_link_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "batches"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      batch_for_registration: {
+        Args: { _batch_id: string }
+        Returns: {
+          batch_name: string
+          course_type: Database["public"]["Enums"]["course_type"]
+          id: string
+          is_international: boolean
+          teacher: string
+        }[]
+      }
       can_read_concept_video: { Args: { _path: string }; Returns: boolean }
       challenge_finish_time_sprint: {
         Args: { _challenge_id: string }
@@ -6913,6 +6948,7 @@ export type Database = {
           total_points: number
         }[]
       }
+      live_session_open: { Args: { _session: string }; Returns: boolean }
       live_session_question_list: {
         Args: { _join_code: string }
         Returns: Json
@@ -7113,8 +7149,18 @@ export type Database = {
           test_number: number
         }[]
       }
+      report_public_data: { Args: { _token: string }; Returns: Json }
+      report_settings_for_token: {
+        Args: { _token: string }
+        Returns: {
+          body: string
+          heading: string
+          sign_off: string
+        }[]
+      }
       request_student_id: { Args: never; Returns: string }
       request_student_owns: { Args: { _student_id: string }; Returns: boolean }
+      request_student_roster_ids: { Args: never; Returns: string[] }
       resolve_account_cohort: {
         Args: { _linked_student_id: string }
         Returns: string
@@ -7201,6 +7247,7 @@ export type Database = {
           test_number: number
         }[]
       }
+      shared_profile_data: { Args: { _token: string }; Returns: Json }
       shared_progress: {
         Args: { _token: string }
         Returns: {

@@ -11,6 +11,12 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
+type SharedProfileData = {
+  batch: { id: string; batch_name: string; course_type: 'SAT' | 'IELTS'; schedule: string; start_date: string } | null;
+  attendance: Record<string, any> | null;
+  homework: { session_number: number; completed: boolean | null }[];
+};
+
 export default function StudentShareProfile() {
   const { shareToken } = useParams<{ shareToken: string }>();
 
@@ -27,16 +33,15 @@ export default function StudentShareProfile() {
       if (!account) return null;
       if (!account.linked_student_id) return { id: account.id, linked_student: null };
 
-      const { data: batch, error: batchError } = account.batch_id
-        ? await supabase
-            .from('batches')
-            .select('id, batch_name, course_type, schedule, start_date')
-            .eq('id', account.batch_id)
-            .maybeSingle()
-        : { data: null, error: null };
-      if (batchError) throw batchError;
+      // Visitors aren't signed in: this function checks the share link and returns only this student's class.
+      const { data: shared, error: sharedError } = await supabase.rpc('shared_profile_data' as any, { _token: shareToken });
+      if (sharedError) throw sharedError;
+      const sharedData = shared as SharedProfileData | null;
+      const batch = sharedData?.batch ?? null;
       return {
         id: account.id,
+        attendance: sharedData?.attendance ?? null,
+        homework: sharedData?.homework ?? [],
         linked_student: {
           id: account.linked_student_id,
           first_name: account.first_name,
@@ -70,31 +75,14 @@ export default function StudentShareProfile() {
   // Fetch attendance data
   const { data: attendanceData } = useQuery({
     queryKey: ['shared-attendance', linkedStudent?.id, linkedStudent?.batch_id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('student_id', linkedStudent!.id)
-        .eq('batch_id', linkedStudent!.batch_id)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () => (studentAccount as { attendance?: Record<string, any> | null } | null)?.attendance ?? null,
     enabled: !!linkedStudent?.id && !!linkedStudent?.batch_id
   });
 
   // Fetch homework data
   const { data: homeworkData } = useQuery({
     queryKey: ['shared-homework', linkedStudent?.id, linkedStudent?.batch_id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('homework')
-        .select('session_number, completed')
-        .eq('student_id', linkedStudent!.id)
-        .eq('batch_id', linkedStudent!.batch_id);
-      if (error) throw error;
-      return data;
-    },
+    queryFn: async () => (studentAccount as { homework?: { session_number: number; completed: boolean | null }[] } | null)?.homework ?? [],
     enabled: !!linkedStudent?.id && !!linkedStudent?.batch_id
   });
 

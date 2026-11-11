@@ -7,50 +7,38 @@ export default function PublicClosingReport() {
   const { token } = useParams<{ token: string }>();
 
   const { data: settings } = useQuery({
-    queryKey: ['closing-report-settings'],
+    queryKey: ['closing-report-settings', 'public', token],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('closing_report_settings')
-        .select('*')
-        .limit(1)
-        .maybeSingle();
-      return data as { heading: string; body: string; sign_off: string } | null;
+      // Parents aren't signed in, so the wording comes from a function that checks the report link.
+      const { data } = await supabase.rpc('report_settings_for_token' as any, { _token: token });
+      const row = (data as { heading: string; body: string; sign_off: string }[] | null)?.[0];
+      return row ?? null;
     },
+    enabled: !!token,
   });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['public-closing-report', token],
     enabled: !!token,
     queryFn: async () => {
-      const { data: tokenData, error: tokenError } = await supabase
-        .from('closing_report_tokens')
-        .select('student_id, batch_id, expires_at')
-        .eq('token', token!)
-        .single();
-
-      if (tokenError || !tokenData) throw new Error('Invalid or expired link');
-      if (new Date(tokenData.expires_at) < new Date()) throw new Error('This report link has expired');
-
-      const studentId = tokenData.student_id;
-      const batchId = tokenData.batch_id;
+      // Parents aren't signed in: one function checks the link and returns this student's class, attendance and homework.
+      const { data: report, error: reportError } = await supabase.rpc('report_public_data' as any, { _token: token });
+      const payload = report as {
+        expired: boolean;
+        batch: { batch_name: string; course_type: string } | null;
+        attendance: Record<string, unknown> | null;
+        homework: { completed: boolean | null }[];
+      } | null;
+      if (reportError || !payload) throw new Error('Invalid or expired link');
+      if (payload.expired) throw new Error('This report link has expired');
 
       const { data: nameRows } = await supabase.rpc('student_name_for_report' as any, { _token: token });
       const student = (nameRows as { first_name: string; last_name: string | null }[] | null)?.[0];
 
-      const { data: batch } = await supabase
-        .from('batches')
-        .select('batch_name, course_type')
-        .eq('id', batchId)
-        .single();
-
+      const batch = payload.batch;
       if (batch?.course_type === 'IELTS') throw new Error('Report not available for IELTS');
 
-      const { data: attendance } = await supabase
-        .from('attendance')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('batch_id', batchId)
-        .single();
+      const attendance = payload.attendance;
 
       let attendanceRate = 0;
       let totalSessions = 0;
@@ -65,11 +53,7 @@ export default function PublicClosingReport() {
         attendanceRate = total > 0 ? Math.round((attended / total) * 100) : 0;
       }
 
-      const { data: homework } = await supabase
-        .from('homework')
-        .select('completed')
-        .eq('student_id', studentId)
-        .eq('batch_id', batchId);
+      const homework = payload.homework;
 
       const hwTotal = homework?.length || 0;
       const hwDone = homework?.filter(h => h.completed).length || 0;

@@ -423,11 +423,9 @@ export default function ReviewRegistration() {
   useEffect(() => {
     if (!batchParam) return;
     (async () => {
-      const { data, error } = await supabase
-        .from("batches")
-        .select("id, batch_name, teacher, course_type, is_international")
-        .eq("id", batchParam)
-        .single();
+      // Visitors aren't signed in, so the class comes from a function that only answers for this QR link.
+      const { data: rows, error } = await supabase.rpc("batch_for_registration" as any, { _batch_id: batchParam });
+      const data = (rows as { id: string; batch_name: string | null; teacher: string | null; course_type: "SAT" | "IELTS"; is_international: boolean }[] | null)?.[0] ?? null;
       if (error || !data) {
         toast.error(COPY.mn.badLink);
         setStep("code"); // Fall back to code flow
