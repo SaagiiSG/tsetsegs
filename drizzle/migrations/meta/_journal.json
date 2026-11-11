@@ -850,24 +850,24 @@
       "breakpoints": true
     },
     {
-      "idx": 121,
+      "idx": 124,
       "version": "7",
-      "when": 1794354350546,
-      "tag": "0121_ring_prizes",
+      "when": 1794429460001,
+      "tag": "0124_ring_prizes",
       "breakpoints": true
     },
     {
-      "idx": 122,
+      "idx": 125,
       "version": "7",
-      "when": 1794360534825,
-      "tag": "0122_solo_center",
+      "when": 1794429520001,
+      "tag": "0125_solo_center",
       "breakpoints": true
     },
     {
-      "idx": 123,
+      "idx": 126,
       "version": "7",
-      "when": 1794367202072,
-      "tag": "0123_solo_free_tier",
+      "when": 1794429580001,
+      "tag": "0126_solo_free_tier",
       "breakpoints": true
     }
   ]

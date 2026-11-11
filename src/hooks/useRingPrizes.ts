@@ -68,7 +68,7 @@ export function useRingPrizeClaimer(enabled = true): void {
           sprint_id: activeSprint?.id ?? null,
         }).select('points');
         const points = data?.[0]?.points ?? 0;
-        if (error || points <= 0) return; // refused (or 0121 not live): nothing to celebrate
+        if (error || points <= 0) return; // refused (or 0124 not live): nothing to celebrate
         emitPointsEarned(points);
         emitRingPrize({ ring, points });
         for (const key of ['ring-prizes', 'today-points', 'sprint-leaderboard', 'all-time-leaderboard']) qc.invalidateQueries({ queryKey: [key] });

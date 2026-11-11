@@ -139,7 +139,7 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
                   initial={reduce ? false : { x: 48, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={reduce ? undefined : { opacity: 0 }}
                   transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}>
                   <TopicMap unit={unit} nextVideoId={next?.videoId ?? null} onOpen={setOpen} />
-                  {/* A free solo user is sent only each topic's first lesson (0123); the rest are Premium. */}
+                  {/* A free solo user is sent only each topic's first lesson (0126); the rest are Premium. */}
                   {!plan.premium && <SoloLock title="Every lesson in this topic" />}
                 </motion.div>
               )}
