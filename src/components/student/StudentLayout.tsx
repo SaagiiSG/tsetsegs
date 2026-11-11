@@ -36,6 +36,9 @@ import { AnnouncementBell } from './AnnouncementBell';
 import { StreakAndRankBar } from './StreakAndRankBar';
 import { TodayPointsChip } from './TodayPointsChip';
 import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
+import { RingPrizeCelebration } from './RingPrizeCelebration';
+import { RING_COLORS } from './dashboard/DailyRing';
+import { useRingPrizeClaimer } from '@/hooks/useRingPrizes';
 import { ChallengeWinCelebration } from './challenges/ChallengeWinCelebration';
 
 import { TourProvider } from './onboarding/TourProvider';
@@ -53,6 +56,7 @@ function StudentLayoutContent() {
   const courses = useStudentCourses();
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const currentStreak = streak?.current_streak ?? 0;
+  useRingPrizeClaimer(!!student && !((teacherUser && teacherName) || isAdmin)); // never pay a student's ring while staff is viewing
 
   // Show onboarding if student has no SAT date set and hasn't completed onboarding
   useEffect(() => {
@@ -226,6 +230,7 @@ function StudentLayoutContent() {
       <StreakBrokenOverlay />
       <ActiveChallengeHUD />
       <ChallengeWinCelebration />
+      <RingPrizeCelebration colors={RING_COLORS} />
       <TourOverlay />
 
 

@@ -5,7 +5,14 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
+import { useDailyGoals } from '@/hooks/useDailyGoals';
+import { useDailyProgress } from '@/hooks/useDailyProgress';
+import { useRingPrizes } from '@/hooks/useRingPrizes';
+import { prizeLeft, type PrizeKey } from '@/lib/ringPrizes';
+import { ringStatus } from '@/portal/studentStats';
 import { TodayPointsChip } from './TodayPointsChip';
+import { RingChip } from './RingChip';
+import { RING_COLORS } from './dashboard/DailyRing';
 import { cn } from '@/lib/utils';
 
 interface StreakAndRankBarProps {
@@ -21,6 +28,14 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
   const { currentUserEntry, activeSprint } = useLeaderboard();
   const rank = currentUserEntry?.rank ?? null;
   const group = currentUserEntry?.groupNumber;
+  const { goals } = useDailyGoals();
+  const { data: progress } = useDailyProgress();
+  const { paid, paidPoints } = useRingPrizes();
+  const status = ringStatus(progress ?? { speed: 0, hard: 0, medium: 0 }, goals);
+  // A ring with no goal never pays (nor the bonus), so it isn't counted as left to win.
+  const noGoal = (['speed', 'hard', 'medium'] as const).filter(k => goals[k] <= 0);
+  const left = prizeLeft(goals, new Set<PrizeKey>([...paid, ...noGoal, ...(noGoal.length ? ['all' as const] : [])]));
+  const frac = (v: number, g: number) => (g > 0 ? v / g : 1);
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
@@ -57,6 +72,17 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
       )}
 
       <TodayPointsChip />
+
+      {progress && (
+        <RingChip
+          p={[frac(progress.speed, goals.speed), frac(progress.hard, goals.hard), frac(progress.medium, goals.medium)]}
+          closed={status.closed}
+          left={left}
+          earned={Object.values(paidPoints).reduce((n, v) => n + v, 0)}
+          colors={RING_COLORS}
+          onClick={onStreakClick ?? (() => navigate('/practice/dashboard'))}
+        />
+      )}
 
       <div
         className="student-chip text-[10px] uppercase"

@@ -8,12 +8,15 @@ import { TIER_DISPLAY_NAMES, type TierType } from '@/data/badgeDefinitions';
 import { TIER_ASSETS } from '@/components/student/leaderboard/tierAssets';
 import { useCenter } from './centerContext';
 import { useCenterSprints } from './admin/ToolPages';
-import { CenterRingHistoryDialog, CenterStreakDialog, MiniRing, SKY_RING, useCenterRingHistory, useCenterStreak } from './CenterStreak';
+import { RingChip } from '@/components/student/RingChip';
+import { CenterRingHistoryDialog, CenterStreakDialog, useCenterRingHistory, useCenterStreak } from './CenterStreak';
 import { useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
 import { useCenterRingPrizeClaimer, useCenterRingPrizes } from './useCenterRingPrizes';
 import { prizeLeft, type PrizeKey } from '@/lib/ringPrizes';
 import { activeSprintId, rankFromBoard, ringStatus, todayPoints } from './studentStats';
 import type { QMeta } from './questionMeta';
+
+export { RingChip };
 
 type Rank = { place: number; tier: TierType };
 
@@ -47,15 +50,6 @@ export function RankChip({ rank, onClick }: { rank: Rank | null; onClick?: () =>
       <img src={TIER_ASSETS[rank.tier].image} alt="" className="-my-1 h-5 w-5 object-contain" />
       <span className="tabular-nums">{`#${rank.place}`}</span>
       <span className="text-[9px] text-muted-foreground">{TIER_DISPLAY_NAMES[rank.tier]}</span>
-    </button>
-  );
-}
-
-export function RingChip({ p, closed, left, earned, onClick }: { p: [number, number, number]; closed: number; left?: number; earned?: number; onClick?: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="max-md:!hidden student-chip shrink-0" title="Daily rings" aria-label={`${closed} of 3 daily rings closed`}>
-      <MiniRing size={18} stroke={1.5} gap={1} p={p} colors={SKY_RING} />
-      <span className="tabular-nums">{`${closed}/3`}{closed === 3 ? (earned ? ` · +${earned} ✓` : '') : left ? ` · +${left}` : ''}</span>
     </button>
   );
 }

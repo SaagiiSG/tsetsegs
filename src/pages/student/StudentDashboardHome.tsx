@@ -7,6 +7,8 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { useSyncBadgeProgress } from '@/hooks/useSyncBadgeProgress';
 import { useDailyGoals } from '@/hooks/useDailyGoals';
 import { useDailyProgress } from '@/hooks/useDailyProgress';
+import { useRingPrizes } from '@/hooks/useRingPrizes';
+import type { PrizeKey } from '@/lib/ringPrizes';
 
 import { DailyRing } from '@/components/student/dashboard/DailyRing';
 import { SetProgressIsland } from '@/components/student/dashboard/SetProgressIsland';
@@ -29,6 +31,7 @@ export default function StudentDashboardHome() {
   const { isEnabled } = useFeatureFlags();
   const { goals, isSet: goalsSet, isLoading: goalsLoading } = useDailyGoals();
   const { data: progress } = useDailyProgress();
+  const { paid, prizes, paidPoints } = useRingPrizes();
 
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [showClosingReport, setShowClosingReport] = useState(false);
@@ -129,6 +132,7 @@ export default function StudentDashboardHome() {
             medium={{ current: progress?.medium ?? 0, goal: goals.medium }}
             onEditGoals={() => setGoalDialogOpen(true)}
             onShowHistory={() => setStreakHistoryOpen(true)}
+            prizes={Object.fromEntries((Object.keys(prizes) as PrizeKey[]).map(k => [k, { points: paidPoints[k] ?? prizes[k], paid: paid.has(k) }])) as Record<PrizeKey, { points: number; paid: boolean }>}
           />
         </motion.div>
         <motion.div

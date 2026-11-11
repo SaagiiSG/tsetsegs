@@ -21,7 +21,7 @@ interface DailyRingProps {
   prizes?: Record<PrizeKey, { points: number; paid: boolean }>;
 }
 
-const RING_COLORS = {
+export const RING_COLORS = {
   speed: 'hsl(45, 95%, 55%)',    // yellow (outer)
   hard: 'hsl(0, 84%, 60%)',      // coral/red (middle)
   medium: 'hsl(180, 85%, 45%)',  // teal (inner)
