@@ -45,7 +45,7 @@ export function CenterRankings({ studentId }: { studentId: string }) {
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
         allPages(p => supabase.from('tenant_speed_runs').select('id, created_at, correct').eq('institution_id', center.id).eq('student_id', studentId)
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
-        // Fail soft: if 0124 isn't live yet the chart still shows answers and runs.
+        // Fail soft: if 0125 isn't live yet the chart still shows answers and runs.
         allPages(p => supabase.from('tenant_ring_prizes').select('id, created_at, points').eq('institution_id', center.id).eq('student_id', studentId)
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)).catch(() => []),
       ]);

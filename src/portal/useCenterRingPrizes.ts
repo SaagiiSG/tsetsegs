@@ -33,7 +33,7 @@ function useRows(studentId: string) {
     enabled: !!studentId,
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase.from('tenant_ring_prizes').select('ring, points, created_at').eq('institution_id', center.id).eq('student_id', studentId).gte('created_at', day);
-      return error ? [] : (data ?? []) as Row[]; // fail soft: 0124 may not be live yet
+      return error ? [] : (data ?? []) as Row[]; // fail soft: 0125 may not be live yet
     },
   });
 }

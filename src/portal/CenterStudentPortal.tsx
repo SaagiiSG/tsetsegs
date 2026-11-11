@@ -642,7 +642,7 @@ function SpeedPage({ me }: { me: Me }) {
     queryKey: ['center-speed-runs', me.student.id, 'list'],
     queryFn: async () => ((await supabase.from('tenant_speed_runs').select('id, created_at, subject, correct, total, duration_seconds, total_time_seconds, category').eq('student_id', me.student.id).order('created_at', { ascending: false }).limit(200)).data ?? []) as SpeedRun[],
   });
-  // Free solo users get 10 runs per rolling 24 hours (0126's guard). NULL (anyone not free) means no limit, never 0.
+  // Free solo users get 10 runs per rolling 24 hours (0127's guard). NULL (anyone not free) means no limit, never 0.
   const plan = useSoloPlan();
   const free = plan.ready && !plan.premium;
   const allowance = useQuery({

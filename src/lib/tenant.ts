@@ -1,7 +1,7 @@
 // Resolves which course-center portal (if any) this page load belongs to.
 // Production: <slug>.flowersos.co. Preview/local only: ?center=<slug> (remembered for the tab; ?center= clears it).
 const ROOT_DOMAIN = 'flowersos.co';
-// 'solo' is the built-in solo center (0125): it lives at flowersos.co/solo, never on its own subdomain.
+// 'solo' is the built-in solo center (0126): it lives at flowersos.co/solo, never on its own subdomain.
 const RESERVED = new Set(['www', 'app', 'admin', 'api', 'solo']);
 const KEY = 'center-portal-preview-slug';
 

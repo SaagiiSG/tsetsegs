@@ -1,8 +1,8 @@
--- Solo portal, part 2 (Saagii, 10 Nov 2026): the free tier. A free solo user (is_free_solo_user(), 0125) reads only
+-- Solo portal, part 2 (Saagii, 10 Nov 2026): the free tier. A free solo user (is_free_solo_user(), 0126) reads only
 -- solo_free_slice: 30 Math questions from the CB set, 100 English questions, 1 practice test (and that test's
 -- questions, so it can run) and the first lesson of every video topic unit; and gets 10 speed runs per rolling 24
 -- hours. The demo-slice pattern (0108): each rule below is its latest definition with one added line, and everyone
--- else reads exactly as before, because that line is true for anyone who isn't a free solo user. Assumes 0125.
+-- else reads exactly as before, because that line is true for anyone who isn't a free solo user. Assumes 0126.
 -- Free solo checks live inside shared rules and functions; a later CREATE OR REPLACE drops them silently, so each added
 -- line carries "Free solo check (solo plan, 10 Nov): keep this line when rewriting." Keep the demo lines too.
 -- Safe to run twice: the slice is emptied and refilled by the same rules.
@@ -48,7 +48,7 @@ BEGIN
     LIMIT k.quota;
     GET DIAGNOSTICS n = ROW_COUNT;
     IF n = 0 THEN
-      RAISE EXCEPTION '0126: no % questions in the % domain; check the question_categories names', k.subject, k.domain;
+      RAISE EXCEPTION '0127: no % questions in the % domain; check the question_categories names', k.subject, k.domain;
     END IF;
     msg := msg || format('%s %s %s/%s%s; ', k.subject, k.domain, n, k.quota, CASE WHEN n < k.quota THEN ' (SHORT: only ' || n || ' exist)' ELSE '' END);
   END LOOP;
@@ -70,7 +70,7 @@ BEGIN
   -- Videos: the first lesson of each unit topicUnits (src/portal/videoTopics.ts:50) builds from the published videos.
   -- English is a domain in ENGLISH_AREAS, one unit per trimmed module (or the domain when there is none); Math is one
   -- unit per TOPICS name, matched on the trimmed module; any other Math video is the one "More videos" unit (NULL here).
-  -- Trimmed means 0125's whitespace class (NBSP and the other Unicode spaces), as JS trim() does.
+  -- Trimmed means 0126's whitespace class (NBSP and the other Unicode spaces), as JS trim() does.
   -- First means lowest order_index (id breaks ties).
   INSERT INTO public.solo_free_slice (item_id, kind)
   SELECT DISTINCT ON (u.english, u.unit) u.id, 'video' FROM (
@@ -89,7 +89,7 @@ BEGIN
   ORDER BY u.english, u.unit, u.order_index, u.id;
   GET DIAGNOSTICS n = ROW_COUNT;
 
-  RAISE NOTICE '0126: solo free slice: %videos: % (one per topic unit)', msg, n;
+  RAISE NOTICE '0127: solo free slice: %videos: % (one per topic unit)', msg, n;
 END $$;
 
 -- 3. The free test's questions, for the read rule below: every active International copy of its Math questions, the
@@ -209,8 +209,8 @@ $$;
 REVOKE ALL ON FUNCTION public.solo_speed_runs_left() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.solo_speed_runs_left() TO authenticated;
 
--- 8. Joining opens last (0125 left it closed): if anything above fails, no solo account can exist without the free tier.
+-- 8. Joining opens last (0126 left it closed): if anything above fails, no solo account can exist without the free tier.
 GRANT EXECUTE ON FUNCTION public.solo_join() TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
-DO $$ BEGIN RAISE NOTICE '0126 applied: solo free tier'; END $$;
+DO $$ BEGIN RAISE NOTICE '0127 applied: solo free tier'; END $$;

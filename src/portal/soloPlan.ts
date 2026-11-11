@@ -28,7 +28,7 @@ export function useSoloPlan(): { isSolo: boolean; premium: boolean; ready: boole
   return isSolo ? { isSolo, premium: isPremium(row.data ?? null), ready: !row.isPending } : { isSolo, premium: true, ready: true };
 }
 
-/** The free slice's question ids (0126). A free user's practice lists, counts and progress use only these. */
+/** The free slice's question ids (0127). A free user's practice lists, counts and progress use only these. */
 export async function freeQuestionIds() {
   const { data, error } = await supabase.from('solo_free_slice').select('item_id').eq('kind', 'question');
   if (error) throw error;

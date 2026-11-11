@@ -1,6 +1,6 @@
 -- Solo portal, part 1 (Saagii, 10 Nov 2026): the solo portal is the center portal running for one built-in center
 -- (slug 'solo', name 'flowersos', UTC). solo_join() turns the signed-in account into a tenant_students row of that
--- center, and is_free_solo_user() says when the caller is a solo student without premium (0126 narrows their reads).
+-- center, and is_free_solo_user() says when the caller is a solo student without premium (0127 narrows their reads).
 -- Never narrow staff: platform staff, center staff, students of another center and main-app students (an auth account
 -- linked to a student_accounts row) can't join, and is_free_solo_user() is false for them. No new solo accounts from
 -- Mongolia (Cloudflare's cf-ipcountry header); an existing solo student still gets their id back.
@@ -11,14 +11,14 @@ SET lock_timeout = '3s';
 -- strangers on its roster.
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM public.institution_customers WHERE lower(slug) = 'solo' AND (name <> 'flowersos' OR is_demo)) THEN
-    RAISE EXCEPTION '0125: the slug solo already belongs to another center';
+    RAISE EXCEPTION '0126: the slug solo already belongs to another center';
   END IF;
 END $$;
 INSERT INTO public.institution_customers (name, slug, status, portal_enabled, is_demo, portal_settings)
 VALUES ('flowersos', 'solo', 'active', true, false, '{"timezone": "UTC"}'::jsonb)
 ON CONFLICT (lower(slug)) WHERE slug IS NOT NULL DO NOTHING;
 
--- Definer: only admins read institution_customers, and 0126's read rules call this as the student.
+-- Definer: only admins read institution_customers, and 0127's read rules call this as the student.
 CREATE OR REPLACE FUNCTION public.solo_institution_id() RETURNS uuid
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT id FROM public.institution_customers WHERE lower(slug) = 'solo' AND NOT is_demo
@@ -27,7 +27,7 @@ $$;
 REVOKE ALL ON FUNCTION public.solo_institution_id() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.solo_institution_id() TO anon, authenticated, service_role;
 
--- 2. Who is a free solo user. Never NULL: 0126's read rules use it in NOT / AND.
+-- 2. Who is a free solo user. Never NULL: 0127's read rules use it in NOT / AND.
 CREATE OR REPLACE FUNCTION public.is_free_solo_user() RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT coalesce(
@@ -84,7 +84,7 @@ BEGIN
   ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, provider = EXCLUDED.provider;
   RETURN sid;
 END $$;
--- Closed until 0126 fills the free tier and opens it; authenticated by name too, since Supabase grants new functions to it.
+-- Closed until 0127 fills the free tier and opens it; authenticated by name too, since Supabase grants new functions to it.
 REVOKE ALL ON FUNCTION public.solo_join() FROM PUBLIC, anon, authenticated;
 
 -- 4. Never billing-blocked: 0018's function, refusing to block the solo center (unblocking it still works).
@@ -109,4 +109,4 @@ WHERE c.id = public.solo_institution_id()
   AND NOT EXISTS (SELECT 1 FROM public.tenant_sprints s WHERE s.institution_id = c.id);
 
 NOTIFY pgrst, 'reload schema';
-DO $$ BEGIN RAISE NOTICE '0125 applied: solo center'; END $$;
+DO $$ BEGIN RAISE NOTICE '0126 applied: solo center'; END $$;

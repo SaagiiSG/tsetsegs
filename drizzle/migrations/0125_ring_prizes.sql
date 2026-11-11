@@ -275,4 +275,4 @@ REVOKE ALL ON FUNCTION public.tenant_student_profile(uuid, uuid, text) FROM PUBL
 GRANT EXECUTE ON FUNCTION public.tenant_student_profile(uuid, uuid, text) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
-DO $$ BEGIN RAISE NOTICE '0124 applied: daily ring prizes'; END $$;
+DO $$ BEGIN RAISE NOTICE '0125 applied: daily ring prizes'; END $$;
