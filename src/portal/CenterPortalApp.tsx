@@ -128,9 +128,10 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     );
   }
 
+  const isSolo = center.slug === 'solo';
   const home = role === 'center_admin' ? '/admin' : role === 'teacher' ? '/teacher' : role === 'student' ? (afterSignIn() ?? '/student') : '/';
   return (
-    <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, isSolo: center.slug === 'solo', signOut, reloadCenter: loadCenter }}>
+    <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, isSolo, signOut, reloadCenter: loadCenter }}>
       {role === 'center_admin' && (access?.warnings ?? 0) > 0 && (
         <div role="alert" className="relative z-50 bg-status-risk/10 text-status-risk text-sm text-center px-4 py-2 border-b border-status-risk/20">
           Payment overdue — warning {access!.warnings} of 3. After 3 warnings, access to this portal can be paused. To settle your bill, <ContactSupport centerId={center.id} variant="link" className="h-auto p-0 text-status-risk underline" />.
@@ -142,7 +143,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
         <Route path="/" element={role ? <Navigate to={home} replace /> : <CenterSignIn signedInWithoutAccess={!!session} />} />
         <Route path="/admin/*" element={role === 'center_admin' ? <CenterAdminPortal /> : <Navigate to={home} replace />} />
         <Route path="/teacher/*" element={role === 'teacher' || role === 'center_admin' ? <CenterTeacherPortal /> : <Navigate to={home} replace />} />
-        <Route path="/student/*" element={role === 'student' ? center.slug === 'solo' ? <CenterStudentPortal /> : <CenterGoogleGate><CenterStudentPortal /></CenterGoogleGate> : <Navigate to={home} replace />} />
+        <Route path="/student/*" element={role === 'student' ? isSolo ? <CenterStudentPortal /> : <CenterGoogleGate><CenterStudentPortal /></CenterGoogleGate> : <Navigate to={home} replace />} />
         <Route path="*" element={<Navigate to={home} replace />} />
       </Routes>}
     </CenterContext.Provider>

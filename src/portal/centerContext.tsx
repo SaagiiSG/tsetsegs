@@ -58,7 +58,7 @@ export function useCenterBrand(center: Center | null | undefined) {
 export function CenterLogo({ center, className = 'h-8 w-8' }: { center: Center; className?: string }) {
   const logo = center.portal_settings?.logo_url;
   const label = centerDisplayName(center);
-  if (center.slug === 'solo') return <img src="/favicon.svg" alt="flowersos logo" className={`${className} rounded-md object-contain bg-background`} />;
+  if (useContext(CenterContext)?.isSolo) return <img src="/favicon.svg" alt="flowersos logo" className={`${className} rounded-md object-contain bg-background`} />;
   return logo
     ? <img src={logo} alt={`${label} logo`} className={`${className} rounded-md object-contain bg-background`} />
     : <span aria-hidden className={`${className} rounded-md bg-primary text-primary-foreground grid place-items-center font-chillax font-semibold text-sm`}>{label.slice(0, 1).toUpperCase()}</span>;

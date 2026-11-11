@@ -18,14 +18,16 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
   </main>
 );
 
-export function SoloBlocked({ onHaveAccount }: { onHaveAccount: () => void }) {
+// No-session path passes onHaveAccount; a refused join passes onSignOut instead, since "I already have an account" would only bounce back here.
+export function SoloBlocked({ onHaveAccount, onSignOut }: { onHaveAccount?: () => void; onSignOut?: () => void }) {
   return (
     <Shell>
       <h1 className="font-chillax text-2xl font-semibold">Solo accounts are for students outside Mongolia</h1>
       <p className="text-sm text-muted-foreground">Solo бүртгэл зөвхөн Монголоос гадна байгаа сурагчдад зориулагдсан. Монголд flowersos нь Flowers-ийн SAT сургалттай хамт ирдэг.</p>
       <p className="text-sm text-muted-foreground">Solo accounts are for students outside Mongolia. In Mongolia, flowersos comes with the Flowers SAT course.</p>
       <Button asChild className="w-full"><a href="/?lang=mon">Flowers SAT course</a></Button>
-      <Button variant="link" size="sm" className="px-0" onClick={onHaveAccount}>I already have a solo account</Button>
+      {onHaveAccount && <Button variant="link" size="sm" className="px-0" onClick={onHaveAccount}>I already have a solo account</Button>}
+      {onSignOut && <Button variant="link" size="sm" className="px-0" onClick={onSignOut}>Sign out</Button>}
     </Shell>
   );
 }
@@ -53,7 +55,7 @@ export default function SoloSignIn() {
     const ok = await run(() => supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: origin + '/solo', data: { full_name: name.trim() } } }));
     if (ok) setSent(true);
   };
-  const verify = (token: string) => run(() => supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' }));
+  const verify = async (token: string) => { if (!(await run(() => supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' })))) setCode(''); };
 
   return (
     <Shell>

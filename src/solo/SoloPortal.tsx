@@ -31,9 +31,11 @@ export default function SoloPortal() {
     if (!userId) { setJoined('pending'); return; }
     let live = true;
     // Safe to repeat: solo_join() returns the same student on every call.
-    Promise.resolve(supabase.rpc('solo_join' as any))
-      .then(({ error }) => live && setJoined(error ? error.message || 'Could not open your solo account.' : 'ok'))
-      .catch(e => live && setJoined((e as Error)?.message || 'Could not open your solo account.'));
+    supabase.rpc('solo_join')
+      .then(
+        ({ error }) => live && setJoined(error ? error.message || 'Could not open your solo account.' : 'ok'),
+        e => live && setJoined((e as Error)?.message || 'Could not open your solo account.'),
+      );
     return () => { live = false; };
   }, [userId]);
 
@@ -45,7 +47,7 @@ export default function SoloPortal() {
   else if (!session) body = deviceLanguage() === 'mon' && !haveAccount ? <SoloBlocked onHaveAccount={() => setHaveAccount(true)} /> : <SoloSignIn />;
   else if (joined === 'pending') body = loading;
   else if (joined !== 'ok') {
-    body = /mongolia/i.test(joined) ? <SoloBlocked onHaveAccount={signOut} /> : (
+    body = /mongolia/i.test(joined) ? <SoloBlocked onSignOut={signOut} /> : (
       <main className="min-h-screen grid place-items-center p-6 text-center">
         <div className="max-w-sm space-y-3">
           <h1 className="font-chillax text-2xl font-semibold">Can't open solo</h1>
