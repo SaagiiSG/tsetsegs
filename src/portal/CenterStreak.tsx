@@ -9,7 +9,7 @@ import type { QMeta } from './questionMeta';
 const COLORS = { speed: 'hsl(45, 95%, 55%)', hard: 'hsl(0, 84%, 60%)', medium: 'hsl(180, 85%, 45%)' };
 type Attempt = { question_id: string; is_correct: boolean; created_at: string };
 export const SKY_RING = { speed: '#8B7CF6', hard: '#D28CF5', medium: '#FBC2E5' };
-type Run = { created_at: string };
+type Run = { created_at: string; correct: number };
 type Goals = { speed: number; hard: number; medium: number };
 
 export const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -68,7 +68,8 @@ export function useCenterRingHistory(attempts: Attempt[], runs: Run[], meta: Rec
     const b: Record<string, { speed: number; hard: Set<string>; medium: Set<string> }> = {};
     const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (days - 1));
     for (let i = 0; i < days; i++) { const d = new Date(start); d.setDate(start.getDate() + i); b[dayKey(d)] = { speed: 0, hard: new Set(), medium: new Set() }; }
-    for (const r of runs) { const k = dayKey(new Date(r.created_at)); if (b[k]) b[k].speed++; }
+    // A run with nothing correct doesn't fill the ring (speedRunsToday's rule, and the server's).
+    for (const r of runs) { const k = dayKey(new Date(r.created_at)); if (b[k] && r.correct > 0) b[k].speed++; }
     for (const a of attempts) {
       if (!a.is_correct) continue;
       const k = dayKey(new Date(a.created_at)); if (!b[k]) continue;

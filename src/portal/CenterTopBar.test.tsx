@@ -20,5 +20,11 @@ describe('top bar chips', () => {
     expect(open).toContain('1/3'); expect(open).toContain('+70'); expect(open).toMatch(/class="max-md:!hidden student-chip/);
     expect(html(<RingChip p={[1, 1, 1]} closed={3} earned={90} left={0} />)).toContain('+90');
   });
+  it('checks only once the bonus is paid, and says the prize aloud', () => {
+    expect(html(<RingChip p={[1, 1, 1]} closed={3} earned={65} />)).not.toContain('✓');
+    const paid = html(<RingChip p={[1, 1, 1]} closed={3} earned={90} allPaid />);
+    expect(paid).toContain('+90 ✓'); expect(paid).toContain('aria-label="3 of 3 daily rings closed, 90 points earned, all rings paid"');
+    expect(html(<RingChip p={[1, 0, 0]} closed={1} left={70} />)).toContain('aria-label="1 of 3 daily rings closed, 70 points to win"');
+  });
   it('shows no rank chip until the rank is real', () => expect(html(<RankChip rank={null} />)).toBe(''));
 });

@@ -11,6 +11,7 @@ export interface PointsBreakdown {
   speedSessions: number;
   badges: number;
   bankCompletions: number;
+  ringPrizes: number;
 }
 
 export interface LeaderboardEntry {
@@ -309,7 +310,8 @@ export function useLeaderboard(selectedTier?: TierType) {
             sectionBonuses: 0,
             speedSessions: 0,
             badges: 0,
-            bankCompletions: 0
+            bankCompletions: 0,
+            ringPrizes: 0
           };
         }
         switch (t.category) {
@@ -327,6 +329,9 @@ export function useLeaderboard(selectedTier?: TierType) {
             break;
           case 'bank_completion':
             breakdowns[t.student_account_id].bankCompletions += t.points;
+            break;
+          case 'ring_prize':
+            breakdowns[t.student_account_id].ringPrizes += t.points;
             break;
         }
       });
@@ -360,7 +365,8 @@ export function useLeaderboard(selectedTier?: TierType) {
             sectionBonuses: 0,
             speedSessions: 0,
             badges: 0,
-            bankCompletions: 0
+            bankCompletions: 0,
+            ringPrizes: 0
           }
         };
       });

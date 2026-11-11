@@ -22,9 +22,9 @@ export function RingPrizeCelebration({ colors = DEFAULT_COLORS }: { colors?: Col
   const reduce = useReducedMotion();
   const [queue, setQueue] = useState<PrizeEvent[]>([]);
   const head = queue[0];
-  // The big card waits for a clear screen; a small ring toast never covers anything.
-  const turn = usePopupTurn('ring-prize-all', head?.ring === 'all');
-  const shown = head && (head.ring !== 'all' || turn) ? head : undefined;
+  // Every prize waits for a clear screen, so neither the toast nor its confetti lands on a timed run or a dialog.
+  const turn = usePopupTurn('ring-prize', !!head);
+  const shown = turn ? head : undefined;
 
   useEffect(() => {
     const on = (e: Event) => setQueue(q => [...q, (e as CustomEvent<PrizeEvent>).detail]);
@@ -42,6 +42,9 @@ export function RingPrizeCelebration({ colors = DEFAULT_COLORS }: { colors?: Col
   const accent = tint[0];
   return (
     <>
+      <AnimatePresence>
+        {big && <motion.div key={`scrim-${shown.id}`} className="pointer-events-none fixed inset-0 z-[100] bg-background/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} />}
+      </AnimatePresence>
       {shown && !reduce && <Confetti key={shown.id} className="!fixed !z-[100] pointer-events-none" width={window.innerWidth} height={window.innerHeight} recycle={false} numberOfPieces={big ? 300 : 120} colors={tint} />}
       <AnimatePresence>
         {shown && (

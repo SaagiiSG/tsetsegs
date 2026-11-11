@@ -19,7 +19,7 @@ import { allPages } from './centerApi';
 
 const tierName = (tier: string) => tier === 'platinum' ? 'Emerald' : tier.charAt(0).toUpperCase() + tier.slice(1);
 const asTier = (t: string | null | undefined): TierType => (TIER_ORDER as readonly string[]).includes(t ?? '') ? t as TierType : 'unranked';
-const EMPTY_BREAKDOWN = { questions: 0, sectionBonuses: 0, speedSessions: 0, badges: 0, bankCompletions: 0 };
+const EMPTY_BREAKDOWN = { questions: 0, sectionBonuses: 0, speedSessions: 0, badges: 0, bankCompletions: 0, ringPrizes: 0 };
 const dayAfter = (date: string) => { const d = new Date(`${date}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
 
 /** Customer leaderboard: same tabs and components as the main student leaderboard, fed only by tenant data. */
@@ -45,8 +45,9 @@ export function CenterRankings({ studentId }: { studentId: string }) {
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
         allPages(p => supabase.from('tenant_speed_runs').select('id, created_at, correct').eq('institution_id', center.id).eq('student_id', studentId)
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
+        // Fail soft: if 0121 isn't live yet the chart still shows answers and runs.
         allPages(p => supabase.from('tenant_ring_prizes').select('id, created_at, points').eq('institution_id', center.id).eq('student_id', studentId)
-          .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
+          .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)).catch(() => []),
       ]);
       return [
         ...attempts.map(a => ({ created_at: a.created_at, points: a.points ?? (a.is_correct ? 10 : 0) })),
