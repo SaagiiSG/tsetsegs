@@ -3825,6 +3825,21 @@ export type Database = {
           },
         ]
       }
+      solo_free_slice: {
+        Row: {
+          item_id: string
+          kind: string
+        }
+        Insert: {
+          item_id: string
+          kind: string
+        }
+        Update: {
+          item_id?: string
+          kind?: string
+        }
+        Relationships: []
+      }
       solo_students: {
         Row: {
           created_at: string
@@ -7202,9 +7217,11 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      solo_free_test_questions: { Args: never; Returns: string[] }
       solo_has_premium: { Args: { _user: string }; Returns: boolean }
       solo_institution_id: { Args: never; Returns: string }
       solo_join: { Args: never; Returns: string }
+      solo_speed_runs_left: { Args: never; Returns: number }
       speed_window_counts: {
         Args: { p_seconds: number; p_student: string }
         Returns: {

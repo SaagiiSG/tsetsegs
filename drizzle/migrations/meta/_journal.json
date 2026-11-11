@@ -862,6 +862,13 @@
       "when": 1794360534825,
       "tag": "0122_solo_center",
       "breakpoints": true
+    },
+    {
+      "idx": 123,
+      "version": "7",
+      "when": 1794367202072,
+      "tag": "0123_solo_free_tier",
+      "breakpoints": true
     }
   ]
 }
