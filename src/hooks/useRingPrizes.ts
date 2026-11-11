@@ -37,9 +37,10 @@ function useRows() {
 export function useRingPrizes() {
   const { goals } = useDailyGoals();
   const rows = useRows().data ?? [];
+  const paid = paidFromRows(rows);
   const paidPoints: Partial<Record<PrizeKey, number>> = {};
-  rows.forEach(r => { if (r.points > 0 && KEYS.includes(r.metadata?.ring as PrizeKey)) paidPoints[r.metadata!.ring as PrizeKey] = r.points; });
-  return { paid: paidFromRows(rows), prizes: ringPrizes(goals), paidPoints };
+  rows.forEach(r => { const k = r.metadata?.ring as PrizeKey; if (paid.has(k) && r.points > 0) paidPoints[k] = r.points; });
+  return { paid, prizes: ringPrizes(goals), paidPoints };
 }
 
 /** Asks the server to pay each closed ring once, then shows and celebrates what it paid. */
@@ -48,11 +49,11 @@ export function useRingPrizeClaimer(enabled = true): void {
   const qc = useQueryClient();
   const { goals, isLoading: goalsLoading } = useDailyGoals();
   const { data: progress } = useDailyProgress();
-  const { activeSprint } = useLeaderboard();
+  const { activeSprint, isLoading: boardLoading } = useLeaderboard(); // wait for the sprint: a too-early claim would carry sprint_id null
   const read = useRows();
   const paid = paidFromRows(read.data ?? []);
   const asked = useRef(new Set<PrizeKey>());
-  const ready = enabled && !!student?.id && !!progress && !goalsLoading && !read.isPending;
+  const ready = enabled && !!student?.id && !!progress && !goalsLoading && !read.isPending && !boardLoading;
   useEffect(() => {
     if (!ready) return;
     const todo = ringsToClaim(progress!, goals, paid, asked.current);
@@ -70,7 +71,7 @@ export function useRingPrizeClaimer(enabled = true): void {
         if (error || points <= 0) return; // refused (or 0121 not live): nothing to celebrate
         emitPointsEarned(points);
         emitRingPrize({ ring, points });
-        for (const key of ['ring-prizes', 'today-points', 'sprint-leaderboard']) qc.invalidateQueries({ queryKey: [key] });
+        for (const key of ['ring-prizes', 'today-points', 'sprint-leaderboard', 'all-time-leaderboard']) qc.invalidateQueries({ queryKey: [key] });
       } catch { /* nothing to celebrate */ }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps

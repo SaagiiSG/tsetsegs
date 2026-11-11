@@ -56,7 +56,7 @@ function StudentLayoutContent() {
   const courses = useStudentCourses();
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const currentStreak = streak?.current_streak ?? 0;
-  useRingPrizeClaimer(!!student && !((teacherUser && teacherName) || isAdmin)); // never pay a student's ring while staff is viewing
+  useRingPrizeClaimer(!!student && !teacherLoading && !adminLoading && !((teacherUser && teacherName) || isAdmin)); // never pay a student's ring while staff is viewing
 
   // Show onboarding if student has no SAT date set and hasn't completed onboarding
   useEffect(() => {
