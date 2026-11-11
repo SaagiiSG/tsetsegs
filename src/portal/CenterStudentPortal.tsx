@@ -63,6 +63,8 @@ import { CenterHelpPage } from './CenterHelp';
 import { motion, useMotionValue, animate, useDragControls, type PanInfo } from 'framer-motion';
 import { CenterOnboarding } from './CenterOnboarding';
 import { onboardingStep, latchGate, type GateLatch } from './onboarding';
+import { useSoloPlan } from './soloPlan';
+import { SoloLock } from './SoloLock';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -284,6 +286,7 @@ const nudgeShown = new Set<string>();
 export function HomePage({ me }: { me: Me }) {
   const navigate = useNavigate();
   const totals = useSetTotals();
+  const plan = useSoloPlan();
   const today = new Date().toDateString();
   const todayList = me.attempts.filter(a => new Date(a.created_at).toDateString() === today);
   const total = me.attempts.length, correct = me.attempts.filter(a => a.is_correct).length;
@@ -369,6 +372,7 @@ export function HomePage({ me }: { me: Me }) {
         <CenterGoalDialog open={goalOpen} onOpenChange={o => { setGoalOpen(o); if (!o) setGoalDue(false); }} studentId={me.student.id} goals={goals.data} />
         <div className="grid gap-3 sm:grid-cols-3 md:contents lg:grid lg:col-span-9">
           {PRACTICE_SETS.map(s => {
+            if (plan.ready && !plan.premium && s.key !== 'CB') return <SoloLock key={s.key} title={`The ${s.label} set`} />;
             const ids = totals.data?.[s.key] ?? [];
             const done = ids.filter(id => solved.has(id)).length;
             const look = SET_LOOK[s.key];
@@ -465,6 +469,7 @@ function useRecordAttempt(me: Me) {
 
 function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
   const record = useRecordAttempt(me);
+  const { premium } = useSoloPlan();
   const [picked, setPicked] = useState(''); const [typed, setTyped] = useState('');
   const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
   const [tries, setTries] = useState(0);
@@ -486,7 +491,8 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
     } finally { checking.current = false; }
   };
   const openExplanation = () => {
-    if (!showExp && result !== 'correct' && q.rationale && !forfeit) {
+    // A free solo user sees a lock, not the explanation, so peeking costs nothing.
+    if (!showExp && result !== 'correct' && q.rationale && !forfeit && premium) {
       if (!window.confirm("Viewing the explanation before solving means this question won't count toward your stats. Continue?")) return;
       setForfeit(true);
     }
@@ -516,7 +522,7 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
       {showExp && (
         <aside className="sky-card xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           <p className="text-xs text-muted-foreground mb-3">Explanation</p>
-          {q.rationale ? <ExplanationView text={q.rationale} /> : <p className="text-sm text-muted-foreground">No explanation has been written for this question yet.</p>}
+          {!premium ? <SoloLock title="Step-by-step explanations" /> : q.rationale ? <ExplanationView text={q.rationale} /> : <p className="text-sm text-muted-foreground">No explanation has been written for this question yet.</p>}
         </aside>
       )}
     </div>
@@ -527,7 +533,9 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
 
 function PracticePage({ me }: { me: Me }) {
   const [params, setParams] = useSearchParams();
-  const set = practiceSetFromParam(params.get('set'));
+  const plan = useSoloPlan();
+  // A free solo user has the CB set only, so that's where a link without ?set= (the ring nudge's random mode) lands.
+  const set = !plan.premium && !params.get('set') ? 'CB' : practiceSetFromParam(params.get('set'));
   const pinned = params.get('q');
   const cats = useQuery({ queryKey: ['question-categories'], queryFn: async () => (await supabase.from('question_categories').select('id, name').order('name')).data ?? [] });
   const [subject, setSubject] = useState<'math' | 'english'>('math');
@@ -562,7 +570,7 @@ function PracticePage({ me }: { me: Me }) {
     setQ((data?.[0] as Q) ?? null);
   }, [subject, domain, difficulty, set, pinned]);
   const solving = !!pinned || params.get('mode') === 'random';
-  useEffect(() => { if (solving) loadQuestion(); }, [loadQuestion, solving]);
+  useEffect(() => { if (solving && plan.ready) loadQuestion(); }, [loadQuestion, solving, plan.ready]);
 
   const setSet = (v: string) => { const p = new URLSearchParams(params); p.delete('q'); p.set('set', v); setParams(p); setSubject('math'); };
   const next = () => { if (pinned) { const p = new URLSearchParams(params); p.delete('q'); p.set('mode', 'random'); setParams(p); } else loadQuestion(); };
@@ -596,7 +604,7 @@ function PracticePage({ me }: { me: Me }) {
           <SelectContent>{DIFFS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select>
         {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button>}
       </div>
-      {q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
+      {plan.ready && !plan.premium && !pinned && subject === 'math' && set !== 'CB' ? <SoloLock title="Every Math set" /> : q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
       {subject === 'math' && <DesmosCalculator />}
     </div>
   );
@@ -622,6 +630,13 @@ function SpeedPage({ me }: { me: Me }) {
   const runs = useQuery({
     queryKey: ['center-speed-runs', me.student.id, 'list'],
     queryFn: async () => ((await supabase.from('tenant_speed_runs').select('id, created_at, subject, correct, total, duration_seconds, total_time_seconds, category').eq('student_id', me.student.id).order('created_at', { ascending: false }).limit(200)).data ?? []) as SpeedRun[],
+  });
+  // Free solo users get 10 runs per rolling 24 hours (0123's guard). NULL (anyone not free) means no limit, never 0.
+  const plan = useSoloPlan();
+  const free = plan.ready && !plan.premium;
+  const allowance = useQuery({
+    queryKey: ['center-speed-runs', me.student.id, 'left'], enabled: free,
+    queryFn: async () => { const { data, error } = await supabase.rpc('solo_speed_runs_left'); if (error) throw error; return data as number | null; },
   });
 
   const start = async (c: SpeedConfig = cfg!) => {
@@ -654,7 +669,7 @@ function SpeedPage({ me }: { me: Me }) {
     return () => clearTimeout(t);
   }, [left, q, done]);
 
-  if (!qs) return <CenterSpeedLobby runs={runs.data ?? []} onStart={start} />;
+  if (!qs) return !plan.ready || (free && allowance.isPending) ? <SkyCardSkeleton /> : <CenterSpeedLobby runs={runs.data ?? []} runsLeft={free ? allowance.data : null} onStart={start} />;
   if (done) {
     const c = score.filter(Boolean).length;
     const ratio = qs.length ? c / qs.length : 0;
@@ -664,7 +679,7 @@ function SpeedPage({ me }: { me: Me }) {
         <div className="flex justify-center gap-1">{[0, 1, 2].map(n => <Star key={n} className={`h-9 w-9 ${n < stars ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />)}</div>
         <p className="font-mono text-3xl">{c}/{qs.length}</p>
         <p className="text-sm sky-body">{timeUp ? 'Time is up. ' : ''}{stars === 3 ? 'Perfect pace.' : 'Run it again to climb a star.'}</p>
-        <div className="flex justify-center gap-2"><Button onClick={() => start()}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Back to speed practice</Button></div>
+        <div className="flex justify-center gap-2"><Button onClick={() => start()} disabled={free && allowance.data === 0}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Back to speed practice</Button></div>
       </Glass>
     );
   }

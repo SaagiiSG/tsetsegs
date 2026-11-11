@@ -24,6 +24,8 @@ import { isCorrect } from './LiveSession';
 import { centerSatProgress } from './centerSatSimulation';
 import type { QMeta } from './questionMeta';
 import { backStep, canSkip, defaultIntensity, helpMePick, questionSubjects, ringPlanCopy, satDateOptions, stepSixMessage, welcomeCopy } from './onboarding';
+import { useSoloPlan } from './soloPlan';
+import { SoloLock } from './SoloLock';
 
 export type RecordFn = (questionId: string, ok: boolean, seconds?: number, answer?: string) => Promise<{ is_correct: boolean; points: number } | null>;
 type Attempt = { question_id: string; is_correct: boolean; created_at: string; time_spent_seconds: number | null };
@@ -50,6 +52,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const { center, name, signOut } = useCenter();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const plan = useSoloPlan();
   const titleId = useId();
   const title = useRef<HTMLHeadingElement>(null);
   const dates = useMemo(() => satDateOptions(new Date(), satMonth), [satMonth]);
@@ -218,7 +221,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
                   </div>
                 </div>
                 {msg && <p role="status" className="font-semibold">{msg}</p>}
-                {tries > 0 && q.rationale && <div className="sky-card"><ExplanationView text={q.rationale} /></div>}
+                {tries > 0 && q.rationale && (plan.premium ? <div className="sky-card"><ExplanationView text={q.rationale} /></div> : plan.ready && <SoloLock title="Step-by-step explanations" />)}
               </div>
             ))}
             {step === 7 && <div className="space-y-4">

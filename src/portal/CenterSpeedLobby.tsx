@@ -30,7 +30,8 @@ function Picker<T extends number>({ label, values, value, onChange, render }: { 
   );
 }
 
-export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart: (c: SpeedConfig) => void }) {
+/** `runsLeft`: a free solo user's runs left today (solo_speed_runs_left); null or absent for everyone else. */
+export function CenterSpeedLobby({ runs, runsLeft, onStart }: { runs: SpeedRun[]; runsLeft?: number | null; onStart: (c: SpeedConfig) => void }) {
   const [range, setRange] = useState<7 | 14 | 30>(7);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [cfg, setCfg] = useState<SpeedConfig>({ subject: 'math', duration: 120, count: 15, category: null });
@@ -116,7 +117,8 @@ export function CenterSpeedLobby({ runs, onStart }: { runs: SpeedRun[]; onStart:
         </div>
       </section>
 
-      <button className="sky-btn sky-btn-blue w-full text-lg" onClick={() => onStart(cfg)}><Play className="h-5 w-5" />Start session</button>
+      {runsLeft != null && <p className="-mb-2 text-center text-sm sky-body">{runsLeft} of 10 left today</p>}
+      <button className="sky-btn sky-btn-blue w-full text-lg disabled:pointer-events-none disabled:opacity-50" disabled={runsLeft === 0} onClick={() => onStart(cfg)}><Play className="h-5 w-5" />Start session</button>
 
       <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">

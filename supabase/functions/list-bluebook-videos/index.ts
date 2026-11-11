@@ -294,6 +294,19 @@ Deno.serve(async (req) => {
             status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        // Free solo check (solo plan, 10 Nov): keep this line when rewriting.
+        // These videos explain practice tests, which are Premium. is_free_solo_user() runs as the caller, like is_demo_user()
+        // above; anything but `true` counts as not free, so real users never get blocked.
+        const isFreeSolo = (await fetch(`${supabaseUrl}/rest/v1/rpc/is_free_solo_user`, {
+          method: "POST",
+          headers: { apikey: Deno.env.get("SUPABASE_ANON_KEY") ?? "", Authorization: auth, "Content-Type": "application/json" },
+          body: "{}",
+        }).then((r) => (r.ok ? r.json() : null)).catch(() => null)) === true;
+        if (isFreeSolo) {
+          return new Response(JSON.stringify({ error: "Practice-test videos are on Premium." }), {
+            status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         allowed = true;
       }
     }

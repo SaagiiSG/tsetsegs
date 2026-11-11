@@ -19,6 +19,8 @@ import { isEnglish, topicUnits, upNext, type VideoState } from './videoTopics';
 import { TopicMap, type Video } from './TopicMap';
 import { TopicList, unitKey } from './TopicList';
 import { useIsWide } from './useIsWide';
+import { useSoloPlan } from './soloPlan';
+import { SoloLock } from './SoloLock';
 
 type MeLite = { student: { id: string }; videosDone: string[] };
 
@@ -36,6 +38,7 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
   const location = useLocation();
   const reduce = useReducedMotion();
   const wide = useIsWide();
+  const plan = useSoloPlan();
   const english = params.get('subject') === 'english';
   const keep = english ? { subject: 'english' } : {};
   const list = useMemo(() => ((videos.data ?? []) as Video[]).filter(v => isEnglish(v) === english), [videos.data, english]);
@@ -111,7 +114,7 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
       {/* No labels: the search box stays, the filter pills under it are gone (Saagii, 30 Oct). */}
       {list.length > 0 && <VideoLabelFilter labels={[]} query={query} onQuery={setQuery} active={null} onActive={() => {}} />}
 
-      {videos.isLoading ? <SkyListSkeleton rows={4} /> : videos.isError && !videos.data ? <LoadError what="videos" onRetry={() => videos.refetch()} /> : !list.length ? <p className="text-sm text-muted-foreground">{english ? 'English videos are coming soon.' : 'No videos yet.'}</p> : filtering ? (
+      {videos.isLoading || !plan.ready ? <SkyListSkeleton rows={4} /> : videos.isError && !videos.data ? <LoadError what="videos" onRetry={() => videos.refetch()} /> : !list.length ? <p className="text-sm text-muted-foreground">{english ? 'English videos are coming soon.' : 'No videos yet.'}</p> : filtering ? (
         !filtered.length ? <p className="text-sm text-muted-foreground">No videos match.</p> : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{filtered.map(v => {
             const info = byId.get(v.id), st: VideoState = info?.state ?? 'locked';
@@ -136,6 +139,8 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
                   initial={reduce ? false : { x: 48, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={reduce ? undefined : { opacity: 0 }}
                   transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}>
                   <TopicMap unit={unit} nextVideoId={next?.videoId ?? null} onOpen={setOpen} />
+                  {/* A free solo user is sent only each topic's first lesson (0123); the rest are Premium. */}
+                  {!plan.premium && <SoloLock title="Every lesson in this topic" />}
                 </motion.div>
               )}
             </AnimatePresence>

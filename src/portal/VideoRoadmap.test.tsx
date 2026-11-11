@@ -11,11 +11,16 @@ import { VideoRoadmap } from './VideoRoadmap';
 const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', isSolo: false, signOut: () => {}, reloadCenter: () => {} };
 const v = (id: string, module: string, order_index: number) => ({ id, title: `Video ${id}`, description: null, module, domain: 'Math', video_url: '', subtitles_vtt: null, labels: [], duration_minutes: null, order_index });
 const videos = { data: [v('e1', 'Exponents & Radicals', 1), v('e2', 'Exponents & Radicals', 2), v('f1', 'Functions', 3), v('q1', 'Quadratic Functions', 4)], isLoading: false } as unknown as UseQueryResult<unknown[]>;
-const render = (path: string, vids = videos, done = ['e1']) => renderToStaticMarkup(
-  <MemoryRouter initialEntries={[path]}><QueryClientProvider client={new QueryClient()}><CenterContext.Provider value={ctx}>
-    <VideoRoadmap videos={vids} me={{ student: { id: 's' }, videosDone: done }} />
-  </CenterContext.Provider></QueryClientProvider></MemoryRouter>,
-);
+// `plan` given: a solo student on that plan (the cached solo_students row).
+const render = (path: string, vids = videos, done = ['e1'], plan?: { plan: string; premium_until: string | null }) => {
+  const client = new QueryClient();
+  if (plan) client.setQueryData(['solo-plan', 'u'], plan);
+  return renderToStaticMarkup(
+    <MemoryRouter initialEntries={[path]}><QueryClientProvider client={client}><CenterContext.Provider value={plan ? { ...ctx, isSolo: true } : ctx}>
+      <VideoRoadmap videos={vids} me={{ student: { id: 's' }, videosDone: done }} />
+    </CenterContext.Provider></QueryClientProvider></MemoryRouter>,
+  );
+};
 // The opening tag of the element carrying data-column="list" or "map".
 const column = (html: string, col: string) => html.match(new RegExp(`<[^>]*data-column="${col}"[^>]*>`))?.[0] ?? '';
 const activeCard = (html: string) => html.slice(html.indexOf('aria-current="true"')).match(/Topic \d+ · [^<]+/)?.[0];
@@ -84,5 +89,12 @@ describe('concept videos page', () => {
     const html = render('/student/videos?subject=english');
     expect(html).toContain('English videos are coming soon.');
     expect(html).not.toContain('Exponents');
+  });
+  it('a free solo user sees the Premium lock under a topic (the server sends only its first lesson)', () => {
+    const free = render('/student/videos', videos, ['e1'], { plan: 'free', premium_until: null });
+    expect(free).toContain('Every lesson in this topic');
+    expect(free).toContain('Try Premium free for 7 days');
+    expect(render('/student/videos', videos, ['e1'], { plan: 'premium', premium_until: null })).not.toContain('Every lesson in this topic');
+    expect(render('/student/videos')).not.toContain('Every lesson in this topic');
   });
 });
