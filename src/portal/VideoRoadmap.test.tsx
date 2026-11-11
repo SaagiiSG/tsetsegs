@@ -8,7 +8,7 @@ const screen = vi.hoisted(() => ({ wide: null as boolean | null }));
 vi.mock('./useIsWide', () => ({ useIsWide: () => screen.wide }));
 import { CenterContext } from './centerContext';
 import { VideoRoadmap } from './VideoRoadmap';
-const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', signOut: () => {}, reloadCenter: () => {} };
+const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', isSolo: false, signOut: () => {}, reloadCenter: () => {} };
 const v = (id: string, module: string, order_index: number) => ({ id, title: `Video ${id}`, description: null, module, domain: 'Math', video_url: '', subtitles_vtt: null, labels: [], duration_minutes: null, order_index });
 const videos = { data: [v('e1', 'Exponents & Radicals', 1), v('e2', 'Exponents & Radicals', 2), v('f1', 'Functions', 3), v('q1', 'Quadratic Functions', 4)], isLoading: false } as unknown as UseQueryResult<unknown[]>;
 const render = (path: string, vids = videos, done = ['e1']) => renderToStaticMarkup(

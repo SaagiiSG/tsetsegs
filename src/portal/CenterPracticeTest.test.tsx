@@ -13,7 +13,7 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 import { CenterContext } from './centerContext';
 import { CenterPracticeTest } from './CenterPracticeTest';
-const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', signOut: () => {}, reloadCenter: () => {} };
+const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', isSolo: false, signOut: () => {}, reloadCenter: () => {} };
 const question = { id: 'q1', question_id: 'X1', question_text: 'What is half of one?', multiple_choice_options: null };
 const inProgress = { id: 'a1', test_name: 'Test 1', status: 'in_progress', current_module: 0, module_started_at: new Date().toISOString(), answers: {}, paper: [{ number: 1, minutes: 35, questions: [question] }], math_correct: null, math_total: null, math_score: null };
 const completed = { ...inProgress, status: 'completed', answers: { q1: { value: '.5' } }, paper: [{ number: 1, minutes: 35, questions: [{ ...question, answer: '1/2', alternate_answers: ['.5'], rationale: null }] }], math_correct: 1, math_total: 1, math_score: 800 };

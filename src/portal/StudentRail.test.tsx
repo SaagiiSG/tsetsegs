@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
 import { CenterContext } from './centerContext';
 import { StudentRail, ACCOUNT_LINKS, initials } from './StudentRail';
-const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', signOut: () => {}, reloadCenter: () => {} };
+const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', isSolo: false, signOut: () => {}, reloadCenter: () => {} };
 const html = renderToStaticMarkup(<MemoryRouter initialEntries={['/student']}><CenterContext.Provider value={ctx}><StudentRail /></CenterContext.Provider></MemoryRouter>);
 describe('student rail', () => {
   it('has no emoji', () => expect(html).not.toMatch(/\p{Extended_Pictographic}/u));

@@ -14,7 +14,7 @@ vi.mock('@tanstack/react-query', async importOriginal => {
 });
 import { CenterContext } from './centerContext';
 import { HomePage } from './CenterStudentPortal';
-const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', signOut: () => {}, reloadCenter: () => {} };
+const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', isSolo: false, signOut: () => {}, reloadCenter: () => {} };
 const me = { student: { id: 's', name: 'Ana Bold', class_id: null }, cls: null, att: [], attempts: [], meta: {}, videosDone: ['e1', 'e2'] };
 const v = (id: string, module: string, order_index: number) => ({ id, title: `Video ${id}`, module, order_index });
 // Topic 1 has three videos (two watched); topic 2 follows with two.
