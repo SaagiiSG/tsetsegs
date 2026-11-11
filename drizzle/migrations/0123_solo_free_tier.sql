@@ -19,26 +19,34 @@ DROP POLICY IF EXISTS "Signed-in accounts read the solo free slice ids" ON publi
 CREATE POLICY "Signed-in accounts read the solo free slice ids" ON public.solo_free_slice FOR SELECT TO authenticated USING (true);
 
 -- 2. Fill it. Picks are by md5(id) order, so a rerun on the same bank picks the same rows. A domain with too few
--- questions gives what it has and the NOTICE says so; nothing here fails the migration.
+-- questions gives what it has and the NOTICE says so; a domain with none stops the migration (its name matches no
+-- live category), before any rule below changes.
 DO $$
 DECLARE k record; n integer; msg text := ''; test uuid; copies integer; visible integer;
 BEGIN
   DELETE FROM public.solo_free_slice;
 
   -- Questions, as the center practice pages count them: Math is subject NULL or 'math' (any case) in the CB set, which
-  -- is every Math set but 68 and 150 (src/portal/practiceSets.ts); a domain is the question_categories name. The Math
-  -- domains are REVIEW_AREAS.math (src/portal/centerReviewModel.ts), the English ones ENGLISH (src/portal/CenterSpeedLobby.tsx).
+  -- is every Math set but 68 and 150 (src/portal/practiceSets.ts); a domain is the question_categories name, in any case
+  -- (as sync-external-questions looks them up). The Math domains are the sync's; the live bank calls the data one
+  -- 'Data Analysis and Problem Solving', and centerReviewModel.ts's 'Problem-Solving and Data Analysis' counts too.
+  -- The English ones are ENGLISH (src/portal/CenterSpeedLobby.tsx).
   FOR k IN SELECT * FROM (VALUES
-    ('math', 'Algebra', 8), ('math', 'Advanced Math', 8), ('math', 'Problem-Solving and Data Analysis', 7), ('math', 'Geometry and Trigonometry', 7),
-    ('english', 'Information and Ideas', 25), ('english', 'Craft and Structure', 25), ('english', 'Expression of Ideas', 25), ('english', 'Standard English Conventions', 25)
-  ) v(subject, domain, quota) LOOP
+    ('math', 'Algebra', NULL, 8), ('math', 'Advanced Math', NULL, 8),
+    ('math', 'Data Analysis and Problem Solving', 'Problem-Solving and Data Analysis', 7), ('math', 'Geometry and Trigonometry', NULL, 7),
+    ('english', 'Information and Ideas', NULL, 25), ('english', 'Craft and Structure', NULL, 25), ('english', 'Expression of Ideas', NULL, 25),
+    ('english', 'Standard English Conventions', NULL, 25)
+  ) v(subject, domain, alias, quota) LOOP
     INSERT INTO public.solo_free_slice (item_id, kind)
     SELECT q.id, 'question' FROM public.intl_questions q JOIN public.question_categories c ON c.id = q.category_id
-    WHERE q.is_active AND NOT q.hide_from_practice AND c.name = k.domain AND lower(coalesce(q.subject, 'math')) = k.subject
+    WHERE q.is_active AND NOT q.hide_from_practice AND lower(c.name) IN (lower(k.domain), lower(k.alias)) AND lower(coalesce(q.subject, 'math')) = k.subject
       AND (k.subject = 'english' OR q.question_set IS NULL OR q.question_set NOT IN ('68', 'SATMathTraining800'))
     ORDER BY md5(q.id::text), q.id
     LIMIT k.quota;
     GET DIAGNOSTICS n = ROW_COUNT;
+    IF n = 0 THEN
+      RAISE EXCEPTION '0123: no % questions in the % domain; check the question_categories names', k.subject, k.domain;
+    END IF;
     msg := msg || format('%s %s %s/%s%s; ', k.subject, k.domain, n, k.quota, CASE WHEN n < k.quota THEN ' (SHORT: only ' || n || ' exist)' ELSE '' END);
   END LOOP;
 
@@ -59,6 +67,7 @@ BEGIN
   -- Videos: the first lesson of each unit topicUnits (src/portal/videoTopics.ts:50) builds from the published videos.
   -- English is a domain in ENGLISH_AREAS, one unit per trimmed module (or the domain when there is none); Math is one
   -- unit per TOPICS name, matched on the trimmed module; any other Math video is the one "More videos" unit (NULL here).
+  -- Trimmed means 0122's whitespace class (NBSP and the other Unicode spaces), as JS trim() does.
   -- First means lowest order_index (id breaks ties).
   INSERT INTO public.solo_free_slice (item_id, kind)
   SELECT DISTINCT ON (u.english, u.unit) u.id, 'video' FROM (
@@ -70,7 +79,7 @@ BEGIN
              'Quadratic Functions', 'Angles', 'Triangles', 'Circles', 'Radians', 'Trigonometry', 'Area, Perimeter, & Volume', 'Reading Data',
              'Probability', 'Statistics I', 'Statistics II']) THEN e.m END AS unit
     FROM public.concept_videos v
-    CROSS JOIN LATERAL (SELECT regexp_replace(coalesce(v.module, ''), '^\s+|\s+$', '', 'g') AS m,
+    CROSS JOIN LATERAL (SELECT regexp_replace(coalesce(v.module, ''), '^[\s\u00a0\u2000-\u200b\u202f\u3000\ufeff]+|[\s\u00a0\u2000-\u200b\u202f\u3000\ufeff]+$', '', 'g') AS m,
       v.domain IN ('Information & Ideas', 'Craft & Structure', 'Expression of Ideas', 'Standard English Conventions') AS english) e
     WHERE v.is_published
   ) u
