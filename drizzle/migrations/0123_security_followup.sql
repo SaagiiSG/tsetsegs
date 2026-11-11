@@ -6,6 +6,8 @@ SET lock_timeout = '3s';
 --    readable, so PATCHing linked_student_id to any id opened another student's data. 0024's guard, with
 --    linked_student_id pinned on update and cleared on insert (auto_link_student_account fires after this trigger
 --    and still links a new account by phone). Staff, the service role and definer functions aren't guarded.
+--    cohort is pinned too: it picks the student's leaderboard, sprint group and question bank, and only staff and
+--    the definer sync triggers (20260912013700, which fire after this one) set it.
 CREATE OR REPLACE FUNCTION public.guard_student_account()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = public AS $$
 DECLARE guarded boolean := current_user IN ('anon', 'authenticated') AND NOT public.is_platform_staff();
@@ -27,6 +29,7 @@ BEGIN
       NEW.share_token := OLD.share_token; NEW.share_token_created_at := OLD.share_token_created_at;
       NEW.last_login := OLD.last_login; NEW.rank_unlocked_at := OLD.rank_unlocked_at;
       NEW.linked_student_id := OLD.linked_student_id;
+      NEW.cohort := OLD.cohort;
     END IF;
   END IF;
   RETURN NEW;
@@ -64,6 +67,85 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
 $$;
 REVOKE ALL ON FUNCTION public.live_session_question_list(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.live_session_question_list(text) TO anon, authenticated;
+
+-- Players' writes use the same window (live_session_open), so a stale game can't be joined or answered either. The
+-- join rule is 0082's with that check added; answer and reveal are 0114's (the player's phone calls both) with it
+-- added to the game lookup. The host's Start, Next and finish go through the staff rules and aren't affected.
+DROP POLICY IF EXISTS "Players join open games" ON public.live_session_participants;
+CREATE POLICY "Players join open games" ON public.live_session_participants FOR INSERT
+  WITH CHECK (total_points = 0
+    AND EXISTS (SELECT 1 FROM public.live_sessions s WHERE s.id = session_id AND s.status <> 'finished')
+    AND public.live_session_open(session_id));
+
+CREATE OR REPLACE FUNCTION public.live_session_answer(_join_code text, _participant uuid, _question uuid, _choice text, _time_taken_ms integer)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  s public.live_sessions;
+  pos integer;
+  correct boolean;
+  taken integer := greatest(coalesce(_time_taken_ms, 0), 0);
+  total_ms integer;
+  pts integer;
+BEGIN
+  SELECT * INTO s FROM public.live_sessions WHERE join_code = upper(_join_code) AND status = 'active'
+    AND public.live_session_open(id);
+  IF NOT FOUND THEN RAISE EXCEPTION 'Not allowed' USING ERRCODE = '42501'; END IF;
+  -- One answer at a time per player, so two quick taps can't both pass the once-only check.
+  PERFORM 1 FROM public.live_session_participants WHERE id = _participant AND session_id = s.id FOR UPDATE;
+  IF NOT public.live_answer_allowed(s.id, _participant, _question) THEN
+    RAISE EXCEPTION 'Not allowed' USING ERRCODE = '42501';
+  END IF;
+  SELECT p.pos INTO pos FROM (SELECT question_id, row_number() OVER (ORDER BY order_index, id) - 1 AS pos
+    FROM public.live_session_questions WHERE session_id = s.id) p WHERE p.question_id = _question;
+  IF pos IS DISTINCT FROM s.current_question_index
+     OR now() >= s.question_started_at + make_interval(secs => s.time_per_question + 10) THEN
+    RAISE EXCEPTION 'Time is up' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT q.answer = _choice INTO correct FROM public.questions q WHERE q.id = _question;
+  correct := coalesce(correct, false);
+  -- LiveSession.tsx's formula in the same double-precision maths: max(100, Math.round(1000 * remaining / total)).
+  total_ms := s.time_per_question * 1000;
+  pts := CASE WHEN correct
+    THEN greatest(100, floor(1000 * (greatest(0, total_ms - taken)::float8 / nullif(total_ms, 0)) + 0.5)::integer)
+    ELSE 0 END;
+
+  INSERT INTO public.live_session_answers (session_id, participant_id, question_id, answer, is_correct, time_taken_ms, points_earned)
+  VALUES (s.id, _participant, _question, _choice, correct, taken, pts);
+  UPDATE public.live_session_participants SET total_points = total_points + pts WHERE id = _participant;
+  RETURN jsonb_build_object('is_correct', correct, 'points', pts);
+END $$;
+REVOKE ALL ON FUNCTION public.live_session_answer(text, uuid, uuid, text, integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.live_session_answer(text, uuid, uuid, text, integer) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.live_session_reveal(_join_code text, _participant uuid, _question uuid)
+RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  s public.live_sessions;
+  pos integer;
+  right_answer text;
+BEGIN
+  SELECT * INTO s FROM public.live_sessions WHERE join_code = upper(_join_code) AND status = 'active'
+    AND public.live_session_open(id);
+  IF NOT FOUND THEN RETURN NULL; END IF;
+  -- The same per-player lock as live_session_answer(), so an answer and a reveal can't both get in.
+  PERFORM 1 FROM public.live_session_participants WHERE id = _participant AND session_id = s.id FOR UPDATE;
+  IF NOT FOUND THEN RETURN NULL; END IF;
+  SELECT p.pos INTO pos FROM (SELECT question_id, row_number() OVER (ORDER BY order_index, id) - 1 AS pos
+    FROM public.live_session_questions WHERE session_id = s.id) p WHERE p.question_id = _question;
+  IF pos IS DISTINCT FROM s.current_question_index OR s.question_started_at IS NULL
+     OR now() < s.question_started_at + make_interval(secs => s.time_per_question) THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT q.answer INTO right_answer FROM public.questions q WHERE q.id = _question;
+  INSERT INTO public.live_session_answers (session_id, participant_id, question_id, answer, is_correct, time_taken_ms, points_earned)
+  SELECT s.id, _participant, _question, '', false, 0, 0
+  WHERE NOT EXISTS (SELECT 1 FROM public.live_session_answers a WHERE a.participant_id = _participant AND a.question_id = _question);
+  RETURN right_answer;
+END $$;
+REVOKE ALL ON FUNCTION public.live_session_reveal(text, uuid, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.live_session_reveal(text, uuid, uuid) TO anon, authenticated;
 
 -- 3. Teachers make parent report links but had no rule to read them back (only admins could, through "Admins can
 --    manage closing report tokens"), so a generated link never showed. Staff = admins and main teachers (0024).
