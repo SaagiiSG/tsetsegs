@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { computeGoals, DEFAULT_GOALS, type GoalIntensity } from '@/hooks/useDailyGoals';
+import { dayStartIso } from '@/lib/ringPrizes';
 import { useCenter } from './centerContext';
 import type { QMeta } from './questionMeta';
 import { MiniRing, SKY_RING } from './CenterStreak';
@@ -57,8 +58,9 @@ export function useCenterDailyProgress(studentId: string, attempts: { question_i
       return data ?? [];
     },
   });
+  const day = dayStartIso(); // a dependency: a tab left open past midnight counts from the new day
   return useMemo(() => {
-    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const start = new Date(day);
     const hard = new Set<string>(), medium = new Set<string>();
     for (const a of attempts) {
       if (!a.is_correct || new Date(a.created_at) < start) continue;
@@ -67,7 +69,7 @@ export function useCenterDailyProgress(studentId: string, attempts: { question_i
     }
     const speed = speedRunsToday(runs.data ?? [], start);
     return { speed, hard: hard.size, medium: medium.size, runs: runs.data ?? [], ready: !!runs.data, failed: runs.isError && !runs.data };
-  }, [attempts, meta, runs.data, runs.isError]);
+  }, [day, attempts, meta, runs.data, runs.isError]);
 }
 
 export const INTENSITIES: { key: GoalIntensity; label: string; blurb: string; icon: typeof Zap }[] = [

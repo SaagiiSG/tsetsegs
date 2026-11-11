@@ -221,6 +221,7 @@ export default function StudentSpeedSession() {
         }).select('points').maybeSingle()
           .then(({ data }) => { emitPointsEarned(Number(data?.points) || 0); return { data }; });
         queryClient.invalidateQueries({ queryKey: ['today-points'] });
+        queryClient.invalidateQueries({ queryKey: ['daily-progress'] });
 
         if (activeSprint) {
           const { ranking, wasNewlyEnrolled } = await ensureSprintEnrollment(student.id, activeSprint.id);
@@ -320,6 +321,7 @@ export default function StudentSpeedSession() {
     const accuracy = results.length > 0 ? Math.round((correctCount / results.length) * 100) : 0;
 
     await logActivity('speed_mode_complete', { total: results.length, correct: correctCount, duration, maxQuestions, avgTimePerQuestion: Math.round(avgTimePerQuestion * 10) / 10 });
+    queryClient.invalidateQueries({ queryKey: ['daily-progress'] }); // the Speed ring counts this log
     queryClient.invalidateQueries({ queryKey: ['speed-history'] });
     queryClient.invalidateQueries({ queryKey: ['speed-stats'] });
     queryClient.invalidateQueries({ queryKey: ['all-speed-sessions'] });
@@ -490,6 +492,7 @@ export default function StudentSpeedSession() {
       <DesmosCalculator />
       <ReferenceSheet />
       <div
+        data-popup-hold
         className={cn(
           "min-h-screen min-w-0 bg-background p-3 transition-all duration-300 select-none md:p-6",
           calculatorSnapSide === 'left' && "md:ml-[40vw] md:w-[60vw]",

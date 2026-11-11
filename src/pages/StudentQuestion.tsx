@@ -517,8 +517,9 @@ export default function StudentQuestion() {
             metadata: { question_id: currentQuestion.id, attempt_number: attemptNumber }
           }).select('points').maybeSingle()
           .then(({ data }) => { emitPointsEarned(Number(data?.points) || 0); return { data }; });
-        // Refresh the header's "today" chip right away with what the server paid.
+        // Refresh the header's "today" chip right away with what the server paid, and the rings (a ring prize claims on close).
         queryClient.invalidateQueries({ queryKey: ['today-points'] });
+        queryClient.invalidateQueries({ queryKey: ['daily-progress'] });
 
         // Update sprint ranking only if there's an active sprint.
         // First-correct-answer-of-the-sprint enrolls the student.

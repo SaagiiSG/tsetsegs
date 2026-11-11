@@ -17,6 +17,12 @@ export function ringsToClaim(progress: Ring, goals: Ring, paid: ReadonlySet<Priz
   return out;
 }
 
+/** The rings already asked for on `day`. A new local day starts an empty set, so a tab left open overnight asks again. */
+export function askedOn(asked: { day: string; rings: Set<PrizeKey> }, day: string): Set<PrizeKey> {
+  if (asked.day !== day) { asked.day = day; asked.rings = new Set(); }
+  return asked.rings;
+}
+
 type Row = { ring: PrizeKey; points: number; created_at: string };
 
 function useRows(studentId: string) {
@@ -25,11 +31,9 @@ function useRows(studentId: string) {
   return useQuery({
     queryKey: ['center-ring-prizes', studentId, day],
     enabled: !!studentId,
-    retry: false, // 0121 may not be live: stay quiet
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase.from('tenant_ring_prizes').select('ring, points, created_at').eq('institution_id', center.id).eq('student_id', studentId).gte('created_at', day);
-      if (error) throw error;
-      return (data ?? []) as Row[];
+      return error ? [] : (data ?? []) as Row[]; // fail soft: 0121 may not be live yet
     },
   });
 }
@@ -46,12 +50,14 @@ export function useCenterRingPrizeClaimer(studentId: string, progress: Ring, goa
   const qc = useQueryClient();
   const read = useRows(studentId);
   const paid = new Set((read.data ?? []).map(r => r.ring));
-  const asked = useRef(new Set<PrizeKey>());
+  const asked = useRef({ day: '', rings: new Set<PrizeKey>() });
+  const day = dayStartIso();
   const loaded = !read.isPending;
   useEffect(() => {
     if (!ready || !loaded) return;
-    const todo = ringsToClaim(progress, goals, paid, asked.current);
-    todo.forEach(k => asked.current.add(k));
+    const today = askedOn(asked.current, day);
+    const todo = ringsToClaim(progress, goals, paid, today);
+    todo.forEach(k => today.add(k));
     todo.forEach(async ring => {
       try {
         const { data, error } = await supabase.rpc('tenant_claim_ring_prize', { _institution: center.id, _ring: ring, _tz_offset_min: tzOffsetMin() });
@@ -63,5 +69,5 @@ export function useCenterRingPrizeClaimer(studentId: string, progress: Ring, goa
       } catch { /* nothing to celebrate */ }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, loaded, progress.speed, progress.hard, progress.medium, goals.speed, goals.hard, goals.medium, read.data]);
+  }, [ready, loaded, day, progress.speed, progress.hard, progress.medium, goals.speed, goals.hard, goals.medium, read.data]);
 }

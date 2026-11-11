@@ -33,7 +33,7 @@ import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AnnouncementBell } from './AnnouncementBell';
-import { StreakAndRankBar } from './StreakAndRankBar';
+import { MainRingChip, StreakAndRankBar } from './StreakAndRankBar';
 import { TodayPointsChip } from './TodayPointsChip';
 import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
 import { RingPrizeCelebration } from './RingPrizeCelebration';
@@ -160,9 +160,10 @@ function StudentLayoutContent() {
             <StreakAndRankBar onStreakClick={() => setStreakDialogOpen(true)} />
           </div>
 
-          {/* Desktop: just the today-points chip centered in the header */}
-          <div className="hidden xl:flex">
+          {/* Desktop: the today-points chip and the ring pill centered in the header */}
+          <div className="hidden xl:flex items-center gap-2">
             <TodayPointsChip />
+            <MainRingChip onClick={() => setStreakDialogOpen(true)} />
           </div>
 
           <div className="flex items-center gap-2">

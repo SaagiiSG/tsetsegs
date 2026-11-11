@@ -20,6 +20,31 @@ interface StreakAndRankBarProps {
   className?: string;
 }
 
+/** The daily ring pill with today's prizes. StudentLayout also shows it next to the today-points chip at xl, where this bar hides. */
+export function MainRingChip({ onClick }: { onClick?: () => void }) {
+  const navigate = useNavigate();
+  const { goals } = useDailyGoals();
+  const { data: progress } = useDailyProgress();
+  const { paid, paidPoints } = useRingPrizes();
+  if (!progress) return null;
+  const status = ringStatus(progress, goals);
+  // A ring with no goal never pays (nor the bonus), so it isn't counted as left to win.
+  const noGoal = (['speed', 'hard', 'medium'] as const).filter(k => goals[k] <= 0);
+  const left = prizeLeft(goals, new Set<PrizeKey>([...paid, ...noGoal, ...(noGoal.length ? ['all' as const] : [])]));
+  const frac = (v: number, g: number) => (g > 0 ? v / g : 1);
+  return (
+    <RingChip
+      p={[frac(progress.speed, goals.speed), frac(progress.hard, goals.hard), frac(progress.medium, goals.medium)]}
+      closed={status.closed}
+      left={left}
+      earned={Object.values(paidPoints).reduce((n, v) => n + v, 0)}
+      allPaid={paid.has('all')}
+      colors={RING_COLORS}
+      onClick={onClick ?? (() => navigate('/practice/dashboard'))}
+    />
+  );
+}
+
 export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarProps) {
   const navigate = useNavigate();
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
@@ -28,14 +53,6 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
   const { currentUserEntry, activeSprint } = useLeaderboard();
   const rank = currentUserEntry?.rank ?? null;
   const group = currentUserEntry?.groupNumber;
-  const { goals } = useDailyGoals();
-  const { data: progress } = useDailyProgress();
-  const { paid, paidPoints } = useRingPrizes();
-  const status = ringStatus(progress ?? { speed: 0, hard: 0, medium: 0 }, goals);
-  // A ring with no goal never pays (nor the bonus), so it isn't counted as left to win.
-  const noGoal = (['speed', 'hard', 'medium'] as const).filter(k => goals[k] <= 0);
-  const left = prizeLeft(goals, new Set<PrizeKey>([...paid, ...noGoal, ...(noGoal.length ? ['all' as const] : [])]));
-  const frac = (v: number, g: number) => (g > 0 ? v / g : 1);
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
@@ -73,16 +90,7 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
 
       <TodayPointsChip />
 
-      {progress && (
-        <RingChip
-          p={[frac(progress.speed, goals.speed), frac(progress.hard, goals.hard), frac(progress.medium, goals.medium)]}
-          closed={status.closed}
-          left={left}
-          earned={Object.values(paidPoints).reduce((n, v) => n + v, 0)}
-          colors={RING_COLORS}
-          onClick={onStreakClick ?? (() => navigate('/practice/dashboard'))}
-        />
-      )}
+      <MainRingChip onClick={onStreakClick} />
 
       <div
         className="student-chip text-[10px] uppercase"

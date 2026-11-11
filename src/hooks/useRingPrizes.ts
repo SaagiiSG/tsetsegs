@@ -5,7 +5,7 @@ import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { emitPointsEarned } from '@/components/student/PointsFlyer';
 import { emitRingPrize } from '@/components/student/RingPrizeCelebration';
 import { dayStartIso, ringPrizes, tzOffsetMin, type PrizeKey } from '@/lib/ringPrizes';
-import { ringsToClaim } from '@/portal/useCenterRingPrizes';
+import { askedOn, ringsToClaim } from '@/portal/useCenterRingPrizes';
 import { useDailyGoals } from './useDailyGoals';
 import { useDailyProgress } from './useDailyProgress';
 import { useLeaderboard } from './useLeaderboard';
@@ -24,11 +24,9 @@ function useRows() {
   return useQuery({
     queryKey: ['ring-prizes', student?.id, day],
     enabled: !!student?.id,
-    retry: false, // 0121 may not be live: stay quiet
     queryFn: async (): Promise<Row[]> => {
       const { data, error } = await supabase.from('point_transactions').select('points, metadata').eq('student_account_id', student!.id).eq('category', 'ring_prize').gte('created_at', day);
-      if (error) throw error;
-      return (data ?? []) as Row[];
+      return error ? [] : (data ?? []) as Row[]; // fail soft: show nothing paid
     },
   });
 }
@@ -52,12 +50,14 @@ export function useRingPrizeClaimer(enabled = true): void {
   const { activeSprint, isLoading: boardLoading } = useLeaderboard(); // wait for the sprint: a too-early claim would carry sprint_id null
   const read = useRows();
   const paid = paidFromRows(read.data ?? []);
-  const asked = useRef(new Set<PrizeKey>());
+  const asked = useRef({ day: '', rings: new Set<PrizeKey>() });
+  const day = dayStartIso();
   const ready = enabled && !!student?.id && !!progress && !goalsLoading && !read.isPending && !boardLoading;
   useEffect(() => {
     if (!ready) return;
-    const todo = ringsToClaim(progress!, goals, paid, asked.current);
-    todo.forEach(k => asked.current.add(k));
+    const today = askedOn(asked.current, day);
+    const todo = ringsToClaim(progress!, goals, paid, today);
+    todo.forEach(k => today.add(k));
     todo.forEach(async ring => {
       try {
         const { data, error } = await supabase.from('point_transactions').insert({
@@ -75,5 +75,5 @@ export function useRingPrizeClaimer(enabled = true): void {
       } catch { /* nothing to celebrate */ }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, progress?.speed, progress?.hard, progress?.medium, goals.speed, goals.hard, goals.medium, paid.size]);
+  }, [ready, day, progress?.speed, progress?.hard, progress?.medium, goals.speed, goals.hard, goals.medium, paid.size]);
 }
