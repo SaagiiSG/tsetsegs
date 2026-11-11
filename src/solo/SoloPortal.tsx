@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { deviceLanguage } from '@/lib/publicLanguage';
 import CenterPortalApp from '@/portal/CenterPortalApp';
-import SoloSignIn, { SoloBlocked } from './SoloSignIn';
+import SoloSignIn, { SoloBlocked, SoloShell } from './SoloSignIn';
 
 type Joined = 'pending' | 'ok' | string;
 
@@ -48,13 +48,13 @@ export default function SoloPortal() {
   else if (joined === 'pending') body = loading;
   else if (joined !== 'ok') {
     body = /mongolia/i.test(joined) ? <SoloBlocked onSignOut={signOut} /> : (
-      <main className="min-h-screen grid place-items-center p-6 text-center">
-        <div className="max-w-sm space-y-3">
-          <h1 className="font-chillax text-2xl font-semibold">Can't open solo</h1>
+      <SoloShell>
+        <div className="space-y-3">
+          <h1 className="text-3xl font-semibold tracking-tight">Can't open solo</h1>
           <p role="alert" className="text-sm text-muted-foreground">{joined}</p>
-          <Button variant="outline" onClick={signOut}>Sign out</Button>
         </div>
-      </main>
+        <Button variant="outline" className="w-full h-12 rounded-full bg-card" onClick={signOut}>Sign out</Button>
+      </SoloShell>
     );
   } else {
     body = <BrowserRouter basename="/solo"><CenterPortalApp slug="solo" /></BrowserRouter>;

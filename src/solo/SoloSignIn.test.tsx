@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
-import { SoloBlocked } from './SoloSignIn';
+import SoloSignIn, { SoloBlocked } from './SoloSignIn';
 
 it('the join-refused block screen has a sign-out and no account link', () => {
   const html = renderToStaticMarkup(<SoloBlocked onSignOut={() => {}} />);
@@ -15,4 +15,12 @@ it('the block screen explains itself, links to the Flowers course and offers no 
   expect(html).toContain('href="/?lang=mon"');
   expect(html).toContain('I already have a solo account');
   expect(html).not.toContain('Continue with Google');
+});
+
+it('the sign-in page sits on the cloud sky and offers Google, Apple and Microsoft with their marks', () => {
+  const html = renderToStaticMarkup(<SoloSignIn />);
+  expect(html).toContain('auth-sky');
+  for (const p of ['Google', 'Apple', 'Microsoft']) expect(html).toContain(`Continue with ${p}`);
+  expect(html.match(/<button[^>]*>\s*<svg/g)?.length).toBe(3);
+  expect(html).toContain('Email me a code');
 });
