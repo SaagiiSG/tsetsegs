@@ -175,7 +175,9 @@ const StudentReveal = () => {
 
   useEffect(() => {
     const fetchBatch = async () => {
-      const { data, error } = await supabase.from("batches").select("*").eq("unique_link_id", id).maybeSingle();
+      // Visitors aren't signed in, so the class comes from a function that only answers for this link.
+      const { data: rows, error } = await supabase.rpc("batch_by_link" as any, { _link: id });
+      const data = (rows as any[] | null)?.[0] ?? null;
       if (error) {
         console.error(error);
         setIsLoading(false);
