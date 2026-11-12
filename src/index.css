@@ -1528,3 +1528,34 @@ body.customer-student-portal a.bg-primary { background-image: linear-gradient(18
 .dark .sky-clouds-band.is-top { opacity: .05; }
 @keyframes sky-cloud-drift-top { from { transform: scaleY(-1) translateX(-4%); } to { transform: scaleY(-1) translateX(4%); } }
 @media (prefers-reduced-motion: reduce) { .sky-clouds-band.is-top { animation: none; } }
+
+/* Onboarding sky (CenterOnboarding): the landing's cloud layers drifting at three speeds; dark mode dims it like .sky-clouds-band. */
+.onb-sky { background: linear-gradient(180deg, hsl(213 90% 84%), hsl(206 88% 91%) 78%); }
+.dark .onb-sky { background: linear-gradient(180deg, hsl(230 38% 11%), hsl(232 32% 16%)); }
+.onb-clouds { position: absolute; inset: 0; pointer-events: none; }
+.onb-cloud { position: absolute; left: -20%; width: 140%; }
+.onb-cloud.is-far { bottom: .5rem; z-index: 0; opacity: .8; }
+.onb-cloud.is-mid { bottom: 0; z-index: 10; }
+.onb-cloud.is-near { bottom: -1rem; z-index: 30; }
+@media (min-width: 1024px) {
+  .onb-cloud { left: -35%; width: 170%; }
+  .onb-cloud.is-far { bottom: 2.5rem; }
+  /* Wider and shifted so the near bank's big cloud covers the foot of the centred flower's stem. */
+  .onb-cloud.is-near { bottom: -1.75rem; left: -70%; width: 190%; }
+}
+.onb-drift { position: relative; animation: onb-drift 70s ease-in-out infinite alternate; }
+.is-mid > .onb-drift { animation-duration: 46s; animation-direction: alternate-reverse; }
+.is-near > .onb-drift { animation-duration: 30s; }
+.onb-drift img { display: block; width: 100%; height: auto; }
+.onb-drift img.is-l { clip-path: inset(0 50% 0 0); }
+.onb-drift img.is-r { position: absolute; inset: 0; clip-path: inset(0 0 0 50%); }
+.dark .onb-clouds { opacity: .1; }
+@keyframes onb-drift { from { transform: translateX(-2%); } to { transform: translateX(2%); } }
+/* The flower sways from its stem's foot; the head pulses once when "Help me pick" lands. */
+.onb-flower { transform-origin: 50% 100%; animation: onb-sway 4.8s ease-in-out infinite alternate; overflow: visible; }
+@keyframes onb-sway { from { transform: rotate(-2.2deg); } to { transform: rotate(2.2deg); } }
+.onb-nod { transform-box: view-box; transform-origin: 0 0; animation: onb-nod .55s cubic-bezier(.32,.72,0,1); }
+@keyframes onb-nod { 40% { transform: scale(1.12); } }
+.onb-float { animation: onb-float 6s ease-in-out infinite alternate; }
+@keyframes onb-float { from { transform: translateY(-4px); } to { transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .onb-drift, .onb-flower, .onb-nod, .onb-float { animation: none; } }

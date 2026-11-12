@@ -25,7 +25,17 @@ export const canSkip = (step: number, saveFailed = false) => (step >= 2 && step 
 /** Where Back goes. Step 7 skips the step-6 question so it is never answered twice. */
 export const backStep = (step: number) => (step <= 1 ? null : step === 7 ? 5 : step - 1);
 
-export const welcomeCopy = (centerName: string) => `${centerName} set you up on FlowersOS. 6 quick steps, about 2 minutes.`;
+/** Solo students have no center to thank: "flowersos set you up on FlowersOS" reads wrong. */
+export const welcomeCopy = (centerName: string, solo = false) =>
+  solo ? "Let's build your SAT plan. 6 quick steps, under a minute." : `${centerName} set you up on FlowersOS. 6 quick steps, about 2 minutes.`;
+
+/** One-tap answers move on by themselves: any SAT date (or "Not sure yet"), "Not yet" on the practice score, any section.
+ *  "Yes, about" needs a typed score, so it waits for Continue. */
+export const autoAdvances = (step: number, choice: string | null) => step === 2 || step === 5 || (step === 3 && choice === 'no');
+
+/** Step 7's heading, from the chosen pace: [lead, name]. */
+export const planProfile = (intensity: GoalIntensity): [string, string] =>
+  intensity === 'intense' ? ["You're a", 'Sprinter'] : intensity === 'gradual' ? ["You're a", 'Steady Climber'] : ["You're an", 'Explorer'];
 
 /** Official SAT dates from today on; the admin's SAT month (YYYY-MM) picks its real date when that date is still ahead. */
 export function satDateOptions(now: Date, satMonth: string | null) {

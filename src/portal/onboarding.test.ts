@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { onboardingStep, latchGate, canSkip, welcomeCopy, satDateOptions, helpMePick, helpMePickReason, defaultIntensity, ringPlanCopy, backStep, questionSubjects, stepSixMessage } from './onboarding';
+import { onboardingStep, latchGate, canSkip, welcomeCopy, autoAdvances, planProfile, satDateOptions, helpMePick, helpMePickReason, defaultIntensity, ringPlanCopy, backStep, questionSubjects, stepSixMessage } from './onboarding';
 const goals = (o = {}) => ({ speed: 2, hard: 5, medium: 10, intensity: null, sat_date: null, isSet: true, target_score: null, prior_score: null, weak_section: null, onboarding_step: null, onboarding_done_at: null, ...o });
 describe('who sees onboarding', () => {
   it('never shows it to students from before the cutoff', () => { expect(onboardingStep(false, goals({ isSet: false }), false)).toBeNull(); expect(onboardingStep(false, undefined, false)).toBeNull(); });
@@ -32,7 +32,23 @@ describe('gate latch', () => {
   it('decides afresh for a different user on the same tab', () => expect(latchGate({ user: 'u', step: null }, 'v', true, 1)).toEqual({ user: 'v', step: 1 }));
 });
 describe('steps', () => {
-  it('welcome', () => expect(welcomeCopy('Sky Prep')).toBe('Sky Prep set you up on FlowersOS. 6 quick steps, about 2 minutes.'));
+  it('welcome', () => {
+    expect(welcomeCopy('Sky Prep')).toBe('Sky Prep set you up on FlowersOS. 6 quick steps, about 2 minutes.');
+    expect(welcomeCopy('flowersos', true)).toBe("Let's build your SAT plan. 6 quick steps, under a minute.");
+  });
+  it('one-tap answers advance by themselves, a typed score waits for Continue', () => {
+    expect(autoAdvances(2, '2026-12-05')).toBe(true);
+    expect(autoAdvances(2, null)).toBe(true); // Not sure yet
+    expect(autoAdvances(3, 'no')).toBe(true);
+    expect(autoAdvances(3, 'yes')).toBe(false);
+    expect(autoAdvances(5, 'math')).toBe(true);
+    expect([1, 4, 6, 7].map(s => autoAdvances(s, 'x'))).toEqual([false, false, false, false]);
+  });
+  it('names the plan from the pace', () => {
+    expect(planProfile('intense')).toEqual(["You're a", 'Sprinter']);
+    expect(planProfile('gradual')).toEqual(["You're a", 'Steady Climber']);
+    expect(planProfile('with_the_flow')).toEqual(["You're an", 'Explorer']);
+  });
   it('lists real upcoming SAT dates and prefills the center month', () => {
     const o = satDateOptions(new Date('2026-10-25T12:00:00'), null);
     expect(o.options.map(d => d.value)).toEqual(['2026-11-07', '2026-12-05', '2027-03-06', '2027-05-01', '2027-06-05']);
