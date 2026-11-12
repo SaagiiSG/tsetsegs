@@ -49,10 +49,10 @@ export function Flower({ bloom, nod = 0, stem = true, className }: { bloom: numb
   );
 }
 
-/** An integer that springs to each new value, so 1300 rolls to 1450 instead of snapping. */
-export function RollingNumber({ value, from }: { value: number; from?: number }) {
+/** An integer that springs to each new value, so 1300 rolls to 1450 instead of snapping. `duration` (s) slows it into a count. */
+export function RollingNumber({ value, from, duration }: { value: number; from?: number; duration?: number }) {
   const reduce = useReducedMotion();
-  const spring = useSpring(reduce ? value : from ?? value, { stiffness: 120, damping: 22 });
+  const spring = useSpring(reduce ? value : from ?? value, duration ? { visualDuration: duration, bounce: 0 } : { stiffness: 120, damping: 22 });
   useEffect(() => { if (reduce) spring.jump(value); else spring.set(value); }, [value, reduce, spring]);
   const text = useTransform(spring, v => String(Math.round(v)));
   return <motion.span className="tabular-nums">{text}</motion.span>;

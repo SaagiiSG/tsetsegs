@@ -24,7 +24,7 @@ import { SkyCardSkeleton } from './SkySkeleton';
 import { isCorrect } from './LiveSession';
 import { centerSatProgress } from './centerSatSimulation';
 import type { QMeta } from './questionMeta';
-import { autoAdvances, backStep, canSkip, defaultIntensity, helpMePick, helpMePickReason, planProfile, questionSubjects, ringPlanCopy, satDateOptions, stepSixMessage, welcomeCopy } from './onboarding';
+import { autoAdvances, backStep, dateMessage, canSkip, defaultIntensity, helpMePick, helpMePickReason, planProfile, questionSubjects, ringPlanCopy, satDateOptions, stepSixMessage, welcomeCopy } from './onboarding';
 import { freeDraw, useSoloPlan } from './soloPlan';
 import { SoloLock } from './SoloLock';
 
@@ -36,6 +36,7 @@ const COLS = 'id, question_text, question_image_url, question_image_url_2, figur
 const SECTIONS = [['math', 'Math'], ['reading_writing', 'Reading and Writing'], ['same', 'About the same']] as const;
 const SAVE_ERROR = "We couldn't save that. Check your connection and try again.";
 const AUTO_ADVANCE_MS = 350; // long enough to see the card pop before the step moves on
+const COUNT_S = 1.1; // the SAT day count, then its message lands
 
 const SOFT = { type: 'spring', visualDuration: 0.5, bounce: 0.16 } as const;
 const POP = { type: 'spring', stiffness: 520, damping: 26 } as const;
@@ -228,7 +229,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const [lead, profile] = planProfile(intensity);
   // The sky echoes the latest answer: [big value, caption].
   const [answer, caption]: [string | null, string] =
-    step === 2 ? [shownDays != null && shownDays >= 0 ? String(shownDays) : null, shownDays === 1 ? 'day to your SAT' : 'days to your SAT']
+    step === 2 ? (shownDays != null && shownDays >= 0 ? [String(shownDays), shownDays === 1 ? 'day to your SAT' : 'days to your SAT'] : [satDate === null ? 'No date yet' : null, ''])
     : step === 3 ? [priorScore != null ? String(priorScore) : prior === 'no' ? 'Not yet' : null, priorScore != null ? 'practice score' : '']
     : step === 4 ? [String(target), 'target score']
     : step === 5 ? [SECTIONS.find(s => s[0] === weak)?.[1] ?? null, 'feels harder']
@@ -267,9 +268,11 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
               ) : answer && (
                 <motion.div key={isNum ? step : `${step}${answer}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }} transition={SOFT}>
                   <p className={cn('font-chillax font-semibold leading-none', isNum ? 'text-5xl lg:text-8xl' : 'text-2xl lg:text-5xl')}>
-                    {isNum ? <RollingNumber value={Number(answer)} from={step === 2 ? 0 : undefined} /> : answer}
+                    {isNum ? <RollingNumber value={Number(answer)} from={step === 2 ? 0 : undefined} duration={step === 2 ? COUNT_S : undefined} /> : answer}
                   </p>
                   {caption && <p className="mt-1 text-xs sky-body lg:mt-3 lg:text-lg">{caption}</p>}
+                  {step === 2 && <motion.p key={String(satDate)} className="mx-auto mt-8 hidden max-w-xs text-2xl font-semibold leading-snug lg:block"
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: reduce ? 0 : COUNT_S }}>{dateMessage(shownDays)}</motion.p>}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -302,6 +305,9 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
                   {dates.options.map(o => <Choice key={o.value} on={satDate === o.value} disabled={saving} onClick={() => tap(o.value, () => setSatDate(o.value))}>{o.label}</Choice>)}
                   <Choice on={satDate === null} disabled={saving} onClick={() => tap(null, () => setSatDate(null))}>Not sure yet</Choice>
                 </div>}
+                {/* Phones show the message here (the sky band is too short); desktop shows it in the sky, which is aria-hidden. */}
+                {step === 2 && satDate !== undefined && <motion.p key={String(satDate)} role="status" className="pt-4 text-lg font-semibold leading-snug lg:sr-only"
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: reduce ? 0 : COUNT_S }}>{dateMessage(shownDays)}</motion.p>}
                 {step === 3 && <div className="space-y-3">
                   <div role="group" aria-labelledby={titleId} className="grid gap-2">
                     <Choice on={prior === 'no'} disabled={saving} onClick={() => tap('no', () => setPrior('no'))}>Not yet</Choice>

@@ -29,9 +29,15 @@ export const backStep = (step: number) => (step <= 1 ? null : step === 7 ? 5 : s
 export const welcomeCopy = (centerName: string, solo = false) =>
   solo ? "Let's build your SAT plan. 6 quick steps, under a minute." : `${centerName} set you up on FlowersOS. 6 quick steps, about 2 minutes.`;
 
-/** One-tap answers move on by themselves: any SAT date (or "Not sure yet"), "Not yet" on the practice score, any section.
- *  "Yes, about" needs a typed score, so it waits for Continue. */
-export const autoAdvances = (step: number, choice: string | null) => step === 2 || step === 5 || (step === 3 && choice === 'no');
+/** One-tap answers move on by themselves: "Not yet" on the practice score, any section. "Yes, about" needs a typed score,
+ *  and the SAT date stays put so the day count can finish and its message land, so both wait for Continue. */
+export const autoAdvances = (step: number, choice: string | null) => step === 5 || (step === 3 && choice === 'no');
+
+/** The line after the day count lands. Hype, never a score number (no score promises). */
+export const dateMessage = (days: number | null) =>
+  days == null ? "No problem, you can add it later. Next, let's set your target."
+  : days < 30 ? "Tight, but every day counts. Let's go."
+  : "Plenty of time for a real jump. Next, let's set your target.";
 
 /** Step 7's heading, from the chosen pace: [lead, name]. */
 export const planProfile = (intensity: GoalIntensity): [string, string] =>
