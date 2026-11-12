@@ -13,6 +13,7 @@ import { MathText } from '@/components/MathText';
 import { QuestionFigures } from '@/components/QuestionFigures';
 import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { CenterLogo, STATUS_LABEL, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
@@ -613,9 +614,10 @@ function PracticePage({ me }: { me: Me }) {
         <Select value={difficulty} onValueChange={setDifficulty}><SelectTrigger className="w-40" aria-label="Difficulty"><SelectValue /></SelectTrigger>
           <SelectContent>{DIFFS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select>
         {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button>}
+        {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleReferenceSheet}><BookOpen className="h-4 w-4" />Reference</Button>}
       </div>
       {plan.ready && !plan.premium && !pinned && subject === 'math' && set !== 'CB' ? <SoloLock title="Every Math set" /> : congrats ? <FreeSectionDone subject={subject} /> : q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
-      {subject === 'math' && <DesmosCalculator />}
+      {subject === 'math' && <><DesmosCalculator /><ReferenceSheet /></>}
     </div>
   );
 }
@@ -720,7 +722,8 @@ function SpeedPage({ me }: { me: Me }) {
           : <Input value={typed} onChange={e => setTyped(e.target.value)} placeholder="Type your answer" className="max-w-xs font-mono" />}
         <Button className="w-full sm:w-auto" onClick={() => answer(choices.length ? picked : typed)} disabled={choices.length ? !picked : !typed.trim()}>Submit</Button>
       </Glass>
-      {subject === 'math' && <><Button variant="outline" size="sm" className="max-md:hidden" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button><DesmosCalculator /></>}
+      {subject === 'math' && <><div className="flex gap-2"><Button variant="outline" size="sm" className="max-md:hidden" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button>
+        <Button variant="outline" size="sm" onClick={toggleReferenceSheet}><BookOpen className="h-4 w-4" />Reference</Button></div><DesmosCalculator /><ReferenceSheet /></>}
     </div>
   );
 }
