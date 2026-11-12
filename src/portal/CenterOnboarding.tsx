@@ -236,7 +236,8 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const isNum = answer != null && /^\d+$/.test(answer);
   // Steps 1-3 open the bud a little each; from step 4 the target sets the bloom (a bud at 1000, full at 1600).
   const bloom = step <= 3 ? (step - 1) * 0.12 : Math.min(1, Math.max(0, (target - 1000) / 600));
-  const ring: [number, number, number] = [prog.speed / vals.speed, prog.hard / vals.hard, prog.medium / vals.medium];
+  // Step 6 shows today's real progress (a new student's is empty). Step 7 shows the plan: each ring closes in turn.
+  const ring: [number, number, number] = step === 7 ? [1, 1, 1] : [prog.speed / vals.speed, prog.hard / vals.hard, prog.medium / vals.medium];
   const choices = q ? normaliseChoices(q.multiple_choice_options, q.choice_images) : [];
 
   return (
@@ -258,8 +259,8 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
                 <motion.div key={step} className="flex flex-col items-end lg:items-center" initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, transition: { duration: 0.15 } }} transition={SOFT}>
                   {/* A frosted disc gives the ring a surface; on bare sky its pale tracks read as a blur. */}
                   <span className="rounded-full bg-white/75 p-1.5 shadow-[0_16px_40px_-18px_hsl(220_60%_35%/.45)] backdrop-blur-sm dark:bg-white/[.06] lg:p-4">
-                    <span className="lg:hidden"><MiniRing size={72} p={ring} colors={SKY_RING} stroke={7} reveal={!reduce} /></span>
-                    <span className="hidden lg:block"><MiniRing size={168} p={ring} colors={SKY_RING} stroke={16} gap={5} reveal={!reduce} /></span>
+                    <span className="lg:hidden"><MiniRing key={intensity} size={72} p={ring} colors={SKY_RING} stroke={7} reveal={!reduce} /></span>
+                    <span className="hidden lg:block"><MiniRing key={intensity} size={168} p={ring} colors={SKY_RING} stroke={16} gap={5} reveal={!reduce} /></span>
                   </span>
                   <p className="mt-1 hidden text-xs sky-body lg:mt-4 lg:block lg:text-lg">your daily ring</p>
                 </motion.div>
