@@ -43,7 +43,10 @@ const Index = () => {
 
   const CTA = ({ center }: { center?: boolean }) => (
     <div className={`flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
-      <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">{text("Демо үзэх", "Try the demo")}<ArrowRight /></Button>
+      {/* Solo sign-up is English only (Mongolian visitors are center students), so the Mongolian page keeps the demo. */}
+      {lang === "eng"
+        ? <Button size="lg" asChild className="h-12 rounded-full px-7"><a href="/solo?lang=eng">Start free<ArrowRight /></a></Button>
+        : <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">Демо үзэх<ArrowRight /></Button>}
       <Button size="lg" variant="outline" onClick={() => navigate(`/educators?lang=${lang}`)} className="h-12 rounded-full border-2 px-7">{text("Би багш", "I am an educator")}</Button>
       <Button size="lg" variant="ghost" onClick={() => navigate("/practice")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}</Button>
     </div>
