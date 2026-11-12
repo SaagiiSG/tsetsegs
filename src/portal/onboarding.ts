@@ -39,6 +39,12 @@ export function satDateOptions(now: Date, satMonth: string | null) {
 export const helpMePick = (prior: number | null) =>
   prior == null ? 1300 : Math.min(1600, Math.max(1000, Math.round((prior + 150) / 50) * 50));
 
+/** The line under "Help me pick", so the button always says something even when the pick equals the current target. */
+export const helpMePickReason = (prior: number | null) =>
+  prior == null ? '1300 is a strong first goal. You can raise it later.'
+  : prior >= 1450 ? '1600 it is. Aim for the top.'
+  : `Your ${prior} practice score + 150 is a stretch you can hit.`;
+
 export function defaultIntensity(daysToSat: number | null): GoalIntensity {
   if (daysToSat == null) return 'gradual';
   return daysToSat <= 60 ? 'intense' : daysToSat <= 120 ? 'gradual' : 'with_the_flow';

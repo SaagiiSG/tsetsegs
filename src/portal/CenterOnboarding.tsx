@@ -23,7 +23,7 @@ import { SkyCardSkeleton } from './SkySkeleton';
 import { isCorrect } from './LiveSession';
 import { centerSatProgress } from './centerSatSimulation';
 import type { QMeta } from './questionMeta';
-import { backStep, canSkip, defaultIntensity, helpMePick, questionSubjects, ringPlanCopy, satDateOptions, stepSixMessage, welcomeCopy } from './onboarding';
+import { backStep, canSkip, defaultIntensity, helpMePick, helpMePickReason, questionSubjects, ringPlanCopy, satDateOptions, stepSixMessage, welcomeCopy } from './onboarding';
 import { freeDraw, useSoloPlan } from './soloPlan';
 import { SoloLock } from './SoloLock';
 
@@ -64,6 +64,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const [prior, setPrior] = useState<'no' | 'yes' | null>(goals?.prior_score != null ? 'yes' : null);
   const [priorText, setPriorText] = useState(goals?.prior_score != null ? String(goals.prior_score) : '');
   const [target, setTarget] = useState(goals?.target_score ?? 1300);
+  const [why, setWhy] = useState(''); // "Help me pick" says why, so it gives feedback even when the pick is the current target
   const [weak, setWeak] = useState(goals?.weak_section ?? null);
   const [pace, setPace] = useState<GoalIntensity | null>(null);
   const [q, setQ] = useState<Q | null | undefined>(undefined);
@@ -202,9 +203,10 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
               </>}
             </div>}
             {step === 4 && <div className="space-y-5">
-              <Slider min={1000} max={1600} step={50} value={[target]} onValueChange={([v]) => setTarget(v)} aria-label="Target score" className="py-2" />
+              <Slider min={1000} max={1600} step={50} value={[target]} onValueChange={([v]) => { setTarget(v); setWhy(''); }} aria-label="Target score" className="py-2" />
               <div className="flex justify-between font-mono text-xs sky-body"><span>1000</span><span>1600</span></div>
-              <Button variant="outline" className="rounded-full" onClick={() => setTarget(helpMePick(priorScore))}><Wand2 className="h-4 w-4" />Help me pick</Button>
+              <Button variant="outline" className="rounded-full" onClick={() => { setTarget(helpMePick(priorScore)); setWhy(helpMePickReason(priorScore)); }}><Wand2 className="h-4 w-4" />Help me pick</Button>
+              <p role="status" className="min-h-6 sky-body">{why}</p>
             </div>}
             {step === 5 && <div role="group" aria-labelledby={titleId} className="grid gap-2">
               {SECTIONS.map(([v, l]) => <Choice key={v} on={weak === v} onClick={() => setWeak(v)}>{l}</Choice>)}

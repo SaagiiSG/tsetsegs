@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { onboardingStep, latchGate, canSkip, welcomeCopy, satDateOptions, helpMePick, defaultIntensity, ringPlanCopy, backStep, questionSubjects, stepSixMessage } from './onboarding';
+import { onboardingStep, latchGate, canSkip, welcomeCopy, satDateOptions, helpMePick, helpMePickReason, defaultIntensity, ringPlanCopy, backStep, questionSubjects, stepSixMessage } from './onboarding';
 const goals = (o = {}) => ({ speed: 2, hard: 5, medium: 10, intensity: null, sat_date: null, isSet: true, target_score: null, prior_score: null, weak_section: null, onboarding_step: null, onboarding_done_at: null, ...o });
 describe('who sees onboarding', () => {
   it('never shows it to students from before the cutoff', () => { expect(onboardingStep(false, goals({ isSet: false }), false)).toBeNull(); expect(onboardingStep(false, undefined, false)).toBeNull(); });
@@ -43,6 +43,12 @@ describe('steps', () => {
     expect(satDateOptions(new Date('2026-11-08T12:00:00'), '2026-11')).toEqual({ options: expect.any(Array), prefill: null });
   });
   it('help me pick', () => expect([null, 1500, 1200, 1230, 700].map(helpMePick)).toEqual([1300, 1600, 1350, 1400, 1000]));
+  it('help me pick always says why', () => {
+    expect(helpMePickReason(null)).toBe('1300 is a strong first goal. You can raise it later.');
+    expect(helpMePickReason(1200)).toBe('Your 1200 practice score + 150 is a stretch you can hit.');
+    expect(helpMePickReason(1450)).toBe('1600 it is. Aim for the top.');
+    expect(helpMePickReason(1550)).toBe('1600 it is. Aim for the top.');
+  });
   it('defaults the ring pace from the SAT date', () => expect([null, 13, 60, 90, 200].map(defaultIntensity)).toEqual(['gradual', 'intense', 'intense', 'gradual', 'with_the_flow']));
   it('does honest maths', () => {
     expect(ringPlanCopy({ hard: 5, medium: 10 }, 0, null)).toBe('About 15 questions a day. Your Math score prediction unlocks in about 4 weeks.');
