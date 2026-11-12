@@ -64,6 +64,7 @@ describe('steps', () => {
     expect(helpMePickReason(1200)).toBe('Your 1200 practice score + 150 is a stretch you can hit.');
     expect(helpMePickReason(1450)).toBe('1600 it is. Aim for the top.');
     expect(helpMePickReason(1550)).toBe('1600 it is. Aim for the top.');
+    expect(helpMePickReason(700)).toBe('1000 is a solid place to start. You can raise it later.');
   });
   it('defaults the ring pace from the SAT date', () => expect([null, 13, 60, 90, 200].map(defaultIntensity)).toEqual(['gradual', 'intense', 'intense', 'gradual', 'with_the_flow']));
   it('does honest maths', () => {

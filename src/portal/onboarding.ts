@@ -53,6 +53,7 @@ export const helpMePick = (prior: number | null) =>
 export const helpMePickReason = (prior: number | null) =>
   prior == null ? '1300 is a strong first goal. You can raise it later.'
   : prior >= 1450 ? '1600 it is. Aim for the top.'
+  : prior < 850 ? '1000 is a solid place to start. You can raise it later.'
   : `Your ${prior} practice score + 150 is a stretch you can hit.`;
 
 export function defaultIntensity(daysToSat: number | null): GoalIntensity {
