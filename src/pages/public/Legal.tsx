@@ -30,7 +30,16 @@ export function Terms() {
         <li>A free trial of a paid plan needs a card. We remind you before the trial ends. If you don’t cancel before it ends, the plan starts and you are charged.</li>
         <li>You can cancel at any time. You keep paid features until the end of the period you paid for, then your account moves to the Free plan. Your progress stays.</li>
         <li>If a payment fails, your account moves to the Free plan.</li>
-        <li>If you think you were charged by mistake, email {EMAIL}.</li>
+      </ul>
+
+      <h2 id="refunds">Refunds</h2>
+      <ul>
+        <li>You can get a full refund within 14 days of a payment, on both the monthly and the yearly plan. This includes the first payment after a free trial.</li>
+        <li>To ask for one, email {EMAIL} from your account’s email address. You don’t need to give a reason. We give one refund per account.</li>
+        <li>As soon as we refund a payment, your account moves to the Free plan. Your progress stays.</li>
+        <li>After 14 days we don’t refund, but you can cancel at any time and keep paid features until the end of the period you paid for.</li>
+        <li>If you were charged by mistake, email us whenever you notice and we will put it right.</li>
+        <li>Nothing here takes away refund rights you have under the law where you live.</li>
       </ul>
 
       <h2>Our content</h2>

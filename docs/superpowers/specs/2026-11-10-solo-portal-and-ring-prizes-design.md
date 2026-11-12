@@ -25,6 +25,7 @@ Payments come later (Part 3 below). They wait on the payment provider choice, A 
   - full badges, streak, analytics and review
   - **no step-by-step explanations**: these are Premium, and only Math questions have them
 - Premium costs US$19/month or US$39/year, with a card-upfront 7-day trial and a reminder 2 days before it ends. If the trial ends unpaid, the student drops back to Free. Prices are fixed; don't relitigate them.
+- Refunds (Saagii, 12 Nov): monthly and yearly both refundable. A refund drops the account to Free at once (`plan` free, `premium_until` now). 14-day window and one refund per account are my calls, written in /terms#refunds.
 - Solo students get a **global leaderboard** with **automatic 3-week seasons, back to back**.
 - No pricing goes on the educator page.
 
@@ -152,7 +153,7 @@ This copies the demo-slice pattern (drizzle 0108): read rules already say "demo 
 
 ## Part 3: payments (not in this round)
 
-These wait on provider A or B: checkout, trial, the 2-day reminder (pg_cron + `sendTemplateEmail`), and webhooks that set `solo_students.plan` / `premium_until`. The app keeps its own record of who's premium, so the provider only reports paid, cancelled or failed.
+These wait on provider A or B: checkout, trial, the 2-day reminder (pg_cron + `sendTemplateEmail`), and webhooks that set `solo_students.plan` / `premium_until`. A refund webhook sets the student to Free immediately. The app keeps its own record of who's premium, so the provider only reports paid, cancelled or failed.
 
 ## Going live
 
