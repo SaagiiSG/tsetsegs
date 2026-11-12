@@ -18,6 +18,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
 import Educators from "./pages/public/Educators";
+import { Privacy, Terms } from "./pages/public/Legal";
 import { resolveCenterSlug, soloHostRedirect } from "./lib/tenant";
 import CenterPortalApp from "./portal/CenterPortalApp";
 import DemoPortal from './demo/DemoPortal';
@@ -127,6 +128,8 @@ const MainApp = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/educators" element={<Educators />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/ngee" element={<NGEEBooking />} />
                   <Route path="/ngee/:courseId" element={<NGEEBooking />} />

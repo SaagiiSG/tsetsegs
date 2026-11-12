@@ -13,7 +13,7 @@ import "@/components/landing/landing.css";
 import { Clouds } from "@/components/landing/Clouds";
 import { StudentStories } from "@/components/landing/StudentStories";
 import { DesmosSection } from "@/components/landing/DesmosSection";
-import { TrademarkNotice } from "@/components/landing/TrademarkNotice";
+import { LegalFooter } from "@/components/landing/LegalFooter";
 import { mathExplanationsLabel, videoCountLabel } from "@/lib/educatorLanding";
 
 type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number; math_explanations: number };
@@ -180,7 +180,7 @@ const Index = () => {
       <footer className="border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
         <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p><address className="mt-1 max-w-xs not-italic">{text("Улаанбаатар, Хан-Уул дүүрэг, 15-р хороо, Их Наяд Зүүн Өндөр, 1114", "1114, Ikh Nayad East Tower, 15-r khoroo, Khan‑Uul district, Ulaanbaatar, Mongolia")}</address></div>
         <div className="flex flex-wrap gap-6"><a href="mailto:manager@tsetsegs.com">manager@tsetsegs.com</a><a href={FB} target="_blank" rel="noopener noreferrer">Facebook</a><a href="/practice">{text("Нэвтрэх", "Sign in")}</a></div>
-      </div><TrademarkNotice text={text} /></footer>
+      </div><LegalFooter text={text} /></footer>
     </div>
   );
 };

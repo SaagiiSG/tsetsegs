@@ -7,7 +7,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { Clouds } from "@/components/landing/Clouds";
 import { StudentStories } from "@/components/landing/StudentStories";
 import { DesmosSection } from "@/components/landing/DesmosSection";
-import { TrademarkNotice } from "@/components/landing/TrademarkNotice";
+import { LegalFooter } from "@/components/landing/LegalFooter";
 import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import { EducatorRequestForm } from "@/components/educators/EducatorRequestForm";
 import { usePublicLanguage } from "@/hooks/usePublicLanguage";
@@ -187,7 +187,7 @@ export default function Educators() {
           <div className="flex gap-6"><a href={`/login?role=admin&lang=${lang}`} className="inline-flex h-11 items-center">{text("Админ нэвтрэх", "Admin sign in")}</a><a href={`/login?role=teacher&lang=${lang}`} className="inline-flex h-11 items-center">{text("Багш нэвтрэх", "Teacher sign in")}</a></div>
           <p className="text-xs">{text("Төвийн бүртгэлтэй хэрэглэгчид өөрийн төвийн хаягаар нэвтэрнэ.", "Existing centers sign in at their own center’s address.")}</p>
         </div>
-      </div><TrademarkNotice text={text} /></footer>
+      </div><LegalFooter text={text} /></footer>
     </div>
   );
 }

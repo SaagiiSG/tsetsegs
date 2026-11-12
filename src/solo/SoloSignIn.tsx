@@ -97,6 +97,7 @@ export default function SoloSignIn() {
           <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !name.trim()}>Email me a code</Button>
         </form>
       )}
+      <p className="text-center text-xs text-muted-foreground">By continuing, you agree to our <a className="underline underline-offset-4 hover:text-foreground" href="/terms">Terms of Use</a> and <a className="underline underline-offset-4 hover:text-foreground" href="/privacy">Privacy Policy</a>.</p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </SoloShell>
   );
