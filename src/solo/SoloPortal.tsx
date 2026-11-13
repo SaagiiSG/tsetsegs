@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { deviceLanguage } from '@/lib/publicLanguage';
 import CenterPortalApp from '@/portal/CenterPortalApp';
-import SoloSignIn, { SoloBlocked, SoloShell } from './SoloSignIn';
+import SoloSignIn, { SoloBlocked, SoloClosed, SoloShell } from './SoloSignIn';
 
 type Joined = 'pending' | 'ok' | string;
 
@@ -44,7 +44,8 @@ export default function SoloPortal() {
 
   let body;
   if (session === undefined) body = loading;
-  else if (!session) body = deviceLanguage() === 'mon' && !haveAccount ? <SoloBlocked onHaveAccount={() => setHaveAccount(true)} /> : <SoloSignIn />;
+  else if (!session && haveAccount) body = <SoloSignIn />;
+  else if (!session) body = deviceLanguage() === 'mon' ? <SoloBlocked onHaveAccount={() => setHaveAccount(true)} /> : <SoloClosed onHaveAccount={() => setHaveAccount(true)} />;
   else if (joined === 'pending') body = loading;
   else if (joined !== 'ok') {
     body = /mongolia/i.test(joined) ? <SoloBlocked onSignOut={signOut} /> : (

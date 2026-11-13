@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
-import SoloSignIn, { SoloBlocked } from './SoloSignIn';
+import SoloSignIn, { SoloBlocked, SoloClosed } from './SoloSignIn';
 
 it('the join-refused block screen has a sign-out and no account link', () => {
   const html = renderToStaticMarkup(<SoloBlocked onSignOut={() => {}} />);
@@ -23,4 +23,12 @@ it('the sign-in page sits on the cloud sky and offers Google, Apple and Microsof
   for (const p of ['Google', 'Apple', 'Microsoft']) expect(html).toContain(`Continue with ${p}`);
   expect(html.match(/<button[^>]*>\s*<svg/g)?.length).toBe(3);
   expect(html).toContain('Email me a code');
+});
+
+it('the closed screen says sign-up is paused and offers only a sign-in for existing accounts', () => {
+  const html = renderToStaticMarkup(<SoloClosed onHaveAccount={() => {}} />);
+  expect(html).toMatch(/<h1[^>]*>Solo sign-up is closed for now<\/h1>/);
+  expect(html).toContain('I already have a solo account');
+  expect(html).not.toContain('Continue with Google');
+  expect(html).not.toContain('Email me a code');
 });

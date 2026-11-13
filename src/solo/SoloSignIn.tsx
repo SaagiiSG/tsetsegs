@@ -47,6 +47,20 @@ export function SoloBlocked({ onHaveAccount, onSignOut }: { onHaveAccount?: () =
   );
 }
 
+// Sign-up paused (Saagii, 13 Nov; 0134 refuses new joins too). Solo students who already joined still sign in.
+export function SoloClosed({ onHaveAccount }: { onHaveAccount: () => void }) {
+  return (
+    <SoloShell>
+      <div className="space-y-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Solo practice</p>
+        <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">Solo sign-up is closed for now</h1>
+        <p className="text-sm text-muted-foreground">We aren't taking new solo accounts at the moment. Check back soon.</p>
+      </div>
+      <Button variant="outline" className={oauthButton} onClick={onHaveAccount}>I already have a solo account</Button>
+    </SoloShell>
+  );
+}
+
 export default function SoloSignIn() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

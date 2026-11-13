@@ -939,6 +939,13 @@
       "when": 1794547082392,
       "tag": "0133_lock_desmos_and_alert_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 134,
+      "version": "7",
+      "when": 1794549987938,
+      "tag": "0134_solo_signup_closed",
+      "breakpoints": true
     }
   ]
 }
