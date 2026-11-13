@@ -35,19 +35,22 @@ export async function freeQuestionIds() {
   return data.map(r => r.item_id);
 }
 
-/** The rows in the free slice; `slice` null (anyone not free) keeps every row. */
-export function onlyFree<R extends { id: string }>(rows: R[], slice: string[] | null) {
+/** English is free for every student (Saagii, 12 Nov): only Math is held to the free slice. Subject NULL is Math. */
+const isEnglish = (subject: string | null | undefined) => subject?.toLowerCase() === 'english';
+
+/** The rows a free user practises: the free slice plus all of English; `slice` null (anyone not free) keeps every row. */
+export function onlyFree<R extends { id: string; subject?: string | null }>(rows: R[], slice: string[] | null) {
   if (!slice) return rows;
   const ids = new Set(slice);
-  return rows.filter(r => ids.has(r.id));
+  return rows.filter(r => ids.has(r.id) || isEnglish(r.subject));
 }
 
 /**
- * Narrows a question draw (random practice, speed, onboarding) to the free slice for a free user, so the free test's
- * readable copies never come up; anyone else's draw is unchanged. A slice that can't be read draws nothing.
+ * Narrows a Math question draw (random practice, speed, onboarding) to the free slice for a free user, so the free test's
+ * readable copies never come up; an English draw and anyone else's draw are unchanged. A slice that can't be read draws nothing.
  */
-export async function freeDraw(premium: boolean) {
-  const slice = premium ? null : await freeQuestionIds().catch(() => [] as string[]);
+export async function freeDraw(premium: boolean, subject: string) {
+  const slice = premium || isEnglish(subject) ? null : await freeQuestionIds().catch(() => [] as string[]);
   // Typed loosely: checking a supabase builder against an `in` constraint is too deep for tsc (TS2589).
   return <B,>(b: B): B => (slice ? (b as { in(column: 'id', values: readonly string[]): B }).in('id', slice) : b);
 }

@@ -78,26 +78,23 @@ describe('practice browser on the free solo plan', () => {
     probe(solo);
     expect((await options.last.queryFn!()).map(r => r.id)).toEqual(['q0', 'q1', 'q2']);
   });
-  it('locks the 68 and 150 tabs for a free user, and keeps CB open', () => {
+  // Free solo users never see the 68 or 150 sets (Saagii, 12 Nov): no tab, no lock.
+  const tabs = (html: string) => [...html.matchAll(/>(68|150|CB) \(\d+\)</g)].map(m => m[1]);
+  it('hides the 68 and 150 tabs from a free user, and keeps CB open', () => {
     state.result = loaded; state.plan = { plan: 'free', premium_until: null };
-    for (const set of ['68', 'SATMathTraining800']) {
-      const html = browse(set, solo);
-      expect(html).toContain('Every Math set');
-      expect(html).toContain('href="/?lang=eng#pricing"');
-      expect(html).toContain('Try Premium free for 7 days');
-      expect(html).not.toContain('CB1');
-    }
     const cb = browse('CB', solo);
-    expect(cb).not.toContain('Every Math set');
+    expect(tabs(cb)).toEqual(['CB']);
     expect(cb).toContain('CB1');
+    expect(cb).not.toContain('Try Premium');
   });
-  it('shows no lock in a normal center', () => {
+  it('shows every tab in a normal center and to a premium user', () => {
     state.result = loaded;
-    expect(browse('68')).not.toContain('Every Math set');
+    expect(tabs(browse('68'))).toEqual(['68', '150', 'CB']);
+    state.plan = { plan: 'premium', premium_until: null };
+    expect(tabs(browse('68', solo))).toEqual(['68', '150', 'CB']);
   });
   it('shows the loading state, not a lock or a list, until the plan is known', () => {
     state.result = loaded;
-    expect(browse('68', solo)).not.toContain('Every Math set');
     const cb = browse('CB', solo);
     expect(cb).not.toContain('CB1');
     expect(cb).not.toContain('No questions here yet');

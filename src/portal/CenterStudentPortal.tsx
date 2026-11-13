@@ -289,6 +289,8 @@ export function HomePage({ me }: { me: Me }) {
   const navigate = useNavigate();
   const totals = useSetTotals();
   const plan = useSoloPlan();
+  // Free solo users never see the 68 or 150 sets (Saagii, 12 Nov).
+  const sets = PRACTICE_SETS.filter(s => plan.premium || !plan.ready || s.key === 'CB');
   const today = new Date().toDateString();
   const todayList = me.attempts.filter(a => new Date(a.created_at).toDateString() === today);
   const total = me.attempts.length, correct = me.attempts.filter(a => a.is_correct).length;
@@ -372,9 +374,9 @@ export function HomePage({ me }: { me: Me }) {
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
         <CenterRingNudge open={nudgeOpen} onOpenChange={o => { if (!o) closeNudge(); }} progress={prog} goals={g} onStart={() => { closeNudge(); navigate('/student/practice?mode=random'); }} />
         <CenterGoalDialog open={goalOpen} onOpenChange={o => { setGoalOpen(o); if (!o) setGoalDue(false); }} studentId={me.student.id} goals={goals.data} />
-        <div className="grid gap-3 sm:grid-cols-3 md:contents lg:grid lg:col-span-9">
-          {PRACTICE_SETS.map(s => {
-            if (plan.ready && !plan.premium && s.key !== 'CB') return <SoloLock key={s.key} title={`The ${s.label} set`} />;
+        {/* A free solo user's lone CB card takes the whole row instead of a third of it. */}
+        <div className={`grid gap-3 ${sets.length > 1 ? 'sm:grid-cols-3' : ''} md:contents lg:grid lg:col-span-9`}>
+          {sets.map(s => {
             const ids = totals.data?.[s.key] ?? [];
             const done = ids.filter(id => solved.has(id)).length;
             const look = SET_LOOK[s.key];
@@ -524,7 +526,8 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
       {showExp && (
         <aside className="sky-card xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           <p className="text-xs text-muted-foreground mb-3">Explanation</p>
-          {!premium ? <SoloLock title="Step-by-step explanations" /> : q.rationale ? <ExplanationView text={q.rationale} /> : <p className="text-sm text-muted-foreground">No explanation has been written for this question yet.</p>}
+          {/* Premium adds Math explanations only; English is free, explanations included. */}
+          {!premium && q.subject?.toLowerCase() !== 'english' ? <SoloLock title="Step-by-step explanations" /> : q.rationale ? <ExplanationView text={q.rationale} /> : <p className="text-sm text-muted-foreground">No explanation has been written for this question yet.</p>}
         </aside>
       )}
     </div>
@@ -536,8 +539,8 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
 function PracticePage({ me }: { me: Me }) {
   const [params, setParams] = useSearchParams();
   const plan = useSoloPlan();
-  // A free solo user has the CB set only, so that's where a link without ?set= (the ring nudge's random mode) lands.
-  const set = !plan.premium && !params.get('set') ? 'CB' : practiceSetFromParam(params.get('set'));
+  // A free solo user has the CB set only, whatever ?set= says (the 68 and 150 sets are never shown to them).
+  const set = !plan.premium ? 'CB' : practiceSetFromParam(params.get('set'));
   const pinned = params.get('q');
   const cats = useQuery({ queryKey: ['question-categories'], queryFn: async () => (await supabase.from('question_categories').select('id, name').order('name')).data ?? [] });
   const [subject, setSubject] = useState<'math' | 'english'>('math');
@@ -548,7 +551,8 @@ function PracticePage({ me }: { me: Me }) {
   // question. Read through a ref so answering doesn't redraw the question on screen.
   const freeList = usePracticeQuestions(!plan.premium);
   const sectionDone = useRef(false);
-  sectionDone.current = !plan.premium && !!freeList.data && freeSectionDone(freeList.data, me.attempts, subject);
+  // English is all free, so only Math has a free section to finish.
+  sectionDone.current = !plan.premium && subject === 'math' && !!freeList.data && freeSectionDone(freeList.data, me.attempts, subject);
   const [congrats, setCongrats] = useState(false);
   const drawReady = plan.ready && (plan.premium || !!freeList.data || freeList.isError);
 
@@ -566,7 +570,7 @@ function PracticePage({ me }: { me: Me }) {
     }
     if (sectionDone.current) { setCongrats(true); return; }
     const sub = subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
-    const scope = await freeDraw(plan.premium);
+    const scope = await freeDraw(plan.premium, subject);
     const base = () => {
       let b = scope(supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub));
       if (subject === 'math') b = set === 'CB' ? b.or(CB_FILTER) : b.eq('question_set', set);
@@ -608,7 +612,7 @@ function PracticePage({ me }: { me: Me }) {
             className={`rounded-md px-3 py-1 text-sm active:scale-[0.97] transition-colors ${subject === s ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:text-foreground'}`}>{s === 'math' ? 'Math' : 'English'}</Button>)}
         </div>
         {subject === 'math' && <Select value={set} onValueChange={setSet}><SelectTrigger className="w-44" aria-label="Question set"><SelectValue /></SelectTrigger>
-          <SelectContent>{PRACTICE_SETS.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent></Select>}
+          <SelectContent>{PRACTICE_SETS.filter(s => plan.premium || s.key === 'CB').map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent></Select>}
         <Select value={domain} onValueChange={setDomain}><SelectTrigger className="w-56" aria-label="Domain"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">All domains</SelectItem>{domainOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
         <Select value={difficulty} onValueChange={setDifficulty}><SelectTrigger className="w-40" aria-label="Difficulty"><SelectValue /></SelectTrigger>
@@ -616,7 +620,7 @@ function PracticePage({ me }: { me: Me }) {
         {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button>}
         {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleReferenceSheet}><BookOpen className="h-4 w-4" />Reference</Button>}
       </div>
-      {plan.ready && !plan.premium && !pinned && subject === 'math' && set !== 'CB' ? <SoloLock title="Every Math set" /> : congrats ? <FreeSectionDone subject={subject} /> : q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
+      {congrats ? <FreeSectionDone subject={subject} /> : q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
       {subject === 'math' && <><DesmosCalculator /><ReferenceSheet /></>}
     </div>
   );
@@ -655,7 +659,7 @@ function SpeedPage({ me }: { me: Me }) {
   const start = async (c: SpeedConfig = cfg!) => {
     setCfg(c);
     const sub = c.subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
-    const scope = await freeDraw(plan.premium);
+    const scope = await freeDraw(plan.premium, c.subject);
     const base = () => { let b = scope(supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub)); if (c.category) b = b.eq('category_id', c.category); return b; };
     const { count } = await base().range(0, 0);
     const off = Math.max(0, Math.floor(Math.random() * Math.max(1, (count ?? 0) - 80)));

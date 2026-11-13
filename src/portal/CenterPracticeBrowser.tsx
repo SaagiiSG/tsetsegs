@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Check, ChevronRight, CircleDot, FileText, Lock, Shuffle, Target } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, CircleDot, FileText, Shuffle, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { SkyListSkeleton } from './SkySkeleton';
 import { allPages } from './centerApi';
 import { PRACTICE_SETS, inPracticeSet, practiceSetIds } from './practiceSets';
 import { freeQuestionIds, onlyFree, useSoloPlan } from './soloPlan';
-import { SoloLock } from './SoloLock';
 
 type Row = { id: string; question_id: string | null; subject: string | null; question_set: string | null; category_id: string | null; skill: string | null };
 type Attempt = { question_id: string; is_correct: boolean };
@@ -56,9 +55,8 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
 
   const data = usePracticeQuestions();
   const plan = useSoloPlan();
-  // Free solo users get the CB set only.
-  const locked = (k: string) => !plan.premium && k !== 'CB';
-  const setLocked = plan.ready && subject === 'math' && locked(setKey);
+  // Free solo users get the CB set only; the 68 and 150 tabs aren't shown to them (Saagii, 12 Nov).
+  const sets = PRACTICE_SETS.filter(s => plan.premium || !plan.ready || s.key === 'CB');
 
   const status = useMemo(() => {
     const m: Record<string, 'done' | 'tried'> = {};
@@ -100,19 +98,19 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
           </div>
           {subject === 'math' && (
             <div className="flex flex-wrap gap-1 rounded-2xl border p-1" role="tablist" aria-label="Question set">
-              {PRACTICE_SETS.map(s => <Button variant="ghost" key={s.key} className={tab(setKey === s.key)} onClick={() => { onSet(s.key); setDomain('all'); setSkill(null); }}>
-                {setKey === s.key && <BookOpen className="h-4 w-4" />}{s.label} {plan.ready && locked(s.key) ? <Lock className="h-4 w-4" aria-label="Premium" /> : `(${setCount(s.key)})`}</Button>)}
+              {sets.map(s => <Button variant="ghost" key={s.key} className={tab(setKey === s.key)} onClick={() => { onSet(s.key); setDomain('all'); setSkill(null); }}>
+                {setKey === s.key && <BookOpen className="h-4 w-4" />}{s.label} ({setCount(s.key)})</Button>)}
             </div>
           )}
           <Button variant="outline" size="sm" className="ml-auto" onClick={onRandom}><Shuffle className="h-4 w-4" />Random question</Button>
         </div>
-        {!setLocked && <div className="space-y-2">
+        <div className="space-y-2">
           <div className="flex flex-wrap justify-between gap-2 text-sm"><span className="text-muted-foreground">Overall progress</span><span className="font-mono">{mastered}/{total} ({total ? Math.round((100 * mastered) / total) : 0}%)</span></div>
           {bar(mastered, total)}
-        </div>}
+        </div>
       </section>
 
-      {setLocked ? <SoloLock title="Every Math set" /> : <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.7fr)_minmax(0,1.3fr)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.7fr)_minmax(0,1.3fr)]">
         <aside className="sky-card space-y-3 lg:sticky lg:top-6 lg:self-start">
           <p className="flex items-center gap-2 font-medium"><Target className="h-4 w-4" />{subject === 'math' ? 'Math areas' : 'English areas'}</p>
           <Button variant="ghost" onClick={() => { setDomain('all'); setSkill(null); }} className={`w-full rounded-2xl px-4 py-3 text-left transition-colors ${domain === 'all' ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'}`}>
@@ -165,7 +163,7 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
             </div>
           )}
         </section>
-      </div>}
+      </div>
     </div>
   );
 }

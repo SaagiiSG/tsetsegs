@@ -22,9 +22,9 @@ const fmt = (n?: number) => (n ?? 0).toLocaleString("en-US");
 // Saagii's numbers (8 Nov): best Math 680, i.e. +198 over the first 482. Hardcoded like the 720 card; the live best_gain is lower.
 const BEST_GAIN = 198;
 // Solo plans (Saagii, 10 Nov): Free needs no card, both paid plans open with a 7-day trial. English only: Mongolian visitors are center students.
-// 1,425 Math, 900 English, Free capped at 30 Math + 100 English, 155 videos: his numbers (10 Nov), hardcoded like BEST_GAIN.
-const FREE_PLAN = ["30 Math and 100 English questions", "Speed mode, 10 sessions a day", "1 full practice test", "The first lesson of every video topic", "Analytics and a predicted SAT score", "Mistake review", "Streaks, badges and the global league"];
-const PREMIUM_PLAN = ["Step-by-step explanations for every Math question", "All 1,425 Math questions, including the hardest problems for 800", "All 900 English questions", "Unlimited speed mode", "Every practice test", "155 video lessons for SAT Math and English"];
+// 1,425 Math, 900 English, Free capped at 30 Math, 155 videos: his numbers (10 Nov), hardcoded like BEST_GAIN. All English is free (12 Nov).
+const FREE_PLAN = ["All 900 English questions", "30 Math questions", "Speed mode, 10 sessions a day", "1 full practice test", "The first lesson of every video topic", "Analytics and a predicted SAT score", "Mistake review", "Streaks, badges and the global league"];
+const PREMIUM_PLAN = ["Step-by-step explanations for every Math question", "All 1,425 Math questions, including the hardest problems for 800", "Unlimited speed mode", "Every practice test", "155 video lessons for SAT Math and English"];
 const PLANS = [
   { name: "Free", price: "$0", per: "forever", note: "No card needed", cta: "Start free", list: FREE_PLAN },
   { name: "Monthly", price: "$19", per: "/month", note: "7-day free trial", cta: "Start free trial", list: PREMIUM_PLAN },

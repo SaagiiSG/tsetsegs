@@ -55,11 +55,10 @@ describe('center home', () => {
       expect(card).not.toMatch(/>0<|\/…|sky-fill-violet/);
     } finally { flags.videosFail = false; }
   });
-  it('locks the 68 and 150 cards for a free solo user only', () => {
+  it('hides the 68 and 150 cards from a free solo user only', () => {
     const free = render({ plan: 'free', premium_until: null });
-    expect(free).toContain('The 68 set');
-    expect(free).toContain('The 150 set');
-    expect(free).toContain('Try Premium free for 7 days');
+    expect(free).not.toContain('Core SAT math patterns'); // the 68 card
+    expect(free).not.toMatch(/The (68|150) set|Try Premium/); // no lock card either
     expect(free).toContain('All other math, including the new 120'); // CB stays a card
     for (const html of [render(), render({ plan: 'premium', premium_until: null })]) {
       expect(html).not.toContain('Try Premium');

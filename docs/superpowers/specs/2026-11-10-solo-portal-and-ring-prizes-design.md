@@ -18,7 +18,8 @@ Payments come later (Part 3 below). They wait on the payment provider choice, A 
 - Closing a ring plays a **cool animation**.
 - All of this applies to **all three portals**: the main student portal, the center portal and the solo portal.
 - Solo students sign up for free with **no card**. Free gets:
-  - **30 Math and 100 English questions**
+  - **30 Math questions and all 900 English questions** (Saagii, 12 Nov: English is free for every student and no longer part of Premium; it replaces the earlier 100 English)
+  - **never the 68 or 150 sets**: no tab, card or lock for them (Saagii, 12 Nov)
   - **10 speed sessions a day**
   - **1 of the 6 practice tests**
   - **the first lesson of each video topic**
@@ -28,6 +29,7 @@ Payments come later (Part 3 below). They wait on the payment provider choice, A 
 - Refunds (Saagii, 12 Nov): monthly and yearly both refundable. A refund drops the account to Free at once (`plan` free, `premium_until` now). 14-day window and one refund per account are my calls, written in /terms#refunds.
 - Solo students get a **global leaderboard** with **automatic 3-week seasons, back to back**.
 - No pricing goes on the educator page.
+- The 68 set and the practice-test questions are our own originals and stay as they are; no variants needed (Saagii, 12 Nov).
 
 ## Part 1: ring prizes (main, center, solo)
 
@@ -139,14 +141,14 @@ This copies the demo-slice pattern (drizzle 0108): read rules already say "demo 
 - **Speed limit:** the 10-a-day speed limit is checked in the speed-run guard trigger for free solo students. The speed lobby shows "x of 10 left today".
 - **Which questions (my call):**
   - The free Math questions are spread across the four Math topics, from the CB set.
-  - The free English questions are spread across the four English topics.
+  - The free English questions are spread across the four English topics. Since 12 Nov (drizzle 0131) every English question is free: the read rule lets a free solo user read any active English row, and the 100 English slice rows no longer matter.
   - Saagii can swap any of them by editing the table.
 - **Locked items:**
-  - Locked sets, tests and videos show a small lock and "Try Premium free for 7 days".
+  - Locked tests and videos show a small lock and "Try Premium free for 7 days". The 68 and 150 sets are hidden from free users instead (12 Nov).
   - Until checkout exists, that button goes to the pricing section.
 - **Finishing the free questions (Saagii, 11 Nov):**
   - A free solo student never earns the CB master badge. Solving the 30 free questions isn't the whole set.
-  - When they finish the free questions, they see a congratulations page for completing the free section, with the "Try Premium free for 7 days" button.
+  - When they finish the free Math questions, they see a congratulations page for completing the free section, with the "Try Premium free for 7 days" button. English has no free section to finish (12 Nov).
 - **Explanations:**
   - Hidden on screen for free solo students.
   - **Known gap:** the explanation text sits in the same question row the free student can read, so a determined student could fetch it. Closing this needs a server-only explanation read, which is follow-up work before launch.

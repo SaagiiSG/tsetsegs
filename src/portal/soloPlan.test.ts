@@ -18,6 +18,10 @@ describe('onlyFree', () => {
   const rows = [{ id: 'slice' }, { id: 'test-copy' }];
   it('a free user keeps only the slice', () => expect(onlyFree(rows, ['slice'])).toEqual([{ id: 'slice' }]));
   it('everyone else keeps every row', () => expect(onlyFree(rows, null)).toEqual(rows));
+  it('a free user keeps every English row, slice or not (all English is free, 12 Nov)', () => {
+    const mixed = [{ id: 'm', subject: 'math' }, { id: 'e', subject: 'English' }, { id: 'n', subject: null }];
+    expect(onlyFree(mixed, []).map(r => r.id)).toEqual(['e']);
+  });
 });
 
 describe('freeDraw', () => {
@@ -26,14 +30,18 @@ describe('freeDraw', () => {
   const table = (ids: string[]): Fake => ({ ids, in: (_column, values) => table(ids.filter(id => values.includes(id))) });
   it('a free user draws only from the slice, never a readable free-test copy', async () => {
     slice.read = { data: [{ item_id: 'slice' }], error: null };
-    expect((await freeDraw(false))(table(['slice', 'test-copy'])).ids).toEqual(['slice']);
+    expect((await freeDraw(false, 'math'))(table(['slice', 'test-copy'])).ids).toEqual(['slice']);
   });
   it('a center (or premium) user draws from everything readable', async () => {
-    expect((await freeDraw(true))(table(['slice', 'test-copy'])).ids).toEqual(['slice', 'test-copy']);
+    expect((await freeDraw(true, 'math'))(table(['slice', 'test-copy'])).ids).toEqual(['slice', 'test-copy']);
+  });
+  it('a free user draws English from everything readable', async () => {
+    slice.read = { data: [{ item_id: 'slice' }], error: null };
+    for (const subject of ['english', 'English']) expect((await freeDraw(false, subject))(table(['slice', 'e1'])).ids).toEqual(['slice', 'e1']);
   });
   it('a free user whose slice read fails draws nothing', async () => {
     slice.read = { data: null, error: new Error('network') };
-    expect((await freeDraw(false))(table(['slice', 'test-copy'])).ids).toEqual([]);
+    expect((await freeDraw(false, 'math'))(table(['slice', 'test-copy'])).ids).toEqual([]);
   });
 });
 

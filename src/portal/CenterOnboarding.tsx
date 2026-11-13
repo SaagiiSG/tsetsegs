@@ -152,7 +152,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
     if (step !== 6 || q) return; // coming back to step 6 keeps the question and the answer
     let live = true;
     (async () => {
-      const scope = await freeDraw(plan.premium);
+      const scope = await freeDraw(plan.premium, questionSubjects(weak)[0]);
       const base = () => scope(supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false)
         .in('subject', questionSubjects(weak)).ilike('difficulty_level', 'medium'));
       const { count } = await base().range(0, 0);
