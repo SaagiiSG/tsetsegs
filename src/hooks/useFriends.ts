@@ -46,21 +46,11 @@ export function useFriends() {
 
     let nameByAccount = new Map<string, { name: string; phone: string }>();
     if (otherIds.length > 0) {
-      const { data: accts } = await supabase
-        .from('student_accounts')
-        .select('id, phone_number')
-        .in('id', otherIds);
-      const phones = (accts ?? []).map((a: any) => a.phone_number);
-      const { data: studs } = await supabase
-        .from('students')
-        .select('first_name, last_name, phone')
-        .in('phone', phones);
-      const studByPhone = new Map<string, any>();
-      (studs ?? []).forEach((s: any) => studByPhone.set(s.phone, s));
-      (accts ?? []).forEach((a: any) => {
-        const s = studByPhone.get(a.phone_number);
-        const name = s ? `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim() : a.phone_number;
-        nameByAccount.set(a.id, { name: name || a.phone_number, phone: a.phone_number });
+      // A definer lookup: students read only their own account row; the phone comes back for friends and incoming requests.
+      const { data: names } = await supabase.rpc('student_display_names' as any, { _ids: otherIds });
+      ((names ?? []) as any[]).forEach((n) => {
+        const name = `${n.first_name ?? ''} ${n.last_name ?? ''}`.trim();
+        nameByAccount.set(n.id, { name: name || n.friend_phone || 'Friend', phone: n.friend_phone ?? '' });
       });
     }
 
@@ -111,40 +101,28 @@ export function useFriends() {
         return { error: "You can't add yourself" };
       }
 
-      // Friend must exist in students table (enrolled) AND have a student_account
-      const { data: studentRow } = await supabase
-        .from('students')
-        .select('id, phone, batches(course_type)')
-        .or(`phone.eq.${phone},phone.eq.${phone.replace(/-/g, '')}`)
-        .eq('is_ghost', false)
-        .limit(1);
-      if (!studentRow || studentRow.length === 0) {
+      // Friend must exist in students table (enrolled) AND have a student_account (a definer lookup, no phones back)
+      const { data: found } = await supabase.rpc('student_find_by_phone' as any, { _phone: phone });
+      const hit = ((found ?? []) as any[])[0];
+      if (!hit) {
         return { error: 'No student with that phone number' };
       }
       // Only SAT students can be added
-      const courseType = (studentRow[0] as any).batches?.course_type;
-      if (courseType && courseType !== 'SAT') {
+      if (hit.course_type && hit.course_type !== 'SAT') {
         return { error: 'That student is not enrolled in SAT' };
       }
-
-      const { data: acct } = await supabase
-        .from('student_accounts')
-        .select('id, cohort')
-        .eq('phone_number', (studentRow[0] as any).phone)
-        .eq('is_ghost', false)
-        .maybeSingle();
-      if (!acct) {
+      if (!hit.account_id) {
         return { error: 'That student has not signed in yet' };
       }
-      if (acct.id === student.id) return { error: "You can't add yourself" };
+      if (hit.account_id === student.id) return { error: "You can't add yourself" };
       // Friends stay inside their own cohort so competition worlds never mix
-      if (normalizeCohort((acct as any).cohort) !== normalizeCohort(student.cohort)) {
+      if (normalizeCohort(hit.cohort) !== normalizeCohort(student.cohort)) {
         return { error: 'No student with that phone number' };
       }
 
       const { error } = await supabase.from('student_friendships').insert({
         requester_id: student.id,
-        addressee_id: acct.id,
+        addressee_id: hit.account_id,
         status: 'pending',
       });
       if (error) {
