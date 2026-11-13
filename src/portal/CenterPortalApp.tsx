@@ -14,6 +14,7 @@ import CenterAdminPortal from './CenterAdminPortal';
 import CenterTeacherPortal from './CenterTeacherPortal';
 import CenterStudentPortal from './CenterStudentPortal';
 import CenterGoogleGate from './CenterGoogleGate';
+import { recordTick } from '@/lib/terms';
 
 const AFTER_SIGNIN = 'center-after-signin';
 const afterSignIn = () => { try { return sessionStorage.getItem(AFTER_SIGNIN); } catch { return null; } };
@@ -38,6 +39,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const googleFinish = useRef<Promise<void> | null>(null);
+  const userId = session?.user.id;
 
   // The remembered proctor link is used once, by `home` on the render where the role first appears.
   useEffect(() => { if (role) try { sessionStorage.removeItem(AFTER_SIGNIN); } catch { /* ignore */ } }, [role]);
@@ -55,6 +57,8 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     return () => sub.subscription.unsubscribe();
   }, [slug]);
+  // A sign-up's agreement tick (TermsCheck on /solo and the join page) is saved once there's a user to save it for.
+  useEffect(() => { if (userId) void recordTick(); }, [userId]);
 
   useEffect(() => {
     if (!center || session === undefined) return;

@@ -13,6 +13,7 @@ import { startGoogle, takePending } from './centerGoogle';
 import { PasswordInput } from './PasswordInput';
 import { canContinue, joinSteps, stepForError, type JoinForm, type JoinStep } from './joinSteps';
 import { AuthSplitLayout, authInputClasses, authLabelClasses } from '@/components/auth/AuthSplitLayout';
+import { TermsCheck } from '@/components/auth/TermsCheck';
 
 const ACCOUNT_READY = 'Your account is ready. Sign in with your phone number and password.';
 
@@ -40,6 +41,7 @@ export default function CenterJoin() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
+  const [agreed, setAgreed] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -145,8 +147,9 @@ export default function CenterJoin() {
 
             {step === 'start' && <div className="space-y-3">
               <p className="text-lg text-muted-foreground">Make your {centerName} account. It takes about a minute.</p>
-              <Button size="lg" className="h-12 w-full rounded-full text-base" disabled={busy} onClick={google}>Continue with Google</Button>
-              <Button size="lg" variant="outline" className="h-12 w-full rounded-full text-base" disabled={busy} onClick={() => { setPath('email'); next(); }}>Use my email instead</Button>
+              <TermsCheck checked={agreed} onChange={setAgreed} />
+              <Button size="lg" className="h-12 w-full rounded-full text-base" disabled={busy || !agreed} onClick={google}>Continue with Google</Button>
+              <Button size="lg" variant="outline" className="h-12 w-full rounded-full text-base" disabled={busy || !agreed} onClick={() => { setPath('email'); next(); }}>Use my email instead</Button>
             </div>}
 
             {step === 'name' && <Field id="j-name" label="Full name">

@@ -10,6 +10,8 @@ import clouds from '@/assets/landing/07-clouds-near.svg';
 import '@/components/landing/landing.css';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
+import { TermsCheck } from '@/components/auth/TermsCheck';
+import { TERMS_VERSION } from '@/lib/terms';
 
 // AuthSplitLayout's cloud sky, with plain links: before joining, /solo has no router for its <Link>s.
 export const SoloShell = ({ children }: { children: React.ReactNode }) => (
@@ -52,6 +54,7 @@ export default function SoloSignIn() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [agreed, setAgreed] = useState(false);
 
   const run = async (fn: () => Promise<{ error?: { message?: string } | null }>) => {
     setBusy(true); setError(null);
@@ -65,7 +68,7 @@ export default function SoloSignIn() {
     run(() => lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin + '/solo' }) as Promise<{ error?: { message?: string } | null }>);
   const sendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await run(() => supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/solo', data: { full_name: name.trim() } } }));
+    const ok = await run(() => supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/solo', data: { full_name: name.trim(), terms_version: TERMS_VERSION } } }));
     if (ok) setSent(true);
   };
   const verify = async (token: string) => { if (!(await run(() => supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' })))) setCode(''); };
@@ -78,9 +81,10 @@ export default function SoloSignIn() {
         <p className="text-sm text-muted-foreground">Free, no card needed. <a className="underline underline-offset-4 hover:text-foreground" href="/?lang=eng#pricing">See plans</a></p>
       </div>
       <div className="space-y-3">
-        <Button variant="outline" className={oauthButton} disabled={busy} onClick={() => oauth('google')}><GoogleMark className="h-5 w-5" />Continue with Google</Button>
-        <Button variant="outline" className={oauthButton} disabled={busy} onClick={() => oauth('apple')}><AppleMark className="h-5 w-5" />Continue with Apple</Button>
-        <Button variant="outline" className={oauthButton} disabled={busy} onClick={() => oauth('microsoft')}><MicrosoftMark className="h-5 w-5" />Continue with Microsoft</Button>
+        <TermsCheck checked={agreed} onChange={setAgreed} />
+        <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('google')}><GoogleMark className="h-5 w-5" />Continue with Google</Button>
+        <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('apple')}><AppleMark className="h-5 w-5" />Continue with Apple</Button>
+        <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('microsoft')}><MicrosoftMark className="h-5 w-5" />Continue with Microsoft</Button>
       </div>
       <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
       {sent ? (
@@ -94,10 +98,9 @@ export default function SoloSignIn() {
         <form onSubmit={sendCode} className="space-y-4">
           <div className="space-y-1.5"><Label htmlFor="solo-name" className={authLabelClasses}>Your name</Label><Input id="solo-name" required autoComplete="name" className={authInputClasses} value={name} onChange={e => setName(e.target.value)} /></div>
           <div className="space-y-1.5"><Label htmlFor="solo-email" className={authLabelClasses}>Email</Label><Input id="solo-email" type="email" required autoComplete="email" className={authInputClasses} value={email} onChange={e => setEmail(e.target.value)} /></div>
-          <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !name.trim()}>Email me a code</Button>
+          <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !agreed || !name.trim()}>Email me a code</Button>
         </form>
       )}
-      <p className="text-center text-xs text-muted-foreground">By continuing, you agree to our <a className="underline underline-offset-4 hover:text-foreground" href="/terms">Terms of Use</a> and <a className="underline underline-offset-4 hover:text-foreground" href="/privacy">Privacy Policy</a>.</p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </SoloShell>
   );
