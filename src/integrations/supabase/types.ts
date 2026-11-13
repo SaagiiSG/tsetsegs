@@ -7340,6 +7340,26 @@ export type Database = {
         }[]
       }
       student_claim_badges: { Args: never; Returns: string[] }
+      student_display_names: {
+        Args: { _ids: string[] }
+        Returns: {
+          first_name: string
+          friend_phone: string
+          id: string
+          is_ghost: boolean
+          last_name: string
+          phone_tail: string
+        }[]
+      }
+      student_find_by_phone: {
+        Args: { _phone: string }
+        Returns: {
+          account_id: string
+          cohort: string
+          course_type: string
+          student_id: string
+        }[]
+      }
       student_google_connected: { Args: never; Returns: boolean }
       student_inherited_tier: {
         Args: { p_sprint: string; p_student: string }
@@ -7390,6 +7410,21 @@ export type Database = {
       student_practised_recently: {
         Args: { p_student: string }
         Returns: boolean
+      }
+      student_profile_card: {
+        Args: { _id: string }
+        Returns: {
+          created_at: string
+          first_name: string
+          id: string
+          last_login: string
+          last_name: string
+          phone_tail: string
+          sat_english_score: number
+          sat_math_score: number
+          sat_score_date: string
+          sat_total_score: number
+        }[]
       }
       student_roster_for_login: {
         Args: { _phones: string[] }
