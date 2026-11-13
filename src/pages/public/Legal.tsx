@@ -25,7 +25,7 @@ export function Terms() {
 
       <h2>Plans and payment</h2>
       <ul>
-        <li>The Free plan needs no card and has no time limit. What it includes is listed on our <a href="/?lang=eng#pricing">pricing section</a>.</li>
+        <li>The Free plan needs no card and never expires, but it has limits, such as how many questions, speed sessions and practice tests you can use. Our <a href="/?lang=eng#pricing">pricing section</a> shows exactly what it includes.</li>
         <li>Paid plans renew automatically each month or year until you cancel. Prices are shown before you pay.</li>
         <li>A free trial of a paid plan needs a card. We remind you before the trial ends. If you don’t cancel before it ends, the plan starts and you are charged.</li>
         <li>You can cancel at any time. You keep paid features until the end of the period you paid for, then your account moves to the Free plan. Your progress stays.</li>
