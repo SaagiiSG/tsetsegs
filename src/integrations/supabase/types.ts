@@ -6463,6 +6463,24 @@ export type Database = {
           },
         ]
       }
+      terms_acceptances: {
+        Row: {
+          accepted_at: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          accepted_at?: string
+          user_id: string
+          version: string
+        }
+        Update: {
+          accepted_at?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -6545,6 +6563,7 @@ export type Database = {
         Args: { fn_name: string; payload: Json }
         Returns: undefined
       }
+      accept_terms: { Args: { p_version: string }; Returns: undefined }
       add_league_points: {
         Args: { p_points: number; p_sprint: string; p_student: string }
         Returns: undefined

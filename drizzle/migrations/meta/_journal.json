@@ -911,6 +911,13 @@
       "when": 1794535906397,
       "tag": "0129_terms_acceptances",
       "breakpoints": true
+    },
+    {
+      "idx": 130,
+      "version": "7",
+      "when": 1794537453269,
+      "tag": "0130_apply_pending_0129",
+      "breakpoints": true
     }
   ]
 }
