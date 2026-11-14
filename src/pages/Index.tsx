@@ -38,8 +38,9 @@ const Index = () => {
   const { lang, setLang, text } = usePublicLanguage();
   const reveal = reduce ? {} : { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" }, transition: { duration: .4 } };
 
-  const { data: s } = useQuery({
-    queryKey: ["landing-public-stats"], staleTime: 10 * 60_000,
+  const { data: s, isError } = useQuery({
+    // One retry, not the default three: while it loads the cards sit at 0, and "0 active users" shouldn't stay up ~8s when the call is failing.
+    queryKey: ["landing-public-stats"], staleTime: 10 * 60_000, retry: 1,
     queryFn: async () => { const { data, error } = await supabase.rpc("landing_public_stats" as never); if (error) throw error; return data as unknown as Stats; },
   });
 
@@ -104,7 +105,7 @@ const Index = () => {
         </section>
 
         <section className="py-10"><div className="lv-container grid grid-cols-2 gap-3 md:grid-cols-4">{proof.map((p, i) => (
-          <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card p-5"><p className={`inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold md:text-3xl ${p.c}`}><CountUp to={p.to} format={p.f} /></p><p className="mt-3 text-sm text-muted-foreground">{p.l}</p></motion.div>
+          <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card p-5"><p className={`inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold md:text-3xl ${p.c}`}><CountUp to={p.to} format={p.f} ready={!!s || isError} /></p><p className="mt-3 text-sm text-muted-foreground">{p.l}</p></motion.div>
         ))}</div></section>
 
         <section id="how" className="py-20"><div className="lv-container">
@@ -186,20 +187,21 @@ const Index = () => {
   );
 };
 
-// Counts from 0 once the card is on screen and its number has loaded; "—" until then. The pill is sized to the final number so it doesn't grow while counting.
-function CountUp({ to, format }: { to?: number; format: (n: number) => string }) {
+// Sits at 0 until the live numbers load (ready), then counts up once on screen, so all four cards move together. "—" only if the number failed to load.
+function CountUp({ to, format, ready }: { to?: number; format: (n: number) => string; ready: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
   const reduce = useReducedMotion();
   const [n, setN] = useState(0);
   useEffect(() => {
-    if (!inView || to == null) return;
+    if (!inView || !ready || to == null) return;
     if (reduce) { setN(to); return; }
     const c = animate(0, to, { duration: 1.4, ease: [0.16, 1, 0.3, 1], onUpdate: v => setN(Math.round(v)) });
     return () => c.stop();
-  }, [inView, to, reduce]);
-  // One outer span for both states: useInView keeps watching the first element it got.
-  return <span ref={ref}>{to == null ? "—" : <><span className="sr-only">{format(to)}</span><span aria-hidden className="inline-block text-right" style={{ minWidth: `${format(to).length}ch` }}>{format(n)}</span></>}</span>;
+  }, [inView, ready, to, reduce]);
+  const end = to == null ? undefined : format(to);
+  // One outer span for every state: useInView keeps watching the first element it got. The pill is sized to the final number so it doesn't grow while counting.
+  return <span ref={ref}>{ready && to == null ? "—" : <>{end && <span className="sr-only">{end}</span>}<span aria-hidden className="inline-block text-right" style={end ? { minWidth: `${end.length}ch` } : undefined}>{format(n)}</span></>}</span>;
 }
 
 function FeatureDemo({ kind, text }: { kind: string; text: (a: string, b: string) => string }) {
