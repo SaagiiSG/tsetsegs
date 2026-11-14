@@ -225,22 +225,13 @@ export async function createChallenge(
     const availableIds = args.invited_account_ids.filter((id) => !busySet.has(id));
 
     if (availableIds.length > 0) {
-      const { data: accts } = await supabase
-        .from('student_accounts')
-        .select('id, phone_number')
-        .in('id', availableIds);
-      const phones = (accts ?? []).map((a: any) => a.phone_number);
-      const { data: studs } = await supabase
-        .from('students')
-        .select('first_name, last_name, phone')
-        .in('phone', phones);
-      const nameByPhone = new Map<string, string>();
-      (studs ?? []).forEach((s: any) => nameByPhone.set(s.phone, `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim()));
-      const rows = (accts ?? []).map((a: any) => ({
+      // A definer lookup: students read only their own account row.
+      const { data: names } = await supabase.rpc('student_display_names' as any, { _ids: availableIds });
+      const rows = ((names ?? []) as any[]).map((n) => ({
         challenge_id: ch.id,
-        student_account_id: a.id,
+        student_account_id: n.id,
         // Challenge players are publicly readable (live screens), so never fall back to a full phone number.
-        display_name: nameByPhone.get(a.phone_number) || `Student ••${String(a.phone_number ?? '').slice(-2)}`,
+        display_name: `${n.first_name ?? ''} ${n.last_name ?? ''}`.trim() || `Student ••${String(n.phone_tail ?? '').slice(-2)}`,
       }));
       if (rows.length > 0) {
         await supabase.from('challenge_participants').insert(rows);

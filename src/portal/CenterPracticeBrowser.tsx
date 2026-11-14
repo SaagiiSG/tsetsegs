@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { SkyListSkeleton } from './SkySkeleton';
 import { allPages } from './centerApi';
 import { PRACTICE_SETS, inPracticeSet, practiceSetIds } from './practiceSets';
+import { freeQuestionIds, onlyFree, useSoloPlan } from './soloPlan';
 
 type Row = { id: string; question_id: string | null; subject: string | null; question_set: string | null; category_id: string | null; skill: string | null };
 type Attempt = { question_id: string; is_correct: boolean };
@@ -16,21 +17,26 @@ const short = (d: string) => d.replace(/ and .*/, '').replace(/Advanced Math/, '
 const CARD = { done: 'border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/15', tried: 'border-red-500/40 bg-red-500/10 hover:bg-red-500/15' };
 
 /** Every practice question (light columns). The home cards share this list so their counts match the tabs. */
-export function usePracticeQuestions() {
+export function usePracticeQuestions(enabled = true) {
+  // A free solo user also reads the free test's question copies; only the free slice counts as practice.
+  const plan = useSoloPlan();
+  const free = !plan.premium;
   return useQuery({
-    queryKey: ['center-practice-browser'],
+    queryKey: ['center-practice-browser', free],
+    enabled: plan.ready && enabled,
     staleTime: 5 * 60_000,
     queryFn: async () => {
       // A partial list would shrink the set totals and could award a master badge early, so any failed read fails the whole
       // query, and allPages reads on until a short page (no row cap).
-      const [{ data: cats, error }, rows] = await Promise.all([
+      const [{ data: cats, error }, rows, slice] = await Promise.all([
         supabase.from('question_categories').select('id, name'),
         allPages<Row>(p => supabase.from('intl_questions').select('id, question_id, subject, question_set, category_id, skill')
           .eq('is_active', true).eq('hide_from_practice', false).order('question_id').order('id').range(p, p + 999)),
+        free ? freeQuestionIds() : null,
       ]);
       if (error) throw error;
       const cat = Object.fromEntries((cats ?? []).map(c => [c.id, c.name]));
-      return rows.map(r => ({ ...r, domain: (r.category_id && cat[r.category_id]) || 'Other', sub: (r.subject ?? 'math').toLowerCase() as 'math' | 'english' }));
+      return onlyFree(rows, slice).map(r => ({ ...r, domain: (r.category_id && cat[r.category_id]) || 'Other', sub: (r.subject ?? 'math').toLowerCase() as 'math' | 'english' }));
     },
   });
 }
@@ -48,6 +54,9 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
   const data = usePracticeQuestions();
+  const plan = useSoloPlan();
+  // Free solo users get the CB set only; the 68 and 150 tabs aren't shown to them (Saagii, 12 Nov).
+  const sets = PRACTICE_SETS.filter(s => plan.premium || !plan.ready || s.key === 'CB');
 
   const status = useMemo(() => {
     const m: Record<string, 'done' | 'tried'> = {};
@@ -89,7 +98,7 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
           </div>
           {subject === 'math' && (
             <div className="flex flex-wrap gap-1 rounded-2xl border p-1" role="tablist" aria-label="Question set">
-              {PRACTICE_SETS.map(s => <Button variant="ghost" key={s.key} className={tab(setKey === s.key)} onClick={() => { onSet(s.key); setDomain('all'); setSkill(null); }}>
+              {sets.map(s => <Button variant="ghost" key={s.key} className={tab(setKey === s.key)} onClick={() => { onSet(s.key); setDomain('all'); setSkill(null); }}>
                 {setKey === s.key && <BookOpen className="h-4 w-4" />}{s.label} ({setCount(s.key)})</Button>)}
             </div>
           )}
@@ -130,7 +139,7 @@ export function CenterPracticeBrowser({ attempts, subject, setKey, onSubject, on
         </aside>
 
         <section className="sky-card lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
-          {data.isLoading ? <div className="p-4"><SkyListSkeleton rows={5} /></div> : shown.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No questions here yet.</p> : (
+          {data.isLoading || !plan.ready ? <div className="p-4"><SkyListSkeleton rows={5} /></div> : shown.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No questions here yet.</p> : (
             // Container queries (arbitrary variants, no plugin): 2 cols narrow (phones), 4 from 31rem, 5 from 38rem of the panel's own width; below 31rem a 4-up row cuts the area labels.
             <div className="[container-type:inline-size]">
               <div className="grid grid-cols-2 gap-2.5 [@container(min-width:31rem)]:grid-cols-4 [@container(min-width:38rem)]:grid-cols-5">

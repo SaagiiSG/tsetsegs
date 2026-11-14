@@ -82,6 +82,7 @@ export function CenterHelpPage() {
         <p><span className="font-medium">Practice.</span> A correct answer earns 10 points on your first try, 5 on your second and 2 on your third. Wrong answers, a fourth try or later, and questions you've already solved earn 0.</p>
         <p>Only your first answer each time you open a question is scored. If you open the explanation before answering, that question isn't scored.</p>
         <p><span className="font-medium">Speed mode.</span> Each answer is scored like practice. Every answer that earns practice points also adds 10 speed points.</p>
+        <p><span className="font-medium">Daily rings.</span> Closing a daily ring pays a prize once a day, closing all three adds a 25-point bonus, and these prizes count as practice points.</p>
         <p><span className="font-medium">Streaks.</span> Answer at least one question a day to keep your streak. Every 7 days in a row earns a streak freezer (you can hold 3), and a freezer covers one missed day.</p>
         <p><span className="font-medium">Leaderboard.</span> Your score is practice points plus speed points. A sprint counts points from its first day to its last. If two scores tie, the student who answered more questions ranks higher.</p>
         <p><span className="font-medium">Tiers.</span> When a sprint ends, the top students in each tier move up one: the top 20 in Unranked and Bronze, 15 in Silver, 10 in Gold, 5 in Emerald and 1 in Diamond. Everyone else, and anyone with 0 points, moves down one. The top Ruby student stays Ruby.</p>

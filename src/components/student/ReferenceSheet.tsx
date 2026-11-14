@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { BookOpen, X, Minus, Maximize2, Minimize2 } from 'lucide-react';
-import referenceSheetImage from '@/assets/sat-reference-sheet.jpg';
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ReferenceSheetBody } from './ReferenceSheetBody';
 
 // Event to toggle reference sheet from external sources
 export const REFERENCE_TOGGLE_EVENT = 'referenceSheetToggle';
@@ -12,16 +14,19 @@ export function toggleReferenceSheet() {
 
 const MIN_WIDTH = 350;
 const MIN_HEIGHT = 300;
-const DEFAULT_WIDTH = 500;
-const DEFAULT_HEIGHT = 450;
+const DEFAULT_WIDTH = 640;
+const DEFAULT_HEIGHT = 560;
 
 type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | null;
 
 export function ReferenceSheet() {
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 100, y: 80 });
-  const [size, setSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+  // Start inside the viewport on small laptops; the sheet reflows to whatever width it gets.
+  const [size, setSize] = useState(() => typeof window === 'undefined' ? { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }
+    : { width: Math.min(DEFAULT_WIDTH, window.innerWidth - 120), height: Math.min(DEFAULT_HEIGHT, window.innerHeight - 100) });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeDirection, setResizeDirection] = useState<ResizeDirection>(null);
@@ -215,8 +220,11 @@ export function ReferenceSheet() {
     <div
       ref={windowRef}
       data-reference-window
-      className="fixed z-40 bg-background border rounded-lg shadow-2xl overflow-hidden"
-      style={{
+      role="dialog"
+      aria-label="Reference sheet"
+      // Phones get a panel docked to the bottom (no drag or resize); larger screens keep the floating window.
+      className={cn('fixed z-40 flex flex-col overflow-hidden border bg-background shadow-2xl', isMobile ? 'inset-x-2 bottom-2 max-h-[75dvh] rounded-2xl' : 'rounded-lg')}
+      style={isMobile ? undefined : {
         left: position.x,
         top: position.y,
         width: `${size.width}px`,
@@ -226,7 +234,7 @@ export function ReferenceSheet() {
       }}
     >
       {/* Resize Handles - Only show when not minimized */}
-      {!isMinimized && (
+      {!isMinimized && !isMobile && (
         <>
           <div 
             className={`${resizeHandleBase} ${resizeHandleEdge} top-0 left-3 right-3 h-1 cursor-n-resize`}
@@ -273,9 +281,9 @@ export function ReferenceSheet() {
 
       {/* Title Bar */}
       <div
-        className="flex items-center justify-between px-3 py-2 bg-muted border-b cursor-move select-none"
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
+        className={cn('flex shrink-0 items-center justify-between px-3 py-2 bg-muted border-b select-none', !isMobile && 'cursor-move')}
+        onMouseDown={isMobile ? undefined : handleMouseDown}
+        onTouchStart={isMobile ? undefined : handleTouchStart}
       >
         <div className="flex items-center gap-2 text-sm font-medium">
           <BookOpen className="h-4 w-4" />
@@ -285,7 +293,7 @@ export function ReferenceSheet() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6"
+            className="h-8 w-8 md:h-6 md:w-6"
             onClick={() => setIsMinimized(!isMinimized)}
             title={isMinimized ? "Expand" : "Minimize"}
           >
@@ -294,7 +302,7 @@ export function ReferenceSheet() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 hover:bg-destructive hover:text-destructive-foreground"
+            className="h-8 w-8 md:h-6 md:w-6 hover:bg-destructive hover:text-destructive-foreground"
             onClick={() => setIsOpen(false)}
             title="Close"
           >
@@ -304,20 +312,7 @@ export function ReferenceSheet() {
       </div>
 
       {/* Content */}
-      <div 
-        className="overflow-auto"
-        style={{ 
-          height: isMinimized ? 0 : `${size.height - 44}px`,
-          display: isMinimized ? 'none' : 'block'
-        }}
-      >
-        <img 
-          src={referenceSheetImage} 
-          alt="SAT Math Reference Sheet"
-          className="w-full h-auto"
-          draggable={false}
-        />
-      </div>
+      {!isMinimized && <div className="min-h-0 flex-1 overflow-auto overscroll-contain"><ReferenceSheetBody /></div>}
     </div>
   );
 }

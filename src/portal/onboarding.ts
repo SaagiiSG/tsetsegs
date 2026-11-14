@@ -25,7 +25,23 @@ export const canSkip = (step: number, saveFailed = false) => (step >= 2 && step 
 /** Where Back goes. Step 7 skips the step-6 question so it is never answered twice. */
 export const backStep = (step: number) => (step <= 1 ? null : step === 7 ? 5 : step - 1);
 
-export const welcomeCopy = (centerName: string) => `${centerName} set you up on FlowersOS. 6 quick steps, about 2 minutes.`;
+/** Solo students have no center to thank: "flowersos set you up on FlowersOS" reads wrong. */
+export const welcomeCopy = (centerName: string, solo = false) =>
+  solo ? "Let's build your SAT plan. 6 quick steps, under a minute." : `${centerName} set you up on FlowersOS. 6 quick steps, about 2 minutes.`;
+
+/** One-tap answers move on by themselves: "Not yet" on the practice score, any section. "Yes, about" needs a typed score,
+ *  and the SAT date stays put so the day count can finish and its message land, so both wait for Continue. */
+export const autoAdvances = (step: number, choice: string | null) => step === 5 || (step === 3 && choice === 'no');
+
+/** The line after the day count lands. Hype, never a score number (no score promises). */
+export const dateMessage = (days: number | null) =>
+  days == null ? "No problem, you can add it later. Next, let's set your target."
+  : days < 30 ? "Tight, but every day counts. Let's go."
+  : "Plenty of time for a real jump. Next, let's set your target.";
+
+/** Step 7's heading, from the chosen pace: [lead, name]. */
+export const planProfile = (intensity: GoalIntensity): [string, string] =>
+  intensity === 'intense' ? ["You're a", 'Sprinter'] : intensity === 'gradual' ? ["You're a", 'Steady Climber'] : ["You're an", 'Explorer'];
 
 /** Official SAT dates from today on; the admin's SAT month (YYYY-MM) picks its real date when that date is still ahead. */
 export function satDateOptions(now: Date, satMonth: string | null) {
@@ -38,6 +54,13 @@ export function satDateOptions(now: Date, satMonth: string | null) {
 
 export const helpMePick = (prior: number | null) =>
   prior == null ? 1300 : Math.min(1600, Math.max(1000, Math.round((prior + 150) / 50) * 50));
+
+/** The line under "Help me pick", so the button always says something even when the pick equals the current target. */
+export const helpMePickReason = (prior: number | null) =>
+  prior == null ? '1300 is a strong first goal. You can raise it later.'
+  : prior >= 1450 ? '1600 it is. Aim for the top.'
+  : prior < 850 ? '1000 is a solid place to start. You can raise it later.'
+  : `Your ${prior} practice score + 150 is a stretch you can hit.`;
 
 export function defaultIntensity(daysToSat: number | null): GoalIntensity {
   if (daysToSat == null) return 'gradual';
@@ -59,9 +82,11 @@ export function ringPlanCopy(goals: { hard: number; medium: number }, distinctMa
 
 export const questionSubjects = (weak: string | null) => (weak === 'reading_writing' ? ['english', 'English'] : ['math', 'Math']);
 
-/** The ring counts only correct medium/hard answers, so an easy one never claims ring progress. */
-export function stepSixMessage(result: { is_correct: boolean; points: number } | null, tryNo: 1 | 2, difficulty: string | null) {
+/** The ring counts only correct medium/hard answers, so an easy one never claims ring progress. A free solo user (`free`)
+ *  gets no explanation, so their copy doesn't point at one. */
+export function stepSixMessage(result: { is_correct: boolean; points: number } | null, tryNo: 1 | 2, difficulty: string | null, free = false) {
   if (!result) return "We couldn't save that answer. Check your connection and try again.";
+  if (!result.is_correct && free) return tryNo === 1 ? 'Not quite. Give it one more try.' : 'Good try. Practice makes these click.';
   if (!result.is_correct) return tryNo === 1 ? 'Not quite. Read how it works, then try once more.' : "Good try — here's how it works";
   const paid = result.points > 0 ? `+${result.points} points` : 'Correct';
   return ['medium', 'hard'].includes((difficulty ?? '').toLowerCase()) ? `${paid}, your ring moved` : paid;

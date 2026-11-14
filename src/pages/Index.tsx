@@ -2,18 +2,34 @@ import { usePublicLanguage } from "@/hooks/usePublicLanguage";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ArrowUpRight, BookOpen, Calculator, Zap, RotateCcw, BarChart3, Trophy, Flame, PenLine, Radio, Users, CalendarCheck, MonitorPlay, Target, Map, Stethoscope } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, BookOpen, Calculator, Zap, RotateCcw, BarChart3, Trophy, Flame, PenLine, Radio, Users, CalendarCheck, MonitorPlay, Target, Map, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/BrandMark";
 import { supabase } from "@/integrations/supabase/client";
 import { HeroDemo } from "@/components/landing/HeroDemo";
 import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import "@/components/landing/landing.css";
 import { Clouds } from "@/components/landing/Clouds";
+import { StudentStories } from "@/components/landing/StudentStories";
+import { DesmosSection } from "@/components/landing/DesmosSection";
+import { LegalFooter } from "@/components/landing/LegalFooter";
+import { mathExplanationsLabel, videoCountLabel } from "@/lib/educatorLanding";
 
-type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number };
+type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number; math_explanations: number };
 const FB = "https://www.facebook.com/tsetsegs.agency";
 const fmt = (n?: number) => (n ?? 0).toLocaleString("en-US");
+// Saagii's numbers (8 Nov): best Math 680, i.e. +198 over the first 482. Hardcoded like the 720 card; the live best_gain is lower.
+const BEST_GAIN = 198;
+// Solo plans (Saagii, 10 Nov): Free needs no card, both paid plans open with a 7-day trial. English only: Mongolian visitors are center students.
+// 1,425 Math, 900 English, Free capped at 30 Math, 155 videos: his numbers (10 Nov), hardcoded like BEST_GAIN. All English is free (12 Nov).
+const FREE_PLAN = ["All 900 English questions", "30 Math questions", "Speed mode, 10 sessions a day", "1 full practice test", "The first lesson of every video topic", "Analytics and a predicted SAT score", "Mistake review", "Streaks, badges and the global league"];
+const PREMIUM_PLAN = ["Step-by-step explanations for every Math question", "All 1,425 Math questions, including the hardest problems for 800", "Unlimited speed mode", "Every practice test", "155 video lessons for SAT Math and English"];
+const PLANS = [
+  { name: "Free", price: "$0", per: "forever", note: "No card needed", cta: "Start free", list: FREE_PLAN },
+  { name: "Monthly", price: "$19", per: "/month", note: "7-day free trial", cta: "Start free trial", list: PREMIUM_PLAN },
+  { name: "Yearly", price: "$39", per: "/year", note: "7-day free trial · about $3.25 a month", cta: "Start free trial", list: PREMIUM_PLAN, best: true },
+];
 
 const Index = () => {
   const navigate = useNavigate();
@@ -28,17 +44,20 @@ const Index = () => {
 
   const CTA = ({ center }: { center?: boolean }) => (
     <div className={`flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
-      <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">{text("Демо үзэх", "Try the demo")}<ArrowRight /></Button>
+      {/* Solo sign-up is English only (Mongolian visitors are center students), so the Mongolian page keeps the demo. */}
+      {lang === "eng"
+        ? <Button size="lg" asChild className="h-12 rounded-full px-7"><a href="/solo?lang=eng">Start free<ArrowRight /></a></Button>
+        : <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">Демо үзэх<ArrowRight /></Button>}
       <Button size="lg" variant="outline" onClick={() => navigate(`/educators?lang=${lang}`)} className="h-12 rounded-full border-2 px-7">{text("Би багш", "I am an educator")}</Button>
       <Button size="lg" variant="ghost" onClick={() => navigate("/practice")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}</Button>
     </div>
   );
 
   const proof = [
-    { v: s ? fmt(s.students) : "—", l: text("бодит тест өгч, бодлого бодсон сурагч", "students with real practice tests with questions"), c: "lv-blue" },
-    { v: s ? `+${s.best_gain}` : "—", l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
+    { v: s ? fmt(s.students) : "—", l: text("хэрэглэгч", "active users"), c: "lv-blue" },
+    { v: `+${BEST_GAIN}`, l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
     { v: s ? `${s.gained100_pct}%` : "—", l: text("нь 100+ оноо ахисан", "gained 100+ points"), c: "lv-violet" },
-    { v: "720", l: text("сурагч 700+ оноо авсан", "students scored 700+"), c: "lv-orange" },
+    { v: "720", l: text("сурагч Math 700+ оноо авсан", "students scored 700+ Math"), c: "lv-orange" },
   ];
 
   const features = [
@@ -61,7 +80,7 @@ const Index = () => {
       <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
         <div className="lv-container flex h-16 items-center justify-between gap-4">
           <a href="/" className="flex items-center gap-2"><BrandMark className="h-7 w-7" /><span className="font-chillax text-xl font-semibold">flowersos</span></a>
-          <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#how">{text("Хэрхэн", "How it works")}</a><a href="#features">{text("Боломжууд", "Features")}</a><a href="#results">{text("Үр дүн", "Results")}</a></nav>
+          <nav className="hidden gap-7 text-sm text-muted-foreground md:flex"><a href="#how">{text("Хэрхэн", "How it works")}</a><a href="#features">{text("Боломжууд", "Features")}</a><a href="#results">{text("Үр дүн", "Results")}</a>{lang === "eng" && <a href="#pricing">Pricing</a>}</nav>
           <div className="flex items-center gap-2">
             <div className="flex rounded-full bg-muted p-1">{(["mon", "eng"] as const).map(l => <Button variant="ghost" size="sm" key={l} aria-pressed={lang === l} onClick={() => setLang(l)} className={`rounded-full px-3 py-1 text-xs font-medium ${lang === l ? "bg-card shadow-sm" : "text-muted-foreground"}`}>{l === "mon" ? "МОН" : "ENG"}</Button>)}</div>
             <Button onClick={() => navigate("/practice")} className="hidden rounded-full sm:inline-flex">{text("Нэвтрэх", "Sign in")}</Button>
@@ -76,7 +95,7 @@ const Index = () => {
             <motion.div {...reveal}>
               <span className="lv-blue rounded-full px-3 py-1 text-sm font-medium">SAT · Math & English</span>
               <h1 className="lv-h1 mt-6">{text("SAT-аа ", "Ace the ")}<span className="relative inline-block">{text("давж гар", "SAT")}<motion.svg viewBox="0 0 200 12" className="absolute -bottom-2 left-0 w-full" aria-hidden><motion.path d="M2 8 Q50 2 100 7 T198 5" fill="none" stroke="hsl(var(--accent))" strokeWidth="4" strokeLinecap="round" initial={{ pathLength: reduce ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: .6, delay: .3 }} /></motion.svg></span></h1>
-              <p className="lv-lead mt-6 max-w-lg">{text(`Манай сурагчид дунджаар Math-д +${s?.best_gain ?? 142}, English-д +100 оноо ахисан. Дасгал, таамаглал, лиг — бүгд нэг дор.`, `Our students raise their Math score by +${s?.best_gain ?? 142} and their English score by +100 on average. Practice, prediction and a league, all in one place.`)}</p>
+              <p className="lv-lead mt-6 max-w-lg">{text(`Манай сурагчид дунджаар Math-д +${BEST_GAIN}, English-д +100 оноо ахисан. Дасгал, таамаглал, лиг — бүгд нэг дор.`, `Our students raise their Math score by +${BEST_GAIN} and their English score by +100 on average. Practice, prediction and a league, all in one place.`)}</p>
               <div className="mt-8"><CTA /></div>
             </motion.div>
             <HeroDemo text={text} />
@@ -92,7 +111,7 @@ const Index = () => {
           <div className="mt-10 grid gap-4 md:grid-cols-3">{[
             { icon: Stethoscope, c: "lv-blue", t: text("Оношил", "Diagnose"), d: text("Практик тест таны түвшин, сул сэдвийг олно.", "Practice tests find your level and weak topics.") },
             { icon: Map, c: "lv-violet", t: text("Төлөвлө", "Plan"), d: text("Систем дараа нь юу сурахыг санал болгоно.", "The app tells you what to study next.") },
-            { icon: Target, c: "lv-pink", t: text("Дасгалла", "Practice"), d: text("Бодлого бүр оноо, streak, лигийн байр авчирна.", "Every question earns points, streaks and league rank.") },
+            { icon: Target, c: "lv-pink", t: text("Давт", "Practice"), d: text("Бодлого бүр оноо, streak, лигийн байр авчирна.", "Every question earns points, streaks and league rank.") },
           ].map((x, i) => (
             <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card overflow-hidden"><div className="lv-sky h-24 p-5"><span className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${x.c}`}><x.icon className="h-5 w-5" /></span></div><div className="p-5"><p className="font-mono text-xs text-muted-foreground">0{i + 1}</p><h3 className="mt-1 font-chillax text-2xl font-medium">{x.t}</h3><p className="mt-2 text-muted-foreground">{x.d}</p></div></motion.div>
           ))}</div>
@@ -104,6 +123,9 @@ const Index = () => {
             <motion.div {...reveal}><div className="lv-tray"><div className="lv-screen p-5"><FeatureDemo kind={f.demo} text={text} /></div></div><p className="mt-3 text-center text-sm text-muted-foreground">{text("Жишээ өгөгдөл", "Sample data")}</p></motion.div>
           </div></div>
         ))}</section>
+
+        {/* 155 videos is Saagii's number (8 Nov): it counts the English lessons coming later. */}
+        <DesmosSection text={text} chips={[{ l: mathExplanationsLabel(s?.math_explanations ?? null, lang), c: "lv-violet" }, { l: videoCountLabel(155, lang), c: "lv-blue" }]} />
 
         <section className="lv-sky py-20"><div className="lv-container grid items-center gap-10 lg:grid-cols-2">
           <motion.div {...reveal}><h2 className="lv-h2">{text("Сурах нь тоглоом шиг", "Studying that feels like a game")}</h2><p className="lv-lead mt-4 max-w-md">{text("7 хоногийн лиг, Bronze-оос Ruby хүртэлх зэрэг, streak ба тэмдэг. Ruby-д зөвхөн #1 үлдэнэ.", "Weekly leagues, ranks from Bronze to Ruby, streaks and badges. Only #1 keeps Ruby.")}</p></motion.div>
@@ -124,7 +146,7 @@ const Index = () => {
           <p className="lv-lead mt-4 max-w-2xl">{text("Нэрийг нь зөвшөөрөл авсны дараа нэмнэ. Доорх тоо бүх сурагчийн нийлбэр.", "Names appear only with consent. The numbers below are totals across all students.")}</p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             <div className="lv-card p-6 md:col-span-2"><p className="text-sm text-muted-foreground">{text("Дундаж Math оноо", "Average Math score")}</p>
-              <div className="mt-6 flex items-end gap-6">{[{ l: text("Эхний", "First"), v: 482 }, { l: text("Сүүлийн", "Latest"), v: 482 + (s?.avg_gain ?? 88) }, { l: text("Шилдэг", "Best"), v: 482 + (s?.best_gain ?? 142) }].map((b, i) => (
+              <div className="mt-6 flex items-end gap-6">{[{ l: text("Эхний", "First"), v: 482 }, { l: text("Дунд", "Midway"), v: 482 + (s?.avg_gain ?? 88) }, { l: text("Шилдэг", "Best"), v: 482 + BEST_GAIN }].map((b, i) => (
                 <div key={i} className="flex-1 text-center"><motion.div className={`mx-auto w-full max-w-[90px] rounded-t-xl ${["lv-blue", "lv-violet", "lv-green"][i]}`} initial={{ height: 0 }} whileInView={{ height: (b.v - 300) / 2 }} viewport={{ once: true }} transition={{ duration: .6, delay: i * .1 }} /><p className="mt-2 font-mono text-xl font-semibold">{b.v}</p><p className="text-xs text-muted-foreground">{b.l}</p></div>
               ))}</div></div>
             <div className="grid gap-4">
@@ -132,8 +154,22 @@ const Index = () => {
               <div className="lv-card p-6"><p className="font-mono text-3xl font-semibold">{s ? fmt(s.answers) : "—"}</p><p className="text-sm text-muted-foreground">{text("бодлого бодогдсон", "questions answered")}</p></div>
             </div>
           </div>
-          {/* Student story cards come back here once student consent is in. */}
+          <StudentStories text={text} />
         </div></section>
+
+        {lang === "eng" && <section id="pricing" className="py-20"><div className="lv-container">
+          <motion.h2 {...reveal} className="lv-h2">Pricing</motion.h2>
+          <p className="lv-lead mt-4 max-w-2xl">Practice free for as long as you like. Premium unlocks everything, and both plans start with a 7-day free trial.</p>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">{PLANS.map(p => (
+            <motion.div key={p.name} {...reveal} className={`lv-card flex flex-col p-6 ${p.best ? "ring-2 ring-accent" : ""}`}>
+              <div className="flex items-center justify-between gap-2"><p className="font-semibold">{p.name}</p>{p.best && <Badge className="rounded-full">Best value</Badge>}</div>
+              <p className="mt-4"><span className="font-mono text-4xl font-semibold">{p.price}</span> <span className="text-muted-foreground">{p.per}</span></p>
+              <p className="mt-1 text-sm text-muted-foreground">{p.note}</p>
+              <ul className="mt-6 flex-1 space-y-2 text-sm">{p.name !== "Free" && <li className="font-medium">Everything in Free, plus:</li>}{p.list.map(f => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{f}</li>)}</ul>
+              <Button asChild variant={p.best ? "default" : "outline"} className="mt-6 rounded-full"><a href={`/solo?lang=${lang}`}>{p.cta}</a></Button>
+            </motion.div>
+          ))}</div>
+        </div></section>}
 
         <section className="lv-sky relative overflow-hidden pb-40 pt-24 text-center">
           <Clouds />
@@ -142,9 +178,9 @@ const Index = () => {
       </main>
 
       <footer className="border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
-        <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep · 1105 & 905</p></div>
+        <div><a href="/" className="flex items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p><address className="mt-1 max-w-xs not-italic">{text("Улаанбаатар, Хан-Уул дүүрэг, 15-р хороо, Их Наяд Зүүн Өндөр, 1114", "1114, Ikh Nayad East Tower, 15-r khoroo, Khan‑Uul district, Ulaanbaatar, Mongolia")}</address></div>
         <div className="flex flex-wrap gap-6"><a href="mailto:manager@tsetsegs.com">manager@tsetsegs.com</a><a href={FB} target="_blank" rel="noopener noreferrer">Facebook</a><a href="/practice">{text("Нэвтрэх", "Sign in")}</a></div>
-      </div></footer>
+      </div><LegalFooter text={text} /></footer>
     </div>
   );
 };

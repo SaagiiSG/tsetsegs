@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Flame, Snowflake, Lock, Award, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import type { QMeta } from './questionMeta';
 const COLORS = { speed: 'hsl(45, 95%, 55%)', hard: 'hsl(0, 84%, 60%)', medium: 'hsl(180, 85%, 45%)' };
 type Attempt = { question_id: string; is_correct: boolean; created_at: string };
 export const SKY_RING = { speed: '#8B7CF6', hard: '#D28CF5', medium: '#FBC2E5' };
-type Run = { created_at: string };
+type Run = { created_at: string; correct: number };
 type Goals = { speed: number; hard: number; medium: number };
 
 export const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -43,18 +44,23 @@ export function useCenterStreak(attempts: { created_at: string }[]) {
 }
 export type CenterStreak = ReturnType<typeof useCenterStreak>;
 
-export function MiniRing({ size = 52, p, colors = COLORS, stroke = 5, gap = 2 }: { size?: number; p: [number, number, number]; colors?: typeof COLORS; stroke?: number; gap?: number }) {
+/** `reveal` draws the rings in one by one (onboarding's plan reveal); each arc then fills to its value. */
+export function MiniRing({ size = 52, p, colors = COLORS, stroke = 5, gap = 2, reveal = false }: { size?: number; p: [number, number, number]; colors?: typeof COLORS; stroke?: number; gap?: number; reveal?: boolean }) {
   const c = size / 2;
   const radii = [c - stroke / 2 - 1, c - stroke * 1.5 - gap - 1, c - stroke * 2.5 - gap * 2 - 1];
   const cols = [colors.speed, colors.hard, colors.medium];
+  const Circle = (reveal ? motion.circle : 'circle') as typeof motion.circle;
   return (
     <svg width={size} height={size}>
       {radii.map((r, i) => {
-        const circ = 2 * Math.PI * r;
+        const circ = 2 * Math.PI * r, off = circ * (1 - Math.min(1, p[i]));
+        const draw = (after: number) => ({ type: 'spring', visualDuration: 0.9, bounce: 0, delay: 0.15 + i * 0.18 + after }) as const;
         return (
           <g key={i}>
-            <circle cx={c} cy={c} r={r} fill="none" stroke={cols[i]} strokeOpacity={0.18} strokeWidth={stroke} />
-            <circle cx={c} cy={c} r={r} fill="none" stroke={cols[i]} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${circ} ${circ}`} strokeDashoffset={circ * (1 - Math.min(1, p[i]))} transform={`rotate(-90 ${c} ${c})`} />
+            <Circle cx={c} cy={c} r={r} fill="none" stroke={cols[i]} strokeOpacity={0.18} strokeWidth={stroke} transform={`rotate(-90 ${c} ${c})`}
+              {...(reveal && { initial: { pathLength: 0 }, animate: { pathLength: 1 }, transition: draw(0) })} />
+            <Circle cx={c} cy={c} r={r} fill="none" stroke={cols[i]} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${circ} ${circ}`} strokeDashoffset={off} transform={`rotate(-90 ${c} ${c})`}
+              {...(reveal && { initial: { strokeDashoffset: circ }, animate: { strokeDashoffset: off }, transition: draw(0.35) })} />
           </g>
         );
       })}
@@ -68,7 +74,8 @@ export function useCenterRingHistory(attempts: Attempt[], runs: Run[], meta: Rec
     const b: Record<string, { speed: number; hard: Set<string>; medium: Set<string> }> = {};
     const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (days - 1));
     for (let i = 0; i < days; i++) { const d = new Date(start); d.setDate(start.getDate() + i); b[dayKey(d)] = { speed: 0, hard: new Set(), medium: new Set() }; }
-    for (const r of runs) { const k = dayKey(new Date(r.created_at)); if (b[k]) b[k].speed++; }
+    // A run with nothing correct doesn't fill the ring (speedRunsToday's rule, and the server's).
+    for (const r of runs) { const k = dayKey(new Date(r.created_at)); if (b[k] && r.correct > 0) b[k].speed++; }
     for (const a of attempts) {
       if (!a.is_correct) continue;
       const k = dayKey(new Date(a.created_at)); if (!b[k]) continue;

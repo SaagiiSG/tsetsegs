@@ -46,4 +46,10 @@ describe('videoTopics', () => {
     expect(upNext(topicUnits(vids, new Set(['a', 'b'])))).toEqual({ unitIndex: 1, videoId: 'c' });
     expect(upNext(topicUnits(vids, new Set(['a', 'b', 'c'])))).toBeNull();
   });
+  it('puts English videos in their own topics, one per module, after Math', () => {
+    const eng = (id: string, module: string, order: number, domain: string) => ({ ...v(id, module, order), domain });
+    const units = topicUnits([v('a', 'Percent', 1), eng('w1', 'Words in Context', 2, 'Craft & Structure'), eng('p', 'Percent', 3, 'Information & Ideas'), eng('w2', 'Words in Context', 4, 'Craft & Structure')], new Set(['w1']));
+    expect(units.map(u => [u.n, u.name, u.area, u.total])).toEqual([[8, 'Percent', 'Problem Solving & Data', 1], [null, 'Words in Context', 'Craft & Structure', 2], [null, 'Percent', 'Information & Ideas', 1]]);
+    expect(states(units[1])).toEqual(['done', 'open']);
+  });
 });

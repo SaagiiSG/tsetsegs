@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
-import { Settings2 } from 'lucide-react';
+import { Check, Settings2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { PrizeKey } from '@/lib/ringPrizes';
 
 interface DailyRingProps {
   speed: { current: number; goal: number };
@@ -16,9 +17,11 @@ interface DailyRingProps {
   colors?: { speed: string; hard: string; medium: string };
   /** Optional decorative wash (css background-image value) rendered behind the ring. */
   decor?: string;
+  /** What each ring pays today (0 = no goal, shows nothing) and whether it was paid. */
+  prizes?: Record<PrizeKey, { points: number; paid: boolean }>;
 }
 
-const RING_COLORS = {
+export const RING_COLORS = {
   speed: 'hsl(45, 95%, 55%)',    // yellow (outer)
   hard: 'hsl(0, 84%, 60%)',      // coral/red (middle)
   medium: 'hsl(180, 85%, 45%)',  // teal (inner)
@@ -57,7 +60,7 @@ function Ring({
   );
 }
 
-export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className, colors, decor }: DailyRingProps) {
+export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, size = 220, className, colors, decor, prizes }: DailyRingProps) {
   const RC = colors ?? RING_COLORS;
   const cx = size / 2;
   const cy = size / 2;
@@ -126,16 +129,21 @@ export function DailyRing({ speed, hard, medium, onEditGoals, onShowHistory, siz
           </svg>
         </div>
         <div className="w-full grid grid-cols-3 gap-1 text-[10px] sm:text-xs">
-          <Legend label="Speed" current={speed.current} goal={speed.goal} color={RC.speed} />
-          <Legend label="Hard" current={hard.current} goal={hard.goal} color={RC.hard} />
-          <Legend label="Medium" current={medium.current} goal={medium.goal} color={RC.medium} />
+          <Legend label="Speed" current={speed.current} goal={speed.goal} color={RC.speed} prize={prizes?.speed} />
+          <Legend label="Hard" current={hard.current} goal={hard.goal} color={RC.hard} prize={prizes?.hard} />
+          <Legend label="Medium" current={medium.current} goal={medium.goal} color={RC.medium} prize={prizes?.medium} />
         </div>
+        {prizes && speed.goal > 0 && hard.goal > 0 && medium.goal > 0 && (
+          <div className="text-[10px] sm:text-xs font-mono text-muted-foreground flex items-center gap-1">
+            {prizes.all.paid && <Check className="h-3 w-3" />}+{prizes.all.points} bonus
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function Legend({ label, current, goal, color }: { label: string; current: number; goal: number; color: string }) {
+function Legend({ label, current, goal, color, prize }: { label: string; current: number; goal: number; color: string; prize?: { points: number; paid: boolean } }) {
   const done = current >= goal;
   return (
     <div className="flex flex-col items-center gap-0.5">
@@ -146,6 +154,11 @@ function Legend({ label, current, goal, color }: { label: string; current: numbe
       <span className={cn('font-mono font-semibold', done ? 'text-foreground' : 'text-muted-foreground')}>
         {current}/{goal}
       </span>
+      {prize && prize.points > 0 && (
+        <span className="flex items-center gap-0.5 font-mono text-muted-foreground">
+          {prize.paid && <Check className="h-3 w-3" />}+{prize.points}{prize.paid && ' earned'}
+        </span>
+      )}
     </div>
   );
 }

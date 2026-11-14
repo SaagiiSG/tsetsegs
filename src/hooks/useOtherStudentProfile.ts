@@ -74,24 +74,12 @@ export function useOtherStudentProfile(userId: string | null) {
     queryFn: async () => {
       if (!userId) return null;
 
-      const { data, error } = await supabase
-        .from('student_accounts')
-        .select(`
-          id,
-          phone_number,
-          created_at,
-          last_login,
-          sat_math_score,
-          sat_english_score,
-          sat_total_score,
-          sat_score_date,
-          linked_student:students(first_name, last_name)
-        `)
-        .eq('id', userId)
-        .maybeSingle();
+      // A definer lookup: students read only their own account row, so a classmate's card comes back without phone or device.
+      const { data, error } = await supabase.rpc('student_profile_card' as any, { _id: userId });
 
       if (error) throw error;
-      return data;
+      const card = ((data ?? []) as any[])[0];
+      return card ? { ...card, linked_student: card.first_name != null ? { first_name: card.first_name, last_name: card.last_name } : null } : null;
     },
     enabled: !!userId
   });
@@ -426,7 +414,7 @@ export function useOtherStudentProfile(userId: string | null) {
   return {
     username: linkedStudent 
       ? `${linkedStudent.first_name} ${linkedStudent.last_name?.charAt(0) || ''}.`
-      : studentAccount?.phone_number?.slice(-4) || 'Student',
+      : studentAccount?.phone_tail || 'Student',
     avatarInitial: linkedStudent?.first_name?.charAt(0).toUpperCase() || 'S',
     createdAt: studentAccount?.created_at || null,
     lastLogin: studentAccount?.last_login || null,

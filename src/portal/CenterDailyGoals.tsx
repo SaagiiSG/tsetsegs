@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { computeGoals, DEFAULT_GOALS, type GoalIntensity } from '@/hooks/useDailyGoals';
+import { dayStartIso } from '@/lib/ringPrizes';
 import { useCenter } from './centerContext';
 import type { QMeta } from './questionMeta';
 import { MiniRing, SKY_RING } from './CenterStreak';
@@ -43,6 +44,10 @@ export function useCenterGoals(studentId: string) {
   });
 }
 
+/** A speed run fills the ring only if something in it was right, so an empty run row can't. */
+export const speedRunsToday = (runs: { created_at: string; correct: number }[], start: Date) =>
+  runs.filter(r => r.correct > 0 && new Date(r.created_at) >= start).length;
+
 /** Today's progress: speed runs completed + distinct hard/medium correct questions. */
 export function useCenterDailyProgress(studentId: string, attempts: { question_id: string; is_correct: boolean; created_at: string }[], meta: Record<string, QMeta>) {
   const runs = useQuery({
@@ -53,17 +58,18 @@ export function useCenterDailyProgress(studentId: string, attempts: { question_i
       return data ?? [];
     },
   });
+  const day = dayStartIso(); // a dependency: a tab left open past midnight counts from the new day
   return useMemo(() => {
-    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const start = new Date(day);
     const hard = new Set<string>(), medium = new Set<string>();
     for (const a of attempts) {
       if (!a.is_correct || new Date(a.created_at) < start) continue;
       const d = (meta[a.question_id]?.difficulty_level ?? '').toLowerCase();
       if (d === 'hard') hard.add(a.question_id); else if (d === 'medium') medium.add(a.question_id);
     }
-    const speed = (runs.data ?? []).filter(r => new Date(r.created_at) >= start).length;
+    const speed = speedRunsToday(runs.data ?? [], start);
     return { speed, hard: hard.size, medium: medium.size, runs: runs.data ?? [], ready: !!runs.data, failed: runs.isError && !runs.data };
-  }, [attempts, meta, runs.data, runs.isError]);
+  }, [day, attempts, meta, runs.data, runs.isError]);
 }
 
 export const INTENSITIES: { key: GoalIntensity; label: string; blurb: string; icon: typeof Zap }[] = [

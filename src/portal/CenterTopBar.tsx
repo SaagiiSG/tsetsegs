@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Flame, Trophy } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { TodayPointsChip } from '@/components/student/TodayPointsChip';
 import { TIER_DISPLAY_NAMES, type TierType } from '@/data/badgeDefinitions';
+import { TIER_ASSETS } from '@/components/student/leaderboard/tierAssets';
 import { useCenter } from './centerContext';
 import { useCenterSprints } from './admin/ToolPages';
-import { CenterRingHistoryDialog, CenterStreakDialog, MiniRing, SKY_RING, useCenterRingHistory, useCenterStreak } from './CenterStreak';
+import { RingChip } from '@/components/student/RingChip';
+import { CenterRingHistoryDialog, CenterStreakDialog, useCenterRingHistory, useCenterStreak } from './CenterStreak';
 import { useCenterDailyProgress, useCenterGoals } from './CenterDailyGoals';
+import { useCenterRingPrizeClaimer, useCenterRingPrizes } from './useCenterRingPrizes';
+import { prizeLeft, type PrizeKey } from '@/lib/ringPrizes';
 import { activeSprintId, rankFromBoard, ringStatus, todayPoints } from './studentStats';
 import type { QMeta } from './questionMeta';
+
+export { RingChip };
 
 type Rank = { place: number; tier: TierType };
 
@@ -41,18 +47,9 @@ export function RankChip({ rank, onClick }: { rank: Rank | null; onClick?: () =>
   if (!rank) return null;
   return (
     <button type="button" onClick={onClick} className="max-md:!hidden student-chip shrink-0" title="Leaderboard" aria-label={`Rank ${rank.place}, ${TIER_DISPLAY_NAMES[rank.tier]}`}>
-      <Trophy className="h-3.5 w-3.5 text-primary" />
+      <img src={TIER_ASSETS[rank.tier].image} alt="" className="-my-1 h-5 w-5 object-contain" />
       <span className="tabular-nums">{`#${rank.place}`}</span>
       <span className="text-[9px] text-muted-foreground">{TIER_DISPLAY_NAMES[rank.tier]}</span>
-    </button>
-  );
-}
-
-export function RingChip({ p, closed, onClick }: { p: [number, number, number]; closed: number; onClick?: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="max-md:!hidden student-chip shrink-0" title="Daily rings" aria-label={`${closed} of 3 daily rings closed`}>
-      <MiniRing size={18} stroke={1.5} gap={1} p={p} colors={SKY_RING} />
-      <span className="tabular-nums">{`${closed}/3`}</span>
     </button>
   );
 }
@@ -70,13 +67,18 @@ export function CenterTopBar({ studentId, attempts, meta }: { studentId: string;
   const history = useCenterRingHistory(attempts, prog.runs, meta);
   const rank = useCenterRank(studentId);
   const status = ringStatus(prog, goals);
+  const { paid, rows } = useCenterRingPrizes(studentId, goals);
+  useCenterRingPrizeClaimer(studentId, prog, goals, prog.ready && !!goalsRead.data);
+  // A ring with no goal never pays (nor the bonus), so it isn't counted as left to win.
+  const noGoal = (['speed', 'hard', 'medium'] as const).filter(k => goals[k] <= 0);
+  const left = prizeLeft(goals, new Set<PrizeKey>([...paid, ...noGoal, ...(noGoal.length ? ['all' as const] : [])]));
   const frac = (v: number, g: number) => (g > 0 ? v / g : 1);
   return (
     <div className="flex items-center justify-center gap-2">
-      <TodayPointsChip points={prog.ready ? todayPoints(attempts, prog.runs) : undefined} />
+      <TodayPointsChip points={prog.ready ? todayPoints(attempts, prog.runs, new Date(), rows) : undefined} />
       <StreakChip days={streak.current} onClick={() => setStreakOpen(true)} />
       <RankChip rank={rank} onClick={() => navigate('/student/leaderboard')} />
-      {prog.ready && goalsRead.data && <RingChip p={[frac(prog.speed, goals.speed), frac(prog.hard, goals.hard), frac(prog.medium, goals.medium)]} closed={status.closed} onClick={() => setRingOpen(true)} />}
+      {prog.ready && goalsRead.data && <RingChip p={[frac(prog.speed, goals.speed), frac(prog.hard, goals.hard), frac(prog.medium, goals.medium)]} closed={status.closed} left={left} earned={rows.reduce((n, r) => n + r.points, 0)} allPaid={paid.has('all')} onClick={() => setRingOpen(true)} />}
       <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streak} history={history} goals={goals} />
       <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={history} goals={goals} />
     </div>

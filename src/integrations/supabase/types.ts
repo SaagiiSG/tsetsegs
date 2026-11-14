@@ -3825,6 +3825,21 @@ export type Database = {
           },
         ]
       }
+      solo_free_slice: {
+        Row: {
+          item_id: string
+          kind: string
+        }
+        Insert: {
+          item_id: string
+          kind: string
+        }
+        Update: {
+          item_id?: string
+          kind?: string
+        }
+        Relationships: []
+      }
       solo_students: {
         Row: {
           created_at: string
@@ -5850,6 +5865,44 @@ export type Database = {
           },
         ]
       }
+      tenant_ring_prizes: {
+        Row: {
+          created_at: string
+          day: string
+          id: string
+          institution_id: string
+          points: number
+          ring: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          id?: string
+          institution_id: string
+          points: number
+          ring: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          id?: string
+          institution_id?: string
+          points?: number
+          ring?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_ring_prizes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_sat_attempts: {
         Row: {
           answers: Json
@@ -6410,6 +6463,24 @@ export type Database = {
           },
         ]
       }
+      terms_acceptances: {
+        Row: {
+          accepted_at: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          accepted_at?: string
+          user_id: string
+          version: string
+        }
+        Update: {
+          accepted_at?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -6492,6 +6563,7 @@ export type Database = {
         Args: { fn_name: string; payload: Json }
         Returns: undefined
       }
+      accept_terms: { Args: { p_version: string }; Returns: undefined }
       add_league_points: {
         Args: { p_points: number; p_sprint: string; p_student: string }
         Returns: undefined
@@ -6588,6 +6660,41 @@ export type Database = {
       apply_league_points_definer: {
         Args: { p_points: number; p_sprint: string; p_student: string }
         Returns: undefined
+      }
+      batch_by_link: {
+        Args: { _link: string }
+        Returns: {
+          batch_name: string | null
+          course_type: Database["public"]["Enums"]["course_type"]
+          created_at: string
+          english_schedule: Json | null
+          fb_group_link: string | null
+          id: string
+          is_international: boolean
+          math_schedule: Json | null
+          nickname: string | null
+          room: string | null
+          schedule: string
+          start_date: string
+          teacher: string | null
+          unique_link_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "batches"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      batch_for_registration: {
+        Args: { _batch_id: string }
+        Returns: {
+          batch_name: string
+          course_type: Database["public"]["Enums"]["course_type"]
+          id: string
+          is_international: boolean
+          teacher: string
+        }[]
       }
       can_read_concept_video: { Args: { _path: string }; Returns: boolean }
       challenge_finish_time_sprint: {
@@ -6834,6 +6941,7 @@ export type Database = {
       is_demo_center: { Args: { _institution: string }; Returns: boolean }
       is_demo_user: { Args: never; Returns: boolean }
       is_enrolled_phone: { Args: { p: string }; Returns: boolean }
+      is_free_solo_user: { Args: never; Returns: boolean }
       is_platform_staff: { Args: never; Returns: boolean }
       is_staff_or_center_member: { Args: never; Returns: boolean }
       landing_public_stats: { Args: never; Returns: Json }
@@ -6859,6 +6967,7 @@ export type Database = {
           total_points: number
         }[]
       }
+      live_session_open: { Args: { _session: string }; Returns: boolean }
       live_session_question_list: {
         Args: { _join_code: string }
         Returns: Json
@@ -7059,8 +7168,18 @@ export type Database = {
           test_number: number
         }[]
       }
+      report_public_data: { Args: { _token: string }; Returns: Json }
+      report_settings_for_token: {
+        Args: { _token: string }
+        Returns: {
+          body: string
+          heading: string
+          sign_off: string
+        }[]
+      }
       request_student_id: { Args: never; Returns: string }
       request_student_owns: { Args: { _student_id: string }; Returns: boolean }
+      request_student_roster_ids: { Args: never; Returns: string[] }
       resolve_account_cohort: {
         Args: { _linked_student_id: string }
         Returns: string
@@ -7075,6 +7194,14 @@ export type Database = {
           review_session_id: string
           seat_number: number
         }[]
+      }
+      ring_prize_day: {
+        Args: { _at: string; _tz_offset_min: string }
+        Returns: string
+      }
+      ring_prize_points: {
+        Args: { _goal: number; _ring: string }
+        Returns: number
       }
       sat_prediction_accuracy: {
         Args: never
@@ -7139,6 +7266,7 @@ export type Database = {
           test_number: number
         }[]
       }
+      shared_profile_data: { Args: { _token: string }; Returns: Json }
       shared_progress: {
         Args: { _token: string }
         Returns: {
@@ -7155,7 +7283,11 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      solo_free_test_questions: { Args: never; Returns: string[] }
       solo_has_premium: { Args: { _user: string }; Returns: boolean }
+      solo_institution_id: { Args: never; Returns: string }
+      solo_join: { Args: never; Returns: string }
+      solo_speed_runs_left: { Args: never; Returns: number }
       speed_window_counts: {
         Args: { p_seconds: number; p_student: string }
         Returns: {
@@ -7208,6 +7340,26 @@ export type Database = {
         }[]
       }
       student_claim_badges: { Args: never; Returns: string[] }
+      student_display_names: {
+        Args: { _ids: string[] }
+        Returns: {
+          first_name: string
+          friend_phone: string
+          id: string
+          is_ghost: boolean
+          last_name: string
+          phone_tail: string
+        }[]
+      }
+      student_find_by_phone: {
+        Args: { _phone: string }
+        Returns: {
+          account_id: string
+          cohort: string
+          course_type: string
+          student_id: string
+        }[]
+      }
       student_google_connected: { Args: never; Returns: boolean }
       student_inherited_tier: {
         Args: { p_sprint: string; p_student: string }
@@ -7233,6 +7385,7 @@ export type Database = {
         Args: { phone: string; student_id: string }
         Returns: boolean
       }
+      student_phone_enrolled: { Args: { _phone: string }; Returns: boolean }
       student_phone_registered: {
         Args: { _batch_id: string; _phone: string }
         Returns: boolean
@@ -7257,6 +7410,21 @@ export type Database = {
       student_practised_recently: {
         Args: { p_student: string }
         Returns: boolean
+      }
+      student_profile_card: {
+        Args: { _id: string }
+        Returns: {
+          created_at: string
+          first_name: string
+          id: string
+          last_login: string
+          last_name: string
+          phone_tail: string
+          sat_english_score: number
+          sat_math_score: number
+          sat_score_date: string
+          sat_total_score: number
+        }[]
       }
       student_roster_for_login: {
         Args: { _phones: string[] }
@@ -7289,6 +7457,10 @@ export type Database = {
       tenant_center_blocked: {
         Args: { _institution: string }
         Returns: boolean
+      }
+      tenant_claim_ring_prize: {
+        Args: { _institution: string; _ring: string; _tz_offset_min: number }
+        Returns: number
       }
       tenant_claim_with_google: {
         Args: { _phone: string; _slug: string }

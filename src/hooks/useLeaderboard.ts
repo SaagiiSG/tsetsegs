@@ -11,6 +11,7 @@ export interface PointsBreakdown {
   speedSessions: number;
   badges: number;
   bankCompletions: number;
+  ringPrizes: number;
 }
 
 export interface LeaderboardEntry {
@@ -265,23 +266,23 @@ export function useLeaderboard(selectedTier?: TierType) {
           total_points,
           is_top_1,
           reserved_next_tier,
-          group_number,
-          student_accounts!inner (
-            id,
-            phone_number,
-            is_ghost,
-            linked_student:students(first_name, last_name)
-          )
+          group_number
         `)
         .eq('sprint_id', activeSprint.id)
         .eq('current_tier', tierToQuery)
         .eq('group_number', userGroupNumber)
-        .eq('student_accounts.is_ghost', false)
         .order('total_points', { ascending: false });
 
-      const { data: rankings, error } = await query;
+      const { data: groupRankings, error } = await query;
 
       if (error) throw error;
+
+      // Names come through a definer lookup (students read only their own account row); ghosts drop out here.
+      const { data: names, error: namesError } = await supabase
+        .rpc('student_display_names' as any, { _ids: (groupRankings ?? []).map(r => r.student_account_id) });
+      if (namesError) throw namesError;
+      const nameById = new Map(((names ?? []) as any[]).map(n => [n.id as string, n]));
+      const rankings = (groupRankings ?? []).filter(r => nameById.get(r.student_account_id)?.is_ghost === false);
 
       // Get total groups count for this tier
       const { data: allGroupsInTier } = await supabase
@@ -309,7 +310,8 @@ export function useLeaderboard(selectedTier?: TierType) {
             sectionBonuses: 0,
             speedSessions: 0,
             badges: 0,
-            bankCompletions: 0
+            bankCompletions: 0,
+            ringPrizes: 0
           };
         }
         switch (t.category) {
@@ -328,6 +330,9 @@ export function useLeaderboard(selectedTier?: TierType) {
           case 'bank_completion':
             breakdowns[t.student_account_id].bankCompletions += t.points;
             break;
+          case 'ring_prize':
+            breakdowns[t.student_account_id].ringPrizes += t.points;
+            break;
         }
       });
 
@@ -337,16 +342,16 @@ export function useLeaderboard(selectedTier?: TierType) {
       const cutoff = Math.min(TIER_PROMOTION_CUTOFFS[tierToQuery as TierType] ?? 20, groupSize || 1);
 
       const entries = (rankings || []).map((ranking, index) => {
-        const linkedStudent = ranking.student_accounts?.linked_student as { first_name: string; last_name: string } | null;
+        const name = nameById.get(ranking.student_account_id);
         const tier = ranking.current_tier as TierType;
         const rank = index + 1;
 
         return {
           rank,
           userId: ranking.student_account_id,
-          username: linkedStudent 
-            ? `${linkedStudent.first_name} ${linkedStudent.last_name?.charAt(0) || ''}.`
-            : ranking.student_accounts?.phone_number?.slice(-4) || 'Anonymous',
+          username: name?.first_name
+            ? `${name.first_name} ${name.last_name?.charAt(0) || ''}.`
+            : name?.phone_tail || 'Anonymous',
           level: calculateLevel(ranking.total_points),
           totalPoints: ranking.total_points,
           currentTier: tier,
@@ -360,7 +365,8 @@ export function useLeaderboard(selectedTier?: TierType) {
             sectionBonuses: 0,
             speedSessions: 0,
             badges: 0,
-            bankCompletions: 0
+            bankCompletions: 0,
+            ringPrizes: 0
           }
         };
       });

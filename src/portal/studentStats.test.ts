@@ -65,3 +65,9 @@ describe('ring nudge', () => {
     expect(ringNudgeCopy(ringStatus({ speed: 0, hard: 0, medium: 0 }, { speed: 2, hard: 5, medium: 10 }))).toBe("You're 0% there. 15 more questions and 2 speed sessions.");
   });
 });
+describe('todayPoints with prizes', () => {
+  it('adds only today\'s prize rows', () => {
+    const prizes = [{ created_at: at('2026-10-25T10:00:00'), points: 25 }, { created_at: at('2026-10-24T10:00:00'), points: 20 }];
+    expect(todayPoints([], [], now, prizes)).toBe(25);
+  });
+});

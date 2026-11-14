@@ -131,7 +131,7 @@ export function MyRankTab({
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
             <p className="text-lg sm:text-2xl font-bold">
-              {pointsToAdvance === 0 ? '✓ Secured' : `${pointsToAdvance?.toLocaleString()} pts`}
+              {pointsToAdvance === 0 ? '✓ Secured' : pointsToAdvance == null ? '—' : `${pointsToAdvance.toLocaleString()} pts`}
             </p>
             <Progress value={progressToAdvance} className="mt-2 h-1.5 sm:h-2" />
           </CardContent>
@@ -146,7 +146,7 @@ export function MyRankTab({
           </CardHeader>
           <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
             <p className="text-lg sm:text-2xl font-bold">
-              {pointsToTop1 === 0 ? '🏆 You\'re #1!' : `${pointsToTop1?.toLocaleString()} pts`}
+              {pointsToTop1 === 0 ? '🏆 You\'re #1!' : pointsToTop1 == null ? '—' : `${pointsToTop1.toLocaleString()} pts`}
             </p>
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {TIER_DISPLAY_NAMES[currentEntry.currentTier]} badge

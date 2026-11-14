@@ -1,5 +1,5 @@
 import { usePublicLanguage } from '@/hooks/usePublicLanguage';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -54,6 +54,7 @@ export default function StudentPortal() {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [forgotPassword, setForgotPassword] = useState(() => new URLSearchParams(window.location.search).get('google_reset') === '1');
   const { toast } = useToast();
   const { 
@@ -61,12 +62,27 @@ export default function StudentPortal() {
     isLoading: authLoading, 
     authStep, 
     pendingPhone,
+    phoneHasPassword,
     checkPhone, 
     submitRegistrationRequest,
     loginWithPassword, 
     setPassword: setPasswordAuth,
     resetAuthFlow 
   } = useStudentAuth();
+
+  // A number with no password yet skips the password box and goes straight to making one.
+  useEffect(() => {
+    setHasPassword(null);
+    if (digitsOnly(phoneNumber).length < 8) return;
+    let stale = false;
+    const t = setTimeout(() => phoneHasPassword(phoneNumber).then(has => {
+      if (stale) return;
+      setHasPassword(has);
+      if (has === false) setPassword('');
+    }), 400);
+    return () => { stale = true; clearTimeout(t); };
+  }, [phoneNumber]);
+  const firstTime = hasPassword === false;
 
   // Redirect if already logged in — course-aware
   if (student) {
@@ -93,15 +109,6 @@ export default function StudentPortal() {
       return;
     }
 
-    if (!password) {
-      toast({
-        title: text('Нууц үг шаардлагатай', 'Password required'),
-        description: text('Нууц үгээ оруулна уу', 'Please enter your password'),
-        variant: 'destructive'
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     const result = await checkPhone(phoneNumber);
@@ -119,6 +126,17 @@ export default function StudentPortal() {
     // First-time / unregistered / pending flows move to their own steps.
     if (result.needsSetup || result.needsRegistration || result.pendingApproval) {
       setPassword('');
+      setIsLoading(false);
+      return;
+    }
+
+    // Checked only now: a first-time student has no password yet and makes one on the next step.
+    if (!password) {
+      toast({
+        title: text('Нууц үг шаардлагатай', 'Password required'),
+        description: text('Нууц үгээ оруулна уу', 'Please enter your password'),
+        variant: 'destructive'
+      });
       setIsLoading(false);
       return;
     }
@@ -266,9 +284,10 @@ export default function StudentPortal() {
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder={text('Нууц үгээ оруулна уу', 'Enter your password')}
+              placeholder={firstTime ? text('Дараагийн алхамд үүсгэнэ', "You'll make it next") : text('Нууц үгээ оруулна уу', 'Enter your password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={firstTime}
               className={cn(authInputClasses, "pl-10 pr-10")}
             />
             <Button
@@ -281,19 +300,26 @@ export default function StudentPortal() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
           </div>
+          {firstTime && (
+            <p className="text-xs text-muted-foreground">
+              {text('Энэ дугаарт нууц үг үүсээгүй байна. Үргэлжлүүлэх дээр дарна уу.', 'This number has no password yet. Tap Continue.')}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
           <Button
             type="submit"
             className={authPrimaryButtonClasses}
-            disabled={isLoading || digitsOnly(phoneNumber).length < 8 || !password}
+            disabled={isLoading || digitsOnly(phoneNumber).length < 8 || (hasPassword === true && !password)}
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {text('Нэвтэрч байна...', 'Signing in...')}
               </>
+            ) : firstTime ? (
+              text('Үргэлжлүүлэх', 'Continue')
             ) : (
               text('Нэвтрэх', 'Sign In')
             )}

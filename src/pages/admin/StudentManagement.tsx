@@ -20,7 +20,7 @@ const last8 = (p: string | null) => (p || '').replace(/\D/g, '').slice(-8);
 const SELECT = 'id, first_name, last_name, name, phone, parent_phone, grade, created_at, batch:batches(id, batch_name, course_type)';
 
 type Row = { id: string; first_name: string; last_name: string | null; name: string | null; phone: string; parent_phone: string | null; grade: string | null; created_at: string; batch: { batch_name: string | null; course_type: string } | null };
-type Account = { id: string; phone_number: string; password_hash: string | null; registered_device_id: string | null };
+type Account = { id: string; phone_number: string; password_hash: string | null; registered_device_id: string | null; is_blocked: boolean | null };
 
 async function count(q: PromiseLike<{ count: number | null; error: unknown }>) { const { count, error } = await q; if (error) throw error; return count ?? 0; }
 
@@ -42,7 +42,7 @@ export default function StudentManagement() {
   const [page, setPage] = useState(1);
   const [dialog, setDialog] = useState<null | 'resets' | 'registrations'>(null);
   const [dialogSearch, setDialogSearch] = useState('');
-  const [confirm, setConfirm] = useState<null | { kind: 'password' | 'device'; account: Account; name: string }>(null);
+  const [confirm, setConfirm] = useState<null | { kind: 'password' | 'device' | 'block' | 'unblock'; account: Account; name: string }>(null);
   const intlIds = useRef<string[] | null>(null);
 
   useEffect(() => { const t = setTimeout(() => { setDebounced(query.trim()); setPage(1); }, 250); return () => clearTimeout(t); }, [query]);
@@ -90,7 +90,7 @@ export default function StudentManagement() {
       const keys = [...new Set(rows.map(r => last8(r.phone)).filter(Boolean))];
       const accounts = new Map<string, Account>();
       if (keys.length) {
-        const { data: a } = await supabase.from('student_accounts').select('id, phone_number, password_hash, registered_device_id').eq('is_ghost', false).or(keys.map(k => `phone_number.ilike.%${k}`).join(','));
+        const { data: a } = await supabase.from('student_accounts').select('id, phone_number, password_hash, registered_device_id, is_blocked').eq('is_ghost', false).or(keys.map(k => `phone_number.ilike.%${k}`).join(','));
         (a ?? []).forEach(x => accounts.set(last8(x.phone_number), x));
       }
       const googleIds = new Set<string>();
@@ -108,10 +108,13 @@ export default function StudentManagement() {
 
   const runConfirm = async () => {
     if (!confirm) return;
-    const patch = confirm.kind === 'password' ? { password_hash: null, password_set_at: null } : { registered_device_id: null, device_registered_at: null };
+    const patch = confirm.kind === 'password' ? { password_hash: null, password_set_at: null }
+      : confirm.kind === 'device' ? { registered_device_id: null, device_registered_at: null }
+      : confirm.kind === 'block' ? { is_blocked: true, blocked_reason: 'Blocked by admin', blocked_at: new Date().toISOString() }
+      : { is_blocked: false, blocked_reason: null, blocked_at: null };
     const { error } = await supabase.from('student_accounts').update(patch).eq('id', confirm.account.id);
     if (error) toast.error(error.message);
-    else toast.success(confirm.kind === 'password' ? `${confirm.name} will set a new password at next login` : `${confirm.name} can sign in on a new device`);
+    else toast.success({ password: `${confirm.name} will set a new password at next login`, device: `${confirm.name} can sign in on a new device`, block: `${confirm.name} is deactivated`, unblock: `${confirm.name} is active again` }[confirm.kind]);
     setConfirm(null); refresh();
   };
 
@@ -122,7 +125,7 @@ export default function StudentManagement() {
   const IconAction = ({ label, onClick, disabled, icon: Icon }: { label: string; onClick: () => void; disabled: boolean; icon: typeof KeyRound }) => (
     <Tooltip><TooltipTrigger asChild>
       <span><Button size="icon" variant="ghost" className="h-7 w-7" aria-label={label} disabled={disabled} onClick={e => { e.stopPropagation(); onClick(); }}><Icon className="h-3.5 w-3.5" /></Button></span>
-    </TooltipTrigger><TooltipContent>{disabled ? `${label} — nothing to reset` : label}</TooltipContent></Tooltip>
+    </TooltipTrigger><TooltipContent>{disabled ? (label.startsWith('Reset') ? `${label} — nothing to reset` : `${label} — no account yet`) : label}</TooltipContent></Tooltip>
   );
 
   return (
@@ -160,6 +163,7 @@ export default function StudentManagement() {
               <TableHead>Name</TableHead>
               <TableHead className="w-10 px-1"><span className="sr-only">Reset password</span></TableHead>
               <TableHead className="w-10 px-1"><span className="sr-only">Reset device lock</span></TableHead>
+              <TableHead className="w-10 px-1"><span className="sr-only">Deactivate or activate</span></TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Parent phone</TableHead>
               <TableHead>Grade</TableHead>
@@ -170,8 +174,8 @@ export default function StudentManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}><TableCell colSpan={10}><Skeleton className="h-5" /></TableCell></TableRow>)
-              : list.data?.rows.length === 0 ? <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-10">No students found</TableCell></TableRow>
+            {list.isLoading ? Array.from({ length: 6 }).map((_, i) => <TableRow key={i}><TableCell colSpan={11}><Skeleton className="h-5" /></TableCell></TableRow>)
+              : list.data?.rows.length === 0 ? <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-10">No students found</TableCell></TableRow>
               : list.data?.rows.map(r => {
                 const acc = list.data!.accounts.get(last8(r.phone));
                 const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || r.name || 'Unnamed';
@@ -180,6 +184,9 @@ export default function StudentManagement() {
                     <TableCell className="font-medium">{name}</TableCell>
                     <TableCell className="px-1"><IconAction label="Reset password" icon={KeyRound} disabled={!acc?.password_hash} onClick={() => acc && setConfirm({ kind: 'password', account: acc, name })} /></TableCell>
                     <TableCell className="px-1"><IconAction label="Reset device lock" icon={ShieldOff} disabled={!acc?.registered_device_id} onClick={() => acc && setConfirm({ kind: 'device', account: acc, name })} /></TableCell>
+                    <TableCell className="px-1">{acc?.is_blocked
+                      ? <span className="text-destructive"><IconAction label="Activate account" icon={Power} disabled={false} onClick={() => setConfirm({ kind: 'unblock', account: acc, name })} /></span>
+                      : <IconAction label="Deactivate account" icon={PowerOff} disabled={!acc} onClick={() => acc && setConfirm({ kind: 'block', account: acc, name })} />}</TableCell>
                     <TableCell className="font-mono text-sm">{r.phone}</TableCell>
                     <TableCell className="font-mono text-sm text-muted-foreground">{r.parent_phone || '—'}</TableCell>
                     <TableCell className="text-sm">{r.grade || '—'}</TableCell>
@@ -220,12 +227,12 @@ export default function StudentManagement() {
       <AlertDialog open={!!confirm} onOpenChange={o => !o && setConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{confirm?.kind === 'password' ? 'Reset password?' : 'Reset device lock?'}</AlertDialogTitle>
+            <AlertDialogTitle>{{ password: 'Reset password?', device: 'Reset device lock?', block: 'Deactivate account?', unblock: 'Activate account?' }[confirm?.kind ?? 'password']}</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirm?.kind === 'password' ? `${confirm?.name} will have to set a new password the next time they sign in.` : `${confirm?.name} will be able to sign in from a new device. Their next device becomes locked in for 90 days.`}
+              {{ password: `${confirm?.name} will have to set a new password the next time they sign in.`, device: `${confirm?.name} will be able to sign in from a new device. Their next device becomes locked in for 90 days.`, block: `${confirm?.name} won't be able to sign in. They'll see "Your account has been suspended: Blocked by admin".`, unblock: `${confirm?.name} will be able to sign in again.` }[confirm?.kind ?? 'password']}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={runConfirm}>Reset</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={runConfirm}>{{ password: 'Reset', device: 'Reset', block: 'Deactivate', unblock: 'Activate' }[confirm?.kind ?? 'password']}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>

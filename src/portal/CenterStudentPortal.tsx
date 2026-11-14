@@ -13,6 +13,7 @@ import { MathText } from '@/components/MathText';
 import { QuestionFigures } from '@/components/QuestionFigures';
 import { ExplanationView } from '@/components/explanation/ExplanationView';
 import { DesmosCalculator, toggleCalculator } from '@/components/student/DesmosCalculator';
+import { ReferenceSheet, toggleReferenceSheet } from '@/components/student/ReferenceSheet';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
 import { normaliseChoices } from '@/lib/bluebookReview';
 import { CenterLogo, STATUS_LABEL, centerDisplayName, hexToHslToken, useCenter } from './centerContext';
@@ -46,6 +47,9 @@ import { CenterRankings } from './CenterRankings';
 import { CenterProfileView, CenterBadgeGrid } from './CenterProfileView';
 import { centerBadges, type CenterBadge } from './centerProfile';
 import { CenterBadgeWatcher } from './CenterBadgeWatcher';
+import { RingPrizeCelebration } from '@/components/student/RingPrizeCelebration';
+import { useCenterRingPrizes } from './useCenterRingPrizes';
+import type { PrizeKey } from '@/lib/ringPrizes';
 import { usePopupTurn } from './popupGate';
 import { RoadmapPreview } from './RoadmapPreview';
 import { topicUnits } from './videoTopics';
@@ -60,6 +64,9 @@ import { CenterHelpPage } from './CenterHelp';
 import { motion, useMotionValue, animate, useDragControls, type PanInfo } from 'framer-motion';
 import { CenterOnboarding } from './CenterOnboarding';
 import { onboardingStep, latchGate, type GateLatch } from './onboarding';
+import { freeDraw, freeSectionDone, speedRunBlocked, useSoloPlan } from './soloPlan';
+import { FreeSectionDone, SoloLock } from './SoloLock';
+import { toast } from 'sonner';
 
 type Q = { id: string; question_text: string; question_image_url: string | null; question_image_url_2: string | null; figure_svg: string | null; figure_description: string | null; multiple_choice_options: any; choice_images: any; answer: string; alternate_answers: any; rationale: string | null; subject: string | null; passage_text: string | null };
 const COLS = 'id, question_text, question_image_url, question_image_url_2, figure_svg, figure_description, multiple_choice_options, choice_images, answer, alternate_answers, rationale, subject, passage_text';
@@ -211,6 +218,7 @@ export default function CenterStudentPortal() {
             <div className="max-w-[1400px] mx-auto space-y-5">
               {me.data.student.class_id && <StudentLive studentId={me.data.student.id} classId={me.data.student.class_id} />}
               <MyBadgeWatcher me={me.data} />
+              <RingPrizeCelebration colors={SKY_RING} />
               <Routes>
                 <Route index element={<HomePage me={me.data} />} />
                 <Route path="practice" element={<PracticePage me={me.data} />} />
@@ -280,6 +288,9 @@ const nudgeShown = new Set<string>();
 export function HomePage({ me }: { me: Me }) {
   const navigate = useNavigate();
   const totals = useSetTotals();
+  const plan = useSoloPlan();
+  // Free solo users never see the 68 or 150 sets (Saagii, 12 Nov).
+  const sets = PRACTICE_SETS.filter(s => plan.premium || !plan.ready || s.key === 'CB');
   const today = new Date().toDateString();
   const todayList = me.attempts.filter(a => new Date(a.created_at).toDateString() === today);
   const total = me.attempts.length, correct = me.attempts.filter(a => a.is_correct).length;
@@ -308,6 +319,7 @@ export function HomePage({ me }: { me: Me }) {
     try { localStorage.setItem(goalSeenKey, '1'); } catch { /* ignore */ }
   }, [goalTurn, goalSeenKey]);
   const g = goals.data ?? { speed: 2, hard: 5, medium: 10 };
+  const { paid, prizes, rows } = useCenterRingPrizes(me.student.id, g);
   const [nudgeDue, setNudgeDue] = useState(false);
   const nudgeKey = `center_ring_nudge_${me.student.id}`;
   // Once per local day; never opens on top of the "Set your daily ring" dialog (goalOpen is a dependency, so it opens after that closes),
@@ -355,14 +367,16 @@ export function HomePage({ me }: { me: Me }) {
             onShowHistory={() => setRingOpen(true)}
             colors={SKY_RING}
             decor={AURORA}
+            prizes={Object.fromEntries((Object.keys(prizes) as PrizeKey[]).map(k => [k, { points: rows.find(r => r.ring === k)?.points ?? prizes[k], paid: paid.has(k) }])) as Record<PrizeKey, { points: number; paid: boolean }>}
             className="sky-card !p-0"
           />}
         </div>
         <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={ringHistory} goals={g} />
         <CenterRingNudge open={nudgeOpen} onOpenChange={o => { if (!o) closeNudge(); }} progress={prog} goals={g} onStart={() => { closeNudge(); navigate('/student/practice?mode=random'); }} />
         <CenterGoalDialog open={goalOpen} onOpenChange={o => { setGoalOpen(o); if (!o) setGoalDue(false); }} studentId={me.student.id} goals={goals.data} />
-        <div className="grid gap-3 sm:grid-cols-3 md:contents lg:grid lg:col-span-9">
-          {PRACTICE_SETS.map(s => {
+        {/* A free solo user's lone CB card takes the whole row instead of a third of it. */}
+        <div className={`grid gap-3 ${sets.length > 1 ? 'sm:grid-cols-3' : ''} md:contents lg:grid lg:col-span-9`}>
+          {sets.map(s => {
             const ids = totals.data?.[s.key] ?? [];
             const done = ids.filter(id => solved.has(id)).length;
             const look = SET_LOOK[s.key];
@@ -459,23 +473,30 @@ function useRecordAttempt(me: Me) {
 
 function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
   const record = useRecordAttempt(me);
+  const { premium } = useSoloPlan();
   const [picked, setPicked] = useState(''); const [typed, setTyped] = useState('');
   const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
   const [tries, setTries] = useState(0);
   const [showExp, setShowExp] = useState(false);
   const [forfeit, setForfeit] = useState(false);
   const startedAt = useRef(Date.now());
+  const checking = useRef(false); // a fast double tap ran submit twice before `tries` updated and saved two answers
   useEffect(() => { setPicked(''); setTyped(''); setResult(null); setTries(0); setShowExp(false); setForfeit(false); startedAt.current = Date.now(); }, [q.id]);
   const choices = normaliseChoices(q.multiple_choice_options, q.choice_images);
   const submit = async () => {
-    const given = choices.length ? picked : typed;
-    const ok = isCorrect(q, given);
-    // Only the first try counts, and peeking at the explanation first forfeits it.
-    if (tries === 0 && !forfeit) await record(q.id, ok, (Date.now() - startedAt.current) / 1000, given);
-    setTries(t => t + 1); setResult(ok ? 'correct' : 'wrong');
+    if (checking.current) return;
+    checking.current = true;
+    try {
+      const given = choices.length ? picked : typed;
+      const ok = isCorrect(q, given);
+      // Only the first try counts, and peeking at the explanation first forfeits it.
+      if (tries === 0 && !forfeit) await record(q.id, ok, (Date.now() - startedAt.current) / 1000, given);
+      setTries(t => t + 1); setResult(ok ? 'correct' : 'wrong');
+    } finally { checking.current = false; }
   };
   const openExplanation = () => {
-    if (!showExp && result !== 'correct' && q.rationale && !forfeit) {
+    // A free solo user sees a lock, not the explanation, so peeking costs nothing.
+    if (!showExp && result !== 'correct' && q.rationale && !forfeit && premium) {
       if (!window.confirm("Viewing the explanation before solving means this question won't count toward your stats. Continue?")) return;
       setForfeit(true);
     }
@@ -505,7 +526,8 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
       {showExp && (
         <aside className="sky-card xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           <p className="text-xs text-muted-foreground mb-3">Explanation</p>
-          {q.rationale ? <ExplanationView text={q.rationale} /> : <p className="text-sm text-muted-foreground">No explanation has been written for this question yet.</p>}
+          {/* Premium adds Math explanations only; English is free, explanations included. */}
+          {!premium && q.subject?.toLowerCase() !== 'english' ? <SoloLock title="Step-by-step explanations" /> : q.rationale ? <ExplanationView text={q.rationale} /> : <p className="text-sm text-muted-foreground">No explanation has been written for this question yet.</p>}
         </aside>
       )}
     </div>
@@ -516,13 +538,23 @@ function Solver({ q, me, onNext }: { q: Q; me: Me; onNext: () => void }) {
 
 function PracticePage({ me }: { me: Me }) {
   const [params, setParams] = useSearchParams();
-  const set = practiceSetFromParam(params.get('set'));
+  const plan = useSoloPlan();
+  // A free solo user has the CB set only, whatever ?set= says (the 68 and 150 sets are never shown to them).
+  const set = !plan.premium ? 'CB' : practiceSetFromParam(params.get('set'));
   const pinned = params.get('q');
   const cats = useQuery({ queryKey: ['question-categories'], queryFn: async () => (await supabase.from('question_categories').select('id, name').order('name')).data ?? [] });
   const [subject, setSubject] = useState<'math' | 'english'>('math');
   const [domain, setDomain] = useState('all');
   const [difficulty, setDifficulty] = useState('all');
   const [q, setQ] = useState<Q | null | undefined>(undefined);
+  // A free solo user who has solved every free question in the subject gets the congratulations page in place of the next
+  // question. Read through a ref so answering doesn't redraw the question on screen.
+  const freeList = usePracticeQuestions(!plan.premium);
+  const sectionDone = useRef(false);
+  // English is all free, so only Math has a free section to finish.
+  sectionDone.current = !plan.premium && subject === 'math' && !!freeList.data && freeSectionDone(freeList.data, me.attempts, subject);
+  const [congrats, setCongrats] = useState(false);
+  const drawReady = plan.ready && (plan.premium || !!freeList.data || freeList.isError);
 
   const domainOptions = useMemo(() => {
     const english = ['Information and Ideas', 'Craft and Structure', 'Expression of Ideas', 'Standard English Conventions'];
@@ -531,14 +563,16 @@ function PracticePage({ me }: { me: Me }) {
   useEffect(() => { setDomain('all'); }, [subject]);
 
   const loadQuestion = useCallback(async () => {
-    setQ(undefined);
+    setQ(undefined); setCongrats(false);
     if (pinned) {
       const { data } = await supabase.from('intl_questions').select(COLS).eq('id', pinned).maybeSingle();
       setQ((data as Q) ?? null); return;
     }
+    if (sectionDone.current) { setCongrats(true); return; }
     const sub = subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
+    const scope = await freeDraw(plan.premium, subject);
     const base = () => {
-      let b = supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub);
+      let b = scope(supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub));
       if (subject === 'math') b = set === 'CB' ? b.or(CB_FILTER) : b.eq('question_set', set);
       if (domain !== 'all') b = b.eq('category_id', domain);
       if (difficulty !== 'all') b = b.ilike('difficulty_level', difficulty);
@@ -549,9 +583,9 @@ function PracticePage({ me }: { me: Me }) {
     const offset = Math.floor(Math.random() * count);
     const { data } = await base().range(offset, offset);
     setQ((data?.[0] as Q) ?? null);
-  }, [subject, domain, difficulty, set, pinned]);
+  }, [subject, domain, difficulty, set, pinned, plan.premium]);
   const solving = !!pinned || params.get('mode') === 'random';
-  useEffect(() => { if (solving) loadQuestion(); }, [loadQuestion, solving]);
+  useEffect(() => { if (solving && drawReady) loadQuestion(); }, [loadQuestion, solving, drawReady]);
 
   const setSet = (v: string) => { const p = new URLSearchParams(params); p.delete('q'); p.set('set', v); setParams(p); setSubject('math'); };
   const next = () => { if (pinned) { const p = new URLSearchParams(params); p.delete('q'); p.set('mode', 'random'); setParams(p); } else loadQuestion(); };
@@ -578,15 +612,16 @@ function PracticePage({ me }: { me: Me }) {
             className={`rounded-md px-3 py-1 text-sm active:scale-[0.97] transition-colors ${subject === s ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:text-foreground'}`}>{s === 'math' ? 'Math' : 'English'}</Button>)}
         </div>
         {subject === 'math' && <Select value={set} onValueChange={setSet}><SelectTrigger className="w-44" aria-label="Question set"><SelectValue /></SelectTrigger>
-          <SelectContent>{PRACTICE_SETS.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent></Select>}
+          <SelectContent>{PRACTICE_SETS.filter(s => plan.premium || s.key === 'CB').map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent></Select>}
         <Select value={domain} onValueChange={setDomain}><SelectTrigger className="w-56" aria-label="Domain"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">All domains</SelectItem>{domainOptions.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
         <Select value={difficulty} onValueChange={setDifficulty}><SelectTrigger className="w-40" aria-label="Difficulty"><SelectValue /></SelectTrigger>
           <SelectContent>{DIFFS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent></Select>
         {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button>}
+        {subject === 'math' && <Button variant="outline" size="sm" onClick={toggleReferenceSheet}><BookOpen className="h-4 w-4" />Reference</Button>}
       </div>
-      {q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
-      {subject === 'math' && <DesmosCalculator />}
+      {congrats ? <FreeSectionDone subject={subject} /> : q === undefined ? <SkyCardSkeleton lines={4} /> : q === null ? <p className="text-sm text-muted-foreground">No questions match these filters. Try another set, domain or difficulty.</p> : <Solver q={q} me={me} onNext={next} />}
+      {subject === 'math' && <><DesmosCalculator /><ReferenceSheet /></>}
     </div>
   );
 }
@@ -607,16 +642,25 @@ function SpeedPage({ me }: { me: Me }) {
   const [picked, setPicked] = useState(''); const [typed, setTyped] = useState('');
   const [score, setScore] = useState<boolean[]>([]);
   const [timeUp, setTimeUp] = useState(false);
+  const [saving, setSaving] = useState(false); // the finished run is being saved, so the runs-left count is out of date
 
   const runs = useQuery({
     queryKey: ['center-speed-runs', me.student.id, 'list'],
     queryFn: async () => ((await supabase.from('tenant_speed_runs').select('id, created_at, subject, correct, total, duration_seconds, total_time_seconds, category').eq('student_id', me.student.id).order('created_at', { ascending: false }).limit(200)).data ?? []) as SpeedRun[],
   });
+  // Free solo users get 10 runs per rolling 24 hours (0127's guard). NULL (anyone not free) means no limit, never 0.
+  const plan = useSoloPlan();
+  const free = plan.ready && !plan.premium;
+  const allowance = useQuery({
+    queryKey: ['center-speed-runs', me.student.id, 'left'], enabled: free,
+    queryFn: async () => { const { data, error } = await supabase.rpc('solo_speed_runs_left'); if (error) throw error; return data as number | null; },
+  });
 
   const start = async (c: SpeedConfig = cfg!) => {
     setCfg(c);
     const sub = c.subject === 'math' ? ['math', 'Math'] : ['english', 'English'];
-    const base = () => { let b = supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub); if (c.category) b = b.eq('category_id', c.category); return b; };
+    const scope = await freeDraw(plan.premium, c.subject);
+    const base = () => { let b = scope(supabase.from('intl_questions').select(COLS, { count: 'exact' }).eq('is_active', true).eq('hide_from_practice', false).in('subject', sub)); if (c.category) b = b.eq('category_id', c.category); return b; };
     const { count } = await base().range(0, 0);
     const off = Math.max(0, Math.floor(Math.random() * Math.max(1, (count ?? 0) - 80)));
     const { data } = await base().range(off, off + 79);
@@ -627,8 +671,14 @@ function SpeedPage({ me }: { me: Me }) {
   const done = qs && (i >= qs.length || timeUp);
   useEffect(() => {
     if (!done || !qs?.length || !cfg) return;
+    setSaving(true);
     supabase.from('tenant_speed_runs').insert({ student_id: me.student.id, institution_id: center.id, subject, correct: score.filter(Boolean).length, total: Math.max(score.length, 1), duration_seconds: cfg.duration, total_time_seconds: cfg.duration - left, category: cfg.category }).select('correct').single()
-      .then(({ data }) => { if (data) emitPointsEarned(runPoints(data)); qc.invalidateQueries({ queryKey: ['center-speed-runs', me.student.id] }); });
+      .then(async ({ data, error }) => {
+        if (data) emitPointsEarned(runPoints(data));
+        if (error && free) toast.error(error.message); // the free plan's 11th run in 24 hours: "Free plan: 10 speed sessions a day"
+        await qc.invalidateQueries({ queryKey: ['center-speed-runs', me.student.id] });
+        setSaving(false);
+      });
   }, [done]);
   const answer = useCallback(async (given: string) => {
     if (!q) return;
@@ -643,7 +693,7 @@ function SpeedPage({ me }: { me: Me }) {
     return () => clearTimeout(t);
   }, [left, q, done]);
 
-  if (!qs) return <CenterSpeedLobby runs={runs.data ?? []} onStart={start} />;
+  if (!qs) return !plan.ready || (free && allowance.isPending) ? <SkyCardSkeleton /> : <CenterSpeedLobby runs={runs.data ?? []} runsLeft={free ? allowance.data : null} onStart={start} />;
   if (done) {
     const c = score.filter(Boolean).length;
     const ratio = qs.length ? c / qs.length : 0;
@@ -653,7 +703,7 @@ function SpeedPage({ me }: { me: Me }) {
         <div className="flex justify-center gap-1">{[0, 1, 2].map(n => <Star key={n} className={`h-9 w-9 ${n < stars ? 'fill-primary text-primary' : 'text-muted-foreground/30'}`} />)}</div>
         <p className="font-mono text-3xl">{c}/{qs.length}</p>
         <p className="text-sm sky-body">{timeUp ? 'Time is up. ' : ''}{stars === 3 ? 'Perfect pace.' : 'Run it again to climb a star.'}</p>
-        <div className="flex justify-center gap-2"><Button onClick={() => start()}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Back to speed practice</Button></div>
+        <div className="flex justify-center gap-2"><Button onClick={() => start()} disabled={speedRunBlocked(free, allowance.data, saving || allowance.isFetching)}>Play again</Button><Button variant="ghost" onClick={() => setQs(null)}>Back to speed practice</Button></div>
       </Glass>
     );
   }
@@ -674,9 +724,10 @@ function SpeedPage({ me }: { me: Me }) {
           <button key={c.letter} onClick={() => setPicked(c.letter)} className={`student-choice text-left rounded-xl border p-3 flex gap-3 ${picked === c.letter ? 'border-primary bg-primary/10' : 'hover:bg-muted/50'}`}>
             <span className="font-mono text-sm w-5">{c.letter}</span><span className="flex-1 min-w-0">{c.image ? <img src={c.image} alt={`Choice ${c.letter}`} className="max-h-40" /> : <MathText text={c.text} />}</span></button>))}</div>
           : <Input value={typed} onChange={e => setTyped(e.target.value)} placeholder="Type your answer" className="max-w-xs font-mono" />}
-        <Button onClick={() => answer(choices.length ? picked : typed)} disabled={choices.length ? !picked : !typed.trim()}>Submit</Button>
+        <Button className="w-full sm:w-auto" onClick={() => answer(choices.length ? picked : typed)} disabled={choices.length ? !picked : !typed.trim()}>Submit</Button>
       </Glass>
-      {subject === 'math' && <><Button variant="outline" size="sm" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button><DesmosCalculator /></>}
+      {subject === 'math' && <><div className="flex gap-2"><Button variant="outline" size="sm" className="max-md:hidden" onClick={toggleCalculator}><Calculator className="h-4 w-4" />Desmos</Button>
+        <Button variant="outline" size="sm" onClick={toggleReferenceSheet}><BookOpen className="h-4 w-4" />Reference</Button></div><DesmosCalculator /><ReferenceSheet /></>}
     </div>
   );
 }
@@ -733,8 +784,10 @@ function VideosPage({ me }: { me: Me }) {
 /** The student's center badges, worked out in the browser. Null until the practice sets load, so a master badge isn't judged early. */
 function useMyCenterBadges(me: Me): CenterBadge[] | null {
   const totals = useSetTotals();
+  const plan = useSoloPlan();
   if (!totals.data) return null;
   return centerBadges({
+    masters: plan.premium,
     answered: me.attempts.length, correct: me.attempts.filter(a => a.is_correct).length,
     solved: new Set(me.attempts.filter(a => a.is_correct).map(a => a.question_id)),
     present: me.att.filter(a => a.status === 'present' || a.status === 'late').length, setIds: totals.data,

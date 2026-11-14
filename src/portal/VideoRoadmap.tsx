@@ -8,16 +8,19 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConceptVideoPlayer } from '@/components/concept-videos/ConceptVideoPlayer';
 import { VideoLabelFilter, LabelChips, filterVideos } from '@/components/concept-videos/VideoLabelFilter';
 import { cn } from '@/lib/utils';
 import { useCenter } from './centerContext';
 import { SkyListSkeleton } from './SkySkeleton';
 import { LoadError } from './CenterPracticeBrowser';
-import { topicUnits, upNext, type VideoState } from './videoTopics';
+import { isEnglish, topicUnits, upNext, type VideoState } from './videoTopics';
 import { TopicMap, type Video } from './TopicMap';
 import { TopicList, unitKey } from './TopicList';
 import { useIsWide } from './useIsWide';
+import { useSoloPlan } from './soloPlan';
+import { SoloLock } from './SoloLock';
 
 type MeLite = { student: { id: string }; videosDone: string[] };
 
@@ -25,6 +28,7 @@ type MeLite = { student: { id: string }; videosDone: string[] };
  * Concept videos by College Panda topic (book order): the topics as cards on the left, the chosen topic's map in the
  * space on the right (on a phone the map slides in over the list). Any topic can be started; inside a topic each video
  * unlocks the next. The chosen topic lives in the address (?topic=N) so refresh and the phone's back button work.
+ * A Math / English switch on top (?subject=english) shows one subject's videos at a time.
  */
 export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me: MeLite }) {
   const { center, userId } = useCenter();
@@ -34,7 +38,10 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
   const location = useLocation();
   const reduce = useReducedMotion();
   const wide = useIsWide();
-  const list = (videos.data ?? []) as Video[];
+  const plan = useSoloPlan();
+  const english = params.get('subject') === 'english';
+  const keep = english ? { subject: 'english' } : {};
+  const list = useMemo(() => ((videos.data ?? []) as Video[]).filter(v => isEnglish(v) === english), [videos.data, english]);
   const done = useMemo(() => new Set(me.videosDone), [me.videosDone]);
   const [open, setOpen] = useState<Video | null>(null);
   const [query, setQuery] = useState('');
@@ -77,9 +84,9 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
   // On a laptop picking swaps the map in place; on a phone it opens the map as a new page, so back returns to the list.
   const pick = (key: string) => {
     if (wide === false) listTop.current = document.getElementById('root')?.scrollTop ?? 0;
-    setParams({ topic: key }, { replace: wide !== false });
+    setParams({ ...keep, topic: key }, { replace: wide !== false });
   };
-  const back = () => (location.key !== 'default' ? navigate(-1) : setParams({}, { replace: true }));
+  const back = () => (location.key !== 'default' ? navigate(-1) : setParams(keep, { replace: true }));
 
   const markDone = async (v: Video) => {
     setSaving(true);
@@ -100,11 +107,14 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
         </div>
         {list.length > 0 && <p className="font-mono text-sm">{watched}<span className="text-muted-foreground">/{list.length} watched</span></p>}
       </div>
+      <Tabs value={english ? 'english' : 'math'} onValueChange={s => { setQuery(''); setParams(s === 'english' ? { subject: 'english' } : {}, { replace: true }); }}>
+        <TabsList><TabsTrigger value="math">Math</TabsTrigger><TabsTrigger value="english">English</TabsTrigger></TabsList>
+      </Tabs>
       {list.length > 0 && <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${(watched / list.length) * 100}%`, background: 'hsl(var(--section-glow))' }} /></div>}
       {/* No labels: the search box stays, the filter pills under it are gone (Saagii, 30 Oct). */}
       {list.length > 0 && <VideoLabelFilter labels={[]} query={query} onQuery={setQuery} active={null} onActive={() => {}} />}
 
-      {videos.isLoading ? <SkyListSkeleton rows={4} /> : videos.isError && !videos.data ? <LoadError what="videos" onRetry={() => videos.refetch()} /> : !list.length ? <p className="text-sm text-muted-foreground">No videos yet.</p> : filtering ? (
+      {videos.isLoading || !plan.ready ? <SkyListSkeleton rows={4} /> : videos.isError && !videos.data ? <LoadError what="videos" onRetry={() => videos.refetch()} /> : !list.length ? <p className="text-sm text-muted-foreground">{english ? 'English videos are coming soon.' : 'No videos yet.'}</p> : filtering ? (
         !filtered.length ? <p className="text-sm text-muted-foreground">No videos match.</p> : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{filtered.map(v => {
             const info = byId.get(v.id), st: VideoState = info?.state ?? 'locked';
@@ -129,6 +139,8 @@ export function VideoRoadmap({ videos, me }: { videos: UseQueryResult<any[]>; me
                   initial={reduce ? false : { x: 48, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={reduce ? undefined : { opacity: 0 }}
                   transition={{ duration: 0.45, ease: [0.32, 0.72, 0, 1] }}>
                   <TopicMap unit={unit} nextVideoId={next?.videoId ?? null} onOpen={setOpen} />
+                  {/* A free solo user is sent only each topic's first lesson (0127); the rest are Premium. */}
+                  {!plan.premium && <SoloLock title="Every lesson in this topic" />}
                 </motion.div>
               )}
             </AnimatePresence>

@@ -208,7 +208,7 @@ export default function ConceptVideosAdmin() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold font-chillax tracking-normal text-foreground [text-shadow:0_0_24px_hsl(var(--section-glow,32_95%_50%)/0.45)]">Concept Videos</h1>
-          <p className="text-sm text-muted-foreground">Short math concept lessons, grouped by topic. Students only see published videos.</p>
+          <p className="text-sm text-muted-foreground">Short Math and English concept lessons, grouped by area. Students only see published videos.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setRoadmapOpen(true)}><RouteIcon className="mr-1 h-4 w-4" /> Edit roadmap</Button>

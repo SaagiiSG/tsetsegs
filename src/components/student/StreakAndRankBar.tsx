@@ -5,12 +5,44 @@ import { useStudentStreak } from '@/hooks/useStudentStreak';
 import { useStudentTier } from '@/hooks/useStudentTier';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { TIER_DISPLAY_NAMES, TIER_COLORS } from '@/data/badgeDefinitions';
+import { useDailyGoals } from '@/hooks/useDailyGoals';
+import { useDailyProgress } from '@/hooks/useDailyProgress';
+import { useRingPrizes } from '@/hooks/useRingPrizes';
+import { prizeLeft, type PrizeKey } from '@/lib/ringPrizes';
+import { ringStatus } from '@/portal/studentStats';
 import { TodayPointsChip } from './TodayPointsChip';
+import { RingChip } from './RingChip';
+import { RING_COLORS } from './dashboard/DailyRing';
 import { cn } from '@/lib/utils';
 
 interface StreakAndRankBarProps {
   onStreakClick?: () => void;
   className?: string;
+}
+
+/** The daily ring pill with today's prizes. StudentLayout also shows it next to the today-points chip at xl, where this bar hides. */
+export function MainRingChip({ onClick }: { onClick?: () => void }) {
+  const navigate = useNavigate();
+  const { goals } = useDailyGoals();
+  const { data: progress } = useDailyProgress();
+  const { paid, paidPoints } = useRingPrizes();
+  if (!progress) return null;
+  const status = ringStatus(progress, goals);
+  // A ring with no goal never pays (nor the bonus), so it isn't counted as left to win.
+  const noGoal = (['speed', 'hard', 'medium'] as const).filter(k => goals[k] <= 0);
+  const left = prizeLeft(goals, new Set<PrizeKey>([...paid, ...noGoal, ...(noGoal.length ? ['all' as const] : [])]));
+  const frac = (v: number, g: number) => (g > 0 ? v / g : 1);
+  return (
+    <RingChip
+      p={[frac(progress.speed, goals.speed), frac(progress.hard, goals.hard), frac(progress.medium, goals.medium)]}
+      closed={status.closed}
+      left={left}
+      earned={Object.values(paidPoints).reduce((n, v) => n + v, 0)}
+      allPaid={paid.has('all')}
+      colors={RING_COLORS}
+      onClick={onClick ?? (() => navigate('/practice/dashboard'))}
+    />
+  );
 }
 
 export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarProps) {
@@ -57,6 +89,8 @@ export function StreakAndRankBar({ onStreakClick, className }: StreakAndRankBarP
       )}
 
       <TodayPointsChip />
+
+      <MainRingChip onClick={onStreakClick} />
 
       <div
         className="student-chip text-[10px] uppercase"

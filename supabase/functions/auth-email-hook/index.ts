@@ -44,10 +44,12 @@ const SAMPLE_DATA: Record<string, object> = {
     siteUrl: SAMPLE_PROJECT_URL,
     recipient: SAMPLE_EMAIL,
     confirmationUrl: SAMPLE_PROJECT_URL,
+    token: '123456',
   },
   magiclink: {
     siteName: SITE_NAME,
     confirmationUrl: SAMPLE_PROJECT_URL,
+    token: '123456',
   },
   recovery: {
     siteName: SITE_NAME,
@@ -136,6 +138,8 @@ const handler = createAuthEmailHandler({
           siteUrl: SITE_URL,
           recipient: data.email,
           confirmationUrl: data.url,
+          // /solo signs in with this code (signInWithOtp sends a new address this email, a known one the magic link).
+          token: data.token ?? '',
         }),
     },
     invite: {
@@ -153,6 +157,7 @@ const handler = createAuthEmailHandler({
         React.createElement(MagicLinkEmail, {
           siteName: SITE_NAME,
           confirmationUrl: data.url,
+          token: data.token ?? '',
         }),
     },
     recovery: {

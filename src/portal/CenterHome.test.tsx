@@ -14,16 +14,18 @@ vi.mock('@tanstack/react-query', async importOriginal => {
 });
 import { CenterContext } from './centerContext';
 import { HomePage } from './CenterStudentPortal';
-const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', signOut: () => {}, reloadCenter: () => {} };
+const ctx = { center: { id: 'c', name: 'Sky Prep', country: 'US', slug: 'sky' }, role: 'student' as const, name: 'Ana', userId: 'u', isSolo: false, signOut: () => {}, reloadCenter: () => {} };
 const me = { student: { id: 's', name: 'Ana Bold', class_id: null }, cls: null, att: [], attempts: [], meta: {}, videosDone: ['e1', 'e2'] };
 const v = (id: string, module: string, order_index: number) => ({ id, title: `Video ${id}`, module, order_index });
 // Topic 1 has three videos (two watched); topic 2 follows with two.
 const videos = [v('e1', 'Exponents & Radicals', 1), v('e2', 'Exponents & Radicals', 2), v('e3', 'Exponents & Radicals', 3), v('x1', 'Expressions', 4), v('x2', 'Expressions', 5)];
-const render = () => {
+// `plan` given: a solo student on that plan (the cached solo_students row).
+const render = (plan?: { plan: string; premium_until: string | null }) => {
   const client = new QueryClient();
   client.setQueryData(['center-concept-videos'], videos);
+  if (plan) client.setQueryData(['solo-plan', 'u'], plan);
   return renderToStaticMarkup(
-    <QueryClientProvider client={client}><MemoryRouter><CenterContext.Provider value={ctx}>
+    <QueryClientProvider client={client}><MemoryRouter><CenterContext.Provider value={plan ? { ...ctx, isSolo: true } : ctx}>
       <HomePage me={me as never} />
     </CenterContext.Provider></MemoryRouter></QueryClientProvider>,
   );
@@ -52,5 +54,15 @@ describe('center home', () => {
       expect(card).toContain('Couldn&#x27;t load videos.');
       expect(card).not.toMatch(/>0<|\/…|sky-fill-violet/);
     } finally { flags.videosFail = false; }
+  });
+  it('hides the 68 and 150 cards from a free solo user only', () => {
+    const free = render({ plan: 'free', premium_until: null });
+    expect(free).not.toContain('Core SAT math patterns'); // the 68 card
+    expect(free).not.toMatch(/The (68|150) set|Try Premium/); // no lock card either
+    expect(free).toContain('All other math, including the new 120'); // CB stays a card
+    for (const html of [render(), render({ plan: 'premium', premium_until: null })]) {
+      expect(html).not.toContain('Try Premium');
+      expect(html).toContain('Core SAT math patterns');
+    }
   });
 });

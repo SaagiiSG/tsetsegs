@@ -33,9 +33,12 @@ import { StreakHistoryDialog } from './StreakHistoryDialog';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { AnnouncementBell } from './AnnouncementBell';
-import { StreakAndRankBar } from './StreakAndRankBar';
+import { MainRingChip, StreakAndRankBar } from './StreakAndRankBar';
 import { TodayPointsChip } from './TodayPointsChip';
 import { ActiveChallengeHUD } from './challenges/ActiveChallengeHUD';
+import { RingPrizeCelebration } from './RingPrizeCelebration';
+import { RING_COLORS } from './dashboard/DailyRing';
+import { useRingPrizeClaimer } from '@/hooks/useRingPrizes';
 import { ChallengeWinCelebration } from './challenges/ChallengeWinCelebration';
 
 import { TourProvider } from './onboarding/TourProvider';
@@ -53,6 +56,7 @@ function StudentLayoutContent() {
   const courses = useStudentCourses();
   const { streak, isStreakActive, freezersAvailable } = useStudentStreak();
   const currentStreak = streak?.current_streak ?? 0;
+  useRingPrizeClaimer(!!student && !teacherLoading && !adminLoading && !((teacherUser && teacherName) || isAdmin)); // never pay a student's ring while staff is viewing
 
   // Show onboarding if student has no SAT date set and hasn't completed onboarding
   useEffect(() => {
@@ -156,9 +160,10 @@ function StudentLayoutContent() {
             <StreakAndRankBar onStreakClick={() => setStreakDialogOpen(true)} />
           </div>
 
-          {/* Desktop: just the today-points chip centered in the header */}
-          <div className="hidden xl:flex">
+          {/* Desktop: the today-points chip and the ring pill centered in the header */}
+          <div className="hidden xl:flex items-center gap-2">
             <TodayPointsChip />
+            <MainRingChip onClick={() => setStreakDialogOpen(true)} />
           </div>
 
           <div className="flex items-center gap-2">
@@ -226,6 +231,7 @@ function StudentLayoutContent() {
       <StreakBrokenOverlay />
       <ActiveChallengeHUD />
       <ChallengeWinCelebration />
+      <RingPrizeCelebration colors={RING_COLORS} />
       <TourOverlay />
 
 

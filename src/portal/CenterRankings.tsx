@@ -19,7 +19,7 @@ import { allPages } from './centerApi';
 
 const tierName = (tier: string) => tier === 'platinum' ? 'Emerald' : tier.charAt(0).toUpperCase() + tier.slice(1);
 const asTier = (t: string | null | undefined): TierType => (TIER_ORDER as readonly string[]).includes(t ?? '') ? t as TierType : 'unranked';
-const EMPTY_BREAKDOWN = { questions: 0, sectionBonuses: 0, speedSessions: 0, badges: 0, bankCompletions: 0 };
+const EMPTY_BREAKDOWN = { questions: 0, sectionBonuses: 0, speedSessions: 0, badges: 0, bankCompletions: 0, ringPrizes: 0 };
 const dayAfter = (date: string) => { const d = new Date(`${date}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
 
 /** Customer leaderboard: same tabs and components as the main student leaderboard, fed only by tenant data. */
@@ -40,15 +40,19 @@ export function CenterRankings({ studentId }: { studentId: string }) {
   const myPoints = useQuery({ queryKey: ['center-sprint-points', center.id, active?.id, studentId], enabled: !!active,
     queryFn: async () => {
       const from = active!.starts_on, to = dayAfter(active!.ends_on);
-      const [attempts, runs] = await Promise.all([
+      const [attempts, runs, prizes] = await Promise.all([
         allPages(p => supabase.from('tenant_attempts').select('id, created_at, points, is_correct').eq('institution_id', center.id).eq('student_id', studentId)
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
         allPages(p => supabase.from('tenant_speed_runs').select('id, created_at, correct').eq('institution_id', center.id).eq('student_id', studentId)
           .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)),
+        // Fail soft: if 0125 isn't live yet the chart still shows answers and runs.
+        allPages(p => supabase.from('tenant_ring_prizes').select('id, created_at, points').eq('institution_id', center.id).eq('student_id', studentId)
+          .gte('created_at', from).lt('created_at', to).order('created_at').order('id').range(p, p + 999)).catch(() => []),
       ]);
       return [
         ...attempts.map(a => ({ created_at: a.created_at, points: a.points ?? (a.is_correct ? 10 : 0) })),
         ...runs.map(r => ({ created_at: r.created_at, points: r.correct * 10 })),
+        ...prizes.map(r => ({ created_at: r.created_at, points: r.points })),
       ];
     } });
   const pointHistory = useMemo(() => active && myPoints.data ? sprintPointsByDay(myPoints.data, active.starts_on, active.ends_on) : undefined, [active, myPoints.data]);
@@ -86,8 +90,9 @@ export function CenterRankings({ studentId }: { studentId: string }) {
 
   const me = entries.find(e => e.userId === studentId);
   const cutoff = TIER_PROMOTION_CUTOFFS[me?.currentTier ?? 'unranked'] ?? 10;
-  const pointsToAdvance = me && me.rank > cutoff ? Math.max(0, (entries[cutoff - 1]?.totalPoints ?? 0) - me.totalPoints + 1) : null;
-  const pointsToTop1 = me && me.rank > 1 ? Math.max(0, (entries[0]?.totalPoints ?? 0) - me.totalPoints + 1) : null;
+  // 0 = already there ("✓ Secured" / "You're #1!"); null only when she isn't on the board.
+  const pointsToAdvance = me ? (me.rank > cutoff ? Math.max(0, (entries[cutoff - 1]?.totalPoints ?? 0) - me.totalPoints + 1) : 0) : null;
+  const pointsToTop1 = me ? (me.rank > 1 ? Math.max(0, (entries[0]?.totalPoints ?? 0) - me.totalPoints + 1) : 0) : null;
   const ladder = <TierLadder currentTier={me?.currentTier ?? currentTier} unlockedAt={unlockedAt} standing={me?.rank ?? null} />;
   const fade = { initial: { opacity: 0, x: -20 }, animate: { opacity: 1, x: 0 }, transition: { duration: 0.2 } };
 

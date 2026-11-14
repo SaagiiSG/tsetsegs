@@ -7,7 +7,7 @@ export type PortalSettings = { display_name?: string; logo_url?: string; brand_c
 export type Center = { id: string; name: string; country: string; slug: string; portal_settings?: PortalSettings | null };
 export type CenterRole = 'center_admin' | 'teacher' | 'student';
 
-type Ctx = { center: Center; role: CenterRole | null; name: string; userId: string | null; signOut: () => void; reloadCenter: () => void };
+type Ctx = { center: Center; role: CenterRole | null; name: string; userId: string | null; isSolo: boolean; signOut: () => void; reloadCenter: () => void };
 export const CenterContext = createContext<Ctx | null>(null);
 export function useCenter() {
   const ctx = useContext(CenterContext);
@@ -58,6 +58,7 @@ export function useCenterBrand(center: Center | null | undefined) {
 export function CenterLogo({ center, className = 'h-8 w-8' }: { center: Center; className?: string }) {
   const logo = center.portal_settings?.logo_url;
   const label = centerDisplayName(center);
+  if (useContext(CenterContext)?.isSolo) return <img src="/favicon.svg" alt="flowersos logo" className={`${className} rounded-md object-contain bg-background`} />;
   return logo
     ? <img src={logo} alt={`${label} logo`} className={`${className} rounded-md object-contain bg-background`} />
     : <span aria-hidden className={`${className} rounded-md bg-primary text-primary-foreground grid place-items-center font-chillax font-semibold text-sm`}>{label.slice(0, 1).toUpperCase()}</span>;

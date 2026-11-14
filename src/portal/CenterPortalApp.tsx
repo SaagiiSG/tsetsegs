@@ -14,6 +14,7 @@ import CenterAdminPortal from './CenterAdminPortal';
 import CenterTeacherPortal from './CenterTeacherPortal';
 import CenterStudentPortal from './CenterStudentPortal';
 import CenterGoogleGate from './CenterGoogleGate';
+import { recordTick } from '@/lib/terms';
 
 const AFTER_SIGNIN = 'center-after-signin';
 const afterSignIn = () => { try { return sessionStorage.getItem(AFTER_SIGNIN); } catch { return null; } };
@@ -38,6 +39,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const googleFinish = useRef<Promise<void> | null>(null);
+  const userId = session?.user.id;
 
   // The remembered proctor link is used once, by `home` on the render where the role first appears.
   useEffect(() => { if (role) try { sessionStorage.removeItem(AFTER_SIGNIN); } catch { /* ignore */ } }, [role]);
@@ -55,6 +57,8 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     return () => sub.subscription.unsubscribe();
   }, [slug]);
+  // A sign-up's agreement tick (TermsCheck on /solo and the join page) is saved once there's a user to save it for.
+  useEffect(() => { if (userId) void recordTick(); }, [userId]);
 
   useEffect(() => {
     if (!center || session === undefined) return;
@@ -128,9 +132,10 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
     );
   }
 
+  const isSolo = center.slug === 'solo';
   const home = role === 'center_admin' ? '/admin' : role === 'teacher' ? '/teacher' : role === 'student' ? (afterSignIn() ?? '/student') : '/';
   return (
-    <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, signOut, reloadCenter: loadCenter }}>
+    <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, isSolo, signOut, reloadCenter: loadCenter }}>
       {role === 'center_admin' && (access?.warnings ?? 0) > 0 && (
         <div role="alert" className="relative z-50 bg-status-risk/10 text-status-risk text-sm text-center px-4 py-2 border-b border-status-risk/20">
           Payment overdue — warning {access!.warnings} of 3. After 3 warnings, access to this portal can be paused. To settle your bill, <ContactSupport centerId={center.id} variant="link" className="h-auto p-0 text-status-risk underline" />.
@@ -142,7 +147,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
         <Route path="/" element={role ? <Navigate to={home} replace /> : <CenterSignIn signedInWithoutAccess={!!session} />} />
         <Route path="/admin/*" element={role === 'center_admin' ? <CenterAdminPortal /> : <Navigate to={home} replace />} />
         <Route path="/teacher/*" element={role === 'teacher' || role === 'center_admin' ? <CenterTeacherPortal /> : <Navigate to={home} replace />} />
-        <Route path="/student/*" element={role === 'student' ? <CenterGoogleGate><CenterStudentPortal /></CenterGoogleGate> : <Navigate to={home} replace />} />
+        <Route path="/student/*" element={role === 'student' ? isSolo ? <CenterStudentPortal /> : <CenterGoogleGate><CenterStudentPortal /></CenterGoogleGate> : <Navigate to={home} replace />} />
         <Route path="*" element={<Navigate to={home} replace />} />
       </Routes>}
     </CenterContext.Provider>

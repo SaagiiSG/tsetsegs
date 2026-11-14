@@ -19,6 +19,7 @@ export function PointsBreakdownTooltip({ points, breakdown, children }: PointsBr
     { label: 'Speed Sessions', value: breakdown.speedSessions, icon: '⚡' },
     { label: 'Badge Acquisitions', value: breakdown.badges, icon: '🏆' },
     { label: 'Bank Completions', value: breakdown.bankCompletions, icon: '✅' },
+    { label: 'Daily rings', value: breakdown.ringPrizes, icon: '⭕' },
   ].filter(item => item.value > 0);
 
   return (

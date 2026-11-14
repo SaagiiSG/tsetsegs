@@ -5,6 +5,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/BrandMark";
 import { Clouds } from "@/components/landing/Clouds";
+import { StudentStories } from "@/components/landing/StudentStories";
+import { DesmosSection } from "@/components/landing/DesmosSection";
+import { LegalFooter } from "@/components/landing/LegalFooter";
 import { TIER_ASSETS } from "@/components/student/leaderboard/tierAssets";
 import { EducatorRequestForm } from "@/components/educators/EducatorRequestForm";
 import { usePublicLanguage } from "@/hooks/usePublicLanguage";
@@ -21,7 +24,8 @@ export default function Educators() {
   const source = sourceFromSearch(window.location.search);
   // The page renders after the browser's own jump to a #section (e.g. the demo's Book a call), so jump again once it exists.
   useEffect(() => { if (window.location.hash) document.getElementById(window.location.hash.slice(1))?.scrollIntoView(); }, []);
-  const videos = videoCountLabel(stats.videos, lang);
+  // 155 is Saagii's number (8 Nov), the same as the student page: it counts the English lessons coming later.
+  const videos = videoCountLabel(155, lang);
 
   const mathExplanations = mathExplanationsLabel(stats.mathExplanations, lang);
 
@@ -32,10 +36,12 @@ export default function Educators() {
     { v: "510", l: text("сурагч дасгал хийсэн", "students practiced"), c: "lv-pink" },
     ...(solved ? [{ v: solved, l: text("2025 оны 12-р сараас хойш бодсон бодлого", "problems solved since December 2025"), c: "lv-blue", wide: true }] : []),
   ];
+  // Saagii's all-time counts (2 Nov 2026; 1500+ raised to 10+ on 8 Nov). They aren't in the database; he confirms they're correct.
+  // Except 800s: since 8 Nov that card is live, the same number as the student page.
   const scores = [
-    { v: "2", l: text("төгс 800", "perfect 800s"), c: "lv-green" },
-    { v: "8", l: text("750+ авсан", "scored 750+"), c: "lv-blue" },
-    { v: "14", l: text("700+ авсан", "scored 700+"), c: "lv-violet" },
+    { v: "10+", l: text("сурагч 1500+ авсан", "students scored 1500+"), c: "lv-blue" },
+    { v: stats.club800 != null ? stats.club800.toLocaleString("en-US") : "—", l: text("сурагч Math 800 авсан", "students hit a perfect 800 Math"), c: "lv-green" },
+    { v: "720", l: text("сурагч Math 700+ оноо авсан", "students scored 700+ Math"), c: "lv-violet" },
   ];
   const statCard = (r: { v: string; l: string; c: string; wide?: boolean }, i: number) => (
     <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className={`lv-card p-4 sm:p-5 ${r.wide ? "col-span-2 md:col-span-1" : ""}`}><p className={`inline-block rounded-full px-3 py-1 font-mono text-xl font-semibold sm:text-2xl md:text-3xl ${r.c}`}>{r.v}</p><p className="mt-3 text-sm text-muted-foreground">{r.l}</p></motion.div>
@@ -70,7 +76,6 @@ export default function Educators() {
 
   const faq = [
     { q: text("Үнэ хэд вэ?", "How much does it cost?"), a: text("Төвийн хэмжээнээс хамаарна. Үнийн талаар уулзалтаар ярилцана.", "It depends on the size of your center. We go through pricing on the call.") },
-    { q: text("ACT-д бэлддэг үү?", "Does it cover the ACT?"), a: text("Үгүй. Платформ зөвхөн дижитал SAT-д зориулагдсан.", "No. The platform is built for the digital SAT.") },
     { q: text("Ямар хэл дээр вэ?", "What language is it in?"), a: text("Англи. Асуулт, тайлбар, видео хичээл бүгд англи хэл дээр.", "English. Questions, explanations and video lessons are all in English.") },
   ];
 
@@ -108,9 +113,9 @@ export default function Educators() {
         <section id="results" className="scroll-mt-20 py-10"><div className="lv-container">
           <p className="text-sm font-medium text-muted-foreground">{text("Цэцэгс дэх дасгал, 2026 оны 10-р сарын 21 хүртэлх 30 хоногт", "Practice at Tsetsegs in the 30 days to October 21, 2026")}</p>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">{practice.map(statCard)}</div>
-          <p className="mt-8 text-sm font-medium text-muted-foreground">{text("2026 оны 8-р сарын SAT, математик", "August 2026 SAT, math section")}</p>
+          <p className="mt-8 text-sm font-medium text-muted-foreground">{text("Цэцэгсийн сурагчдын SAT оноо", "Tsetsegs students on the SAT")}</p>
           <div className="mt-4 grid grid-cols-3 gap-3">{scores.map(statCard)}</div>
-          <p className="mt-4 text-xs text-muted-foreground">{text("2026 оны 8-р сарын SAT-ын дараа манай багш нарын бүртгэсэн оноо.", "Scores our teachers recorded after the August 2026 SAT.")}</p>
+          <StudentStories text={text} />
         </div></section>
 
         <section id="practice" className="lv-sky scroll-mt-20 py-20"><div className="lv-container grid items-center gap-10 lg:grid-cols-2">
@@ -127,14 +132,7 @@ export default function Educators() {
           ))}</motion.div>
         </div></section>
 
-        <section id="desmos" className="scroll-mt-20 py-20"><motion.div {...reveal} className="lv-container"><div className="max-w-3xl">
-          <h2 className="lv-h2">{text("Desmos-оор SAT математикийг секундэд", "SAT math in seconds, with Desmos")}</h2>
-          <p className="lv-lead mt-4">{text("Desmos дижитал SAT-д суулгагдсан. Манай багш нар SAT математикийг түүгээр секундэд бодож, сурагчдадаа ч мөн адил заадаг. Тэдний бичсэн математикийн тайлбар Desmos-ын товчлолыг боломжтой бүх газарт харуулдаг.", "Desmos is built into the digital SAT. Our teachers use it to solve SAT math in seconds and teach their students to do the same. Their math explanations show the Desmos shortcut wherever there is one.")}</p>
-          {(mathExplanations || videos) && <div className="mt-6 flex flex-wrap gap-2">
-            {mathExplanations && <span className="lv-violet rounded-full px-4 py-2 text-sm font-medium">{mathExplanations}</span>}
-            {videos && <span className="lv-blue rounded-full px-4 py-2 text-sm font-medium">{videos}</span>}
-          </div>}
-        </div></motion.div></section>
+        <DesmosSection text={text} chips={[{ l: mathExplanations, c: "lv-violet" }, { l: videos, c: "lv-blue" }]} />
 
         <section id="center" className="scroll-mt-20 py-20"><div className="lv-container">
           <motion.h2 {...reveal} className="lv-h2 max-w-2xl">{text("Төвөө бүхэлд нь нэг дороос удирд", "Run your whole center in one place")}</motion.h2>
@@ -183,13 +181,13 @@ export default function Educators() {
       </main>
 
       <footer id="signin" className="scroll-mt-20 border-t border-border py-10"><div className="lv-container flex flex-col justify-between gap-6 text-sm text-muted-foreground sm:flex-row">
-        <div><a href="/" className="flex h-11 items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p><a href="mailto:manager@tsetsegs.com" className="inline-flex h-11 items-center">manager@tsetsegs.com</a></div>
+        <div><a href="/" className="flex h-11 items-center gap-2 font-chillax text-xl font-semibold text-foreground"><BrandMark className="h-7 w-7" />flowersos</a><p className="mt-2">Tsetsegs SAT Prep</p><address className="mt-1 max-w-xs not-italic">{text("Улаанбаатар, Хан-Уул дүүрэг, 15-р хороо, Их Наяд Зүүн Өндөр, 1114", "1114, Ikh Nayad East Tower, 15-r khoroo, Khan‑Uul district, Ulaanbaatar, Mongolia")}</address><a href="mailto:manager@tsetsegs.com" className="inline-flex h-11 items-center">manager@tsetsegs.com</a></div>
         <div className="space-y-2">
           <p className="font-medium text-foreground">{text("Аль хэдийн хэрэглэгч үү?", "Already a customer?")}</p>
           <div className="flex gap-6"><a href={`/login?role=admin&lang=${lang}`} className="inline-flex h-11 items-center">{text("Админ нэвтрэх", "Admin sign in")}</a><a href={`/login?role=teacher&lang=${lang}`} className="inline-flex h-11 items-center">{text("Багш нэвтрэх", "Teacher sign in")}</a></div>
           <p className="text-xs">{text("Төвийн бүртгэлтэй хэрэглэгчид өөрийн төвийн хаягаар нэвтэрнэ.", "Existing centers sign in at their own center’s address.")}</p>
         </div>
-      </div></footer>
+      </div><LegalFooter text={text} /></footer>
     </div>
   );
 }

@@ -48,7 +48,7 @@ export function AnalyticsPage() {
       const t = topics.data?.get(a.question_id); if (!t) return;
       const e = topicMap.get(t.topic) ?? { n: 0, c: 0, subject: t.subject }; e.n++; if (a.is_correct) e.c++; topicMap.set(t.topic, e);
     });
-    const weak = [...topicMap.entries()].filter(([, v]) => v.n >= 3).map(([k, v]) => ({ topic: k, ...v, acc: v.c / v.n })).sort((a, b) => a.acc - b.acc).slice(0, 8);
+    const weak = [...topicMap.entries()].filter(([, v]) => v.n >= 3).map(([k, v]) => ({ topic: k, ...v, acc: v.c / v.n })).filter(w => Math.round(w.acc * 100) <= 80).sort((a, b) => a.acc - b.acc).slice(0, 8);
     const byClass = data.classes.map(c => {
       const rows = data.attendance.filter(a => a.class_id === c.id);
       return { name: c.name, rate: rows.length ? rows.filter(r => ATTENDED.has(r.status)).length / rows.length : null, sessions: new Set(rows.map(r => r.session_date)).size };
@@ -57,7 +57,7 @@ export function AnalyticsPage() {
       const rows = data.attempts.filter(a => (topics.data?.get(a.question_id)?.subject ?? 'math').startsWith(s));
       return { s, n: rows.length, c: rows.filter(r => r.is_correct).length };
     });
-    return { days, weak, byClass, subjects };
+    return { days, weak, byClass, subjects, hasTopics: topicMap.size > 0 };
   }, [data, topics.data]);
   if (isLoading || !data || !view) return <Loading />;
   const maxDay = Math.max(1, ...view.days.map(d => d.answered));
@@ -72,8 +72,8 @@ export function AnalyticsPage() {
       <Section title="Questions per day (14 days)">
         <div className="flex items-end gap-1 h-36" role="img" aria-label="Questions answered per day">
           {view.days.map(d => (
-            <div key={d.date} className="flex-1 flex flex-col items-center gap-1 min-w-0" title={`${d.date}: ${d.answered} answered, ${pct(d.correct, d.answered)} correct`}>
-              <div className="w-full rounded-sm bg-foreground/60" style={{ height: `${(d.answered / maxDay) * 100}%`, minHeight: d.answered ? 2 : 0 }} />
+            <div key={d.date} className="flex-1 h-full flex flex-col items-center gap-1 min-w-0" title={`${d.date}: ${d.answered} answered, ${pct(d.correct, d.answered)} correct`}>
+              <div className="w-full flex-1 flex items-end"><div className="w-full rounded-sm bg-foreground/60" style={{ height: `${(d.answered / maxDay) * 100}%`, minHeight: d.answered ? 2 : 0 }} /></div>
               <span className="text-[10px] text-muted-foreground font-mono">{d.date.slice(8)}</span>
             </div>
           ))}
@@ -83,7 +83,7 @@ export function AnalyticsPage() {
         <Section title="Weak topics">
           {view.weak.length ? <ul className="space-y-3">{view.weak.map(w => (
             <li key={w.topic} className="space-y-1"><div className="flex justify-between text-sm"><span className="truncate">{w.topic}</span><span className="font-mono text-xs text-muted-foreground">{Math.round(w.acc * 100)}% · {w.n}</span></div><Bar value={w.c} max={w.n} /></li>
-          ))}</ul> : <Empty>Not enough practice yet to find weak topics.</Empty>}
+          ))}</ul> : <Empty>{view.hasTopics ? 'Every topic is above 80%.' : 'Not enough practice yet to find weak topics.'}</Empty>}
         </Section>
         <Section title="Attendance by batch">
           {view.byClass.length ? <ul className="space-y-3">{view.byClass.map(c => (

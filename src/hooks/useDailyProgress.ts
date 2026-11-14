@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useStudentAuth } from '@/contexts/StudentAuthContext';
 import { questionEmbedFor } from '@/lib/questionTable';
+import { dayStartIso } from '@/lib/ringPrizes';
 
 export interface DailyProgress {
   speed: number;
@@ -16,19 +17,15 @@ export interface DailyProgress {
 export function useDailyProgress() {
   const { student } = useStudentAuth();
   const qEmbed = questionEmbedFor(student?.cohort);
+  const startIso = dayStartIso(); // in the key: a tab left open past midnight never shows yesterday's rings as today's
 
   return useQuery({
-    queryKey: ['daily-progress', student?.id],
+    queryKey: ['daily-progress', student?.id, startIso],
     enabled: !!student?.id,
     staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
     queryFn: async (): Promise<DailyProgress> => {
       if (!student?.id) return { speed: 0, hard: 0, medium: 0 };
-
-      // Local-day start
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-      const startIso = start.toISOString();
 
       // Speed sessions completed today
       const { data: speedLogs } = await supabase

@@ -45,6 +45,7 @@ interface StudentAuthContextType {
   authStep: AuthStep;
   pendingPhone: string | null;
   pendingStudentAccount: StudentAccount | null;
+  phoneHasPassword: (phoneNumber: string) => Promise<boolean | null>;
   checkPhone: (phoneNumber: string) => Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean; account?: StudentAccount }>;
   submitRegistrationRequest: (fullName: string) => Promise<{ error: string | null }>;
   loginWithPassword: (password: string, account?: StudentAccount) => Promise<{ error: string | null }>;
@@ -55,6 +56,14 @@ interface StudentAuthContextType {
 }
 
 const StudentAuthContext = createContext<StudentAuthContextType | undefined>(undefined);
+
+// Normalize: students may type with/without "+", spaces, or dashes.
+// Match against exact input, digits-only, and E.164 ("+digits") variants
+// so international numbers stored as "+14155550134" match "4155550134".
+const phoneCandidates = (phoneNumber: string) => {
+  const digits = phoneNumber.replace(/\D/g, '');
+  return Array.from(new Set([phoneNumber, digits, digits ? `+${digits}` : ''].filter(Boolean)));
+};
 
 // ---- IndexedDB helpers for redundant device ID storage ----
 const IDB_NAME = 'student_device_store';
@@ -319,13 +328,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
 
   const checkPhone = async (phoneNumber: string): Promise<{ error: string | null; needsPassword?: boolean; needsSetup?: boolean; needsRegistration?: boolean; pendingApproval?: boolean; account?: StudentAccount }> => {
     try {
-      // Normalize: students may type with/without "+", spaces, or dashes.
-      // Match against exact input, digits-only, and E.164 ("+digits") variants
-      // so international numbers stored as "+14155550134" match "4155550134".
-      const digits = phoneNumber.replace(/\D/g, '');
-      const candidates = Array.from(new Set(
-        [phoneNumber, digits, digits ? `+${digits}` : ''].filter(Boolean)
-      ));
+      const candidates = phoneCandidates(phoneNumber);
 
       // Run the roster lookup and the account lookup in parallel — they are
       // independent, and doing them sequentially doubled the login wait time.
@@ -422,6 +425,13 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       return { error: msg || 'Failed to check phone number' };
     }
 
+  };
+
+  // Read-only, for the login screen: null when the lookup fails.
+  const phoneHasPassword = async (phoneNumber: string): Promise<boolean | null> => {
+    const { data, error } = await supabase.rpc('student_account_for_login' as any, { _phones: phoneCandidates(phoneNumber) });
+    if (error) return null;
+    return !!(data as any[] | null)?.[0]?.password_hash;
   };
 
   const submitRegistrationRequest = async (fullName: string): Promise<{ error: string | null }> => {
@@ -639,6 +649,7 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       authStep,
       pendingPhone,
       pendingStudentAccount,
+      phoneHasPassword,
       checkPhone,
       submitRegistrationRequest,
       loginWithPassword,

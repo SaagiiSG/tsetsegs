@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button';
 import { AREA_COLOR, type TopicUnit } from './videoTopics';
 import { MORE, type Video } from './TopicMap';
 
-/** A topic's key in the page address (?topic=…): its book number, or "more" for the videos outside the 26 topics. */
-export const unitKey = (u: { n: number | null }) => String(u.n ?? 'more');
+/** A topic's key in the page address (?topic=…): its book number, an English topic's name, or "more" for the videos outside the 26 topics. */
+export const unitKey = (u: { n: number | null; name: string; area: unknown }) => String(u.n ?? (u.area ? u.name : 'more'));
 
 /** Every topic as a collapsed card in its area's colour; picking one shows its map. */
 export function TopicList({ units, selected, onPick }: { units: TopicUnit<Video>[]; selected: string | null; onPick: (key: string) => void }) {

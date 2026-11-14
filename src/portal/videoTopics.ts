@@ -1,4 +1,7 @@
-export type Area = 'Advanced Math' | 'Algebra' | 'Problem Solving & Data' | 'Geometry & Trig';
+// The four SAT English areas; a video is English when its domain is one of them (Saagii, 7 Nov).
+export const ENGLISH_AREAS = ['Information & Ideas', 'Craft & Structure', 'Expression of Ideas', 'Standard English Conventions'] as const;
+export type Area = 'Advanced Math' | 'Algebra' | 'Problem Solving & Data' | 'Geometry & Trig' | typeof ENGLISH_AREAS[number];
+export const isEnglish = (v: { domain?: string }) => (ENGLISH_AREAS as readonly string[]).includes(v.domain ?? '');
 
 export const TOPICS: readonly { n: number; name: string; area: Area }[] = [
   { n: 1, name: 'Exponents & Radicals', area: 'Advanced Math' },
@@ -34,12 +37,17 @@ export const AREA_COLOR: Record<Area, { light: string; dark: string }> = {
   Algebra: { light: '#3B8DF5', dark: '#73AEF8' },
   'Problem Solving & Data': { light: '#FB8A4C', dark: '#FCA97C' },
   'Geometry & Trig': { light: '#E07CC8', dark: '#EBA3DA' },
+  // English reuses the four colour families, so its cards keep the same tested ink contrast.
+  'Information & Ideas': { light: '#3B8DF5', dark: '#73AEF8' },
+  'Craft & Structure': { light: '#7B6CF6', dark: '#A39AF9' },
+  'Expression of Ideas': { light: '#FB8A4C', dark: '#FCA97C' },
+  'Standard English Conventions': { light: '#E07CC8', dark: '#EBA3DA' },
 };
 
 export type VideoState = 'done' | 'open' | 'locked';
 export type TopicUnit<V> = { n: number | null; name: string; area: Area | null; items: { video: V; state: VideoState }[]; watched: number; total: number };
 
-export function topicUnits<V extends { id: string; module: string | null; order_index: number }>(videos: V[], done: Set<string>): TopicUnit<V>[] {
+export function topicUnits<V extends { id: string; module: string | null; order_index: number; domain?: string }>(videos: V[], done: Set<string>): TopicUnit<V>[] {
   const sorted = [...videos].sort((a, b) => a.order_index - b.order_index);
   const unit = (n: number | null, name: string, area: Area | null, vs: V[]): TopicUnit<V> => {
     let opened = false;
@@ -51,10 +59,14 @@ export function topicUnits<V extends { id: string; module: string | null; order_
     });
     return { n, name, area, items, watched: vs.filter(x => done.has(x.id)).length, total: vs.length };
   };
+  const math = sorted.filter(x => !isEnglish(x));
   const known = new Set(TOPICS.map(t => t.name));
-  const units = TOPICS.map(t => unit(t.n, t.name, t.area, sorted.filter(x => (x.module ?? '').trim() === t.name))).filter(u => u.total > 0);
-  const rest = sorted.filter(x => !known.has((x.module ?? '').trim()));
-  return rest.length ? [...units, unit(null, 'More videos', null, rest)] : units;
+  const units = TOPICS.map(t => unit(t.n, t.name, t.area, math.filter(x => (x.module ?? '').trim() === t.name))).filter(u => u.total > 0);
+  // English has no fixed topic list yet (no videos, 7 Nov): each module is a topic, in video order.
+  const english = new Map<string, V[]>();
+  for (const x of sorted.filter(isEnglish)) { const name = x.module?.trim() || x.domain!; english.set(name, [...(english.get(name) ?? []), x]); }
+  const rest = math.filter(x => !known.has((x.module ?? '').trim()));
+  return [...units, ...[...english].map(([name, vs]) => unit(null, name, vs[0].domain as Area, vs)), ...(rest.length ? [unit(null, 'More videos', null, rest)] : [])];
 }
 
 export function upNext<V extends { id: string }>(units: TopicUnit<V>[]): { unitIndex: number; videoId: string } | null {

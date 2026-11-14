@@ -18,12 +18,15 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TeacherProtectedRoute } from "./components/TeacherProtectedRoute";
 import Index from "./pages/Index";
 import Educators from "./pages/public/Educators";
-import SoloWelcome from "./pages/public/SoloWelcome";
-import { resolveCenterSlug } from "./lib/tenant";
+import { Privacy, Terms } from "./pages/public/Legal";
+import { resolveCenterSlug, soloHostRedirect } from "./lib/tenant";
 import CenterPortalApp from "./portal/CenterPortalApp";
 import DemoPortal from './demo/DemoPortal';
+import SoloPortal from './solo/SoloPortal';
+import { onSoloPage } from './solo/storageKey';
 import DemoStart from './demo/DemoStart';
 import { demoRoleFromPath } from './demo/storageKey';
+import { DEMO_THEME_KEY } from './demo/demoStore';
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import StudentReveal from "./pages/StudentReveal";
@@ -128,6 +131,8 @@ const MainApp = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/educators" element={<Educators />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/ngee" element={<NGEEBooking />} />
                   <Route path="/ngee/:courseId" element={<NGEEBooking />} />
@@ -329,7 +334,6 @@ const MainApp = () => (
 
                   {/* Student Self-Registration */}
                   <Route path="/student-register" element={<StudentRegistration />} />
-                  <Route path="/solo" element={<SoloWelcome />} />
 
                   {/* Review Registration */}
                   <Route path="/register" element={<ReviewRegistration />} />
@@ -376,12 +380,15 @@ const CenterJoinRedirect = () => {
 };
 
 const App = () => {
+  const soloHome = soloHostRedirect(window.location.hostname, window.location.search);
+  if (soloHome) { window.location.replace(soloHome); return null; }
   const path = window.location.pathname;
   if (path === '/demo' || path.startsWith('/demo/')) {
     const demoRole = demoRoleFromPath(path);
-    return demoRole ? <DemoPortal role={demoRole} /> : <ThemeProvider attribute="class" defaultTheme="dark" enableSystem><DemoStart /></ThemeProvider>;
+    return demoRole ? <DemoPortal role={demoRole} /> : <ThemeProvider attribute="class" defaultTheme="light" storageKey={DEMO_THEME_KEY}><DemoStart /></ThemeProvider>;
   }
   const centerSlug = resolveCenterSlug();
+  if (onSoloPage(path, centerSlug)) return <SoloPortal />;
   if (centerSlug) {
     return (
       <QueryClientProvider client={queryClient}>
