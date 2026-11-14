@@ -3,7 +3,7 @@ import { Maximize, Maximize2, Minimize2, X, ZoomIn, ZoomOut } from 'lucide-react
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { nextZoom } from '@/lib/bluebookTest';
 import { cn } from '@/lib/utils';
-import referenceSheetImage from '@/assets/sat-reference-sheet.jpg';
+import { ReferenceSheetBody } from '@/components/student/ReferenceSheetBody';
 
 const toolBtn = 'bb-focus grid h-7 min-w-7 place-items-center rounded px-1 hover:bg-black/5 [&_svg]:h-[18px] [&_svg]:w-[18px]';
 
@@ -52,7 +52,7 @@ export function ReferencePanel({ open, onClose }: { open: boolean; onClose(): vo
         <button type="button" className="bb-focus ml-auto rounded p-1 md:ml-0" aria-label="Close reference" onClick={onClose}><X /></button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <img src={referenceSheetImage} alt="SAT Math Reference Sheet" className="mx-auto w-full max-w-[720px]" />
+        <div className="mx-auto w-full max-w-[720px]"><ReferenceSheetBody /></div>
       </div>
     </aside>
   );
