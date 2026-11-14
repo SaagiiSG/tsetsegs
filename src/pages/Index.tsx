@@ -1,7 +1,8 @@
 import { usePublicLanguage } from "@/hooks/usePublicLanguage";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { animate, motion, useInView, useReducedMotion } from "framer-motion";
 import { ArrowRight, ArrowUpRight, Check, BookOpen, Calculator, Zap, RotateCcw, BarChart3, Trophy, Flame, PenLine, Radio, Users, CalendarCheck, MonitorPlay, Target, Map, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,10 +55,10 @@ const Index = () => {
   );
 
   const proof = [
-    { v: s ? fmt(s.students) : "—", l: text("хэрэглэгч", "active users"), c: "lv-blue" },
-    { v: `+${BEST_GAIN}`, l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
-    { v: s ? `${s.gained100_pct}%` : "—", l: text("нь 100+ оноо ахисан", "gained 100+ points"), c: "lv-violet" },
-    { v: "720", l: text("сурагч Math 700+ оноо авсан", "students scored 700+ Math"), c: "lv-orange" },
+    { to: s?.students, f: fmt, l: text("хэрэглэгч", "active users"), c: "lv-blue" },
+    { to: BEST_GAIN, f: (n: number) => `+${n}`, l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
+    { to: s?.gained100_pct, f: (n: number) => `${n}%`, l: text("нь 100+ оноо ахисан", "gained 100+ points"), c: "lv-violet" },
+    { to: 720, f: fmt, l: text("сурагч Math 700+ оноо авсан", "students scored 700+ Math"), c: "lv-orange" },
   ];
 
   const features = [
@@ -103,7 +104,7 @@ const Index = () => {
         </section>
 
         <section className="py-10"><div className="lv-container grid grid-cols-2 gap-3 md:grid-cols-4">{proof.map((p, i) => (
-          <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card p-5"><p className={`inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold md:text-3xl ${p.c}`}>{p.v}</p><p className="mt-3 text-sm text-muted-foreground">{p.l}</p></motion.div>
+          <motion.div key={i} {...reveal} transition={{ duration: .4, delay: i * .06 }} className="lv-card p-5"><p className={`inline-block rounded-full px-3 py-1 font-mono text-2xl font-semibold md:text-3xl ${p.c}`}><CountUp to={p.to} format={p.f} /></p><p className="mt-3 text-sm text-muted-foreground">{p.l}</p></motion.div>
         ))}</div></section>
 
         <section id="how" className="py-20"><div className="lv-container">
@@ -184,6 +185,22 @@ const Index = () => {
     </div>
   );
 };
+
+// Counts from 0 once the card is on screen and its number has loaded; "—" until then. The pill is sized to the final number so it doesn't grow while counting.
+function CountUp({ to, format }: { to?: number; format: (n: number) => string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  const reduce = useReducedMotion();
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!inView || to == null) return;
+    if (reduce) { setN(to); return; }
+    const c = animate(0, to, { duration: 1.4, ease: [0.16, 1, 0.3, 1], onUpdate: v => setN(Math.round(v)) });
+    return () => c.stop();
+  }, [inView, to, reduce]);
+  // One outer span for both states: useInView keeps watching the first element it got.
+  return <span ref={ref}>{to == null ? "—" : <><span className="sr-only">{format(to)}</span><span aria-hidden className="inline-block text-right" style={{ minWidth: `${format(to).length}ch` }}>{format(n)}</span></>}</span>;
+}
 
 function FeatureDemo({ kind, text }: { kind: string; text: (a: string, b: string) => string }) {
   if (kind === "question") return (<div><span className="lv-violet rounded-full px-3 py-1 text-xs">{text("Тайлбар", "Explanation")}</span><p className="mt-3 font-medium">{text("Шулууны налалт 2, (1, 5) цэгээр гарна. y-тэнхлэгийг хаана огтлох вэ?", "A line with slope 2 passes through (1, 5). Where does it cross the y-axis?")}</p><ol className="mt-3 space-y-1.5 font-mono text-sm text-muted-foreground"><li>1. y = 2x + b</li><li>2. 5 = 2(1) + b</li><li className="lv-green inline-block rounded-full px-2">3. b = 3</li></ol></div>);
