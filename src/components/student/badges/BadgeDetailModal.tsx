@@ -138,8 +138,10 @@ export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinn
                 ? (rawValue as any).current ?? 0 
                 : (rawValue || 0);
               const numericValue = typeof currentValue === 'number' ? currentValue : Number(currentValue) || 0;
-              const isComplete = numericValue >= req.target;
-              const reqProgress = Math.min(100, (numericValue / req.target) * 100);
+              // Synced progress carries the real total (CB tab size, Math vocab size); the definition's is a fallback.
+              const target = (typeof rawValue === 'object' && rawValue !== null && (rawValue as { target?: number }).target) || req.target;
+              const isComplete = numericValue >= target;
+              const reqProgress = Math.min(100, (numericValue / target) * 100);
 
               return (
                 <div 
@@ -159,7 +161,7 @@ export function BadgeDetailModal({ badge, open, onClose, onPin, isPinned, isPinn
                       <span className="text-sm">{req.label}</span>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {numericValue}/{req.target}
+                      {numericValue}/{target}
                     </span>
                   </div>
                   <Progress value={reqProgress} className="h-1.5" />

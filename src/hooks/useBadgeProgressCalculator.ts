@@ -4,7 +4,7 @@ import { badgeDefinitions, BadgeRequirement } from '@/data/badgeDefinitions';
 import { parseISO, format } from 'date-fns';
 import {
   type AttemptRow, type SpeedSessionRow, ubDay, longestDayRun, bestCorrectRun, hasAccurateWindow,
-  countAccurateSessions, longestPerfectRun, hasQualifyingSession, percentOf,
+  countAccurateSessions, longestPerfectRun, hasQualifyingSession, percentOf, solvedQuestionIds, type VariantRow,
 } from '@/lib/badgeRules';
 
 export interface BadgeProgressResult {
@@ -53,9 +53,9 @@ const loadSessions = (id: string) => (forStudent(id).sessions ??= fetchAll((from
   .order('id')
   .range(from, to)));
 
-async function solvedIn(studentAccountId: string, questions: Promise<{ id: string }[]>) {
-  const [qs, attempts] = await Promise.all([questions, loadAttempts(studentAccountId)]);
-  const solved = new Set(attempts.filter(a => a.is_correct).map(a => a.question_id));
+async function solvedIn(studentAccountId: string, questions: Promise<{ id: string }[]>, variants: Promise<VariantRow[]> = Promise.resolve([])) {
+  const [qs, attempts, vs] = await Promise.all([questions, loadAttempts(studentAccountId), variants]);
+  const solved = solvedQuestionIds(attempts, vs);
   return { total: qs.length, solved: qs.filter(q => solved.has(q.id)).length };
 }
 
@@ -84,7 +84,7 @@ async function calculateRequirementProgress(
   badgeName?: string,
   qTable: QuestionTable = 'questions'
 ): Promise<{ current: number; target: number; percentage: number }> {
-  const target = req.target;
+  let target = req.target;
   let current = 0;
 
   switch (req.type) {
@@ -125,32 +125,42 @@ async function calculateRequirementProgress(
 
     case 'all_68_questions':
     case 'all_cb_problems': {
-      const set = req.type === 'all_68_questions' ? '68' : 'CollegeBoard';
-      current = (await solvedIn(studentAccountId, fetchAll<{ id: string }>((from, to) => supabase
+      // The 68 and CB Math tabs, counted as the server does (0139); the target is the tab's real size.
+      const cb = req.type === 'all_cb_problems';
+      const { total, solved } = await solvedIn(studentAccountId, fetchAll<{ id: string }>((from, to) => {
+        const q = supabase.from(qTable).select('id').eq('is_active', true).eq('subject', 'math').eq('hide_from_practice', false);
+        return (cb ? q.eq('is_original', true).not('question_set', 'in', '("68","SATMathTraining800","ANP120Aug3")') : q.eq('question_set', '68'))
+          .order('id')
+          .range(from, to);
+      }), cb ? fetchAll<VariantRow>((from, to) => supabase
         .from(qTable)
-        .select('id')
-        .eq('question_set', set)
-        .eq('is_active', true)
+        .select('id, parent_question_id, question_set')
+        .not('parent_question_id', 'is', null)
         .order('id')
-        .range(from, to)))).solved;
+        .range(from, to)) : undefined);
+      current = solved;
+      target = total;
       break;
     }
 
     case 'vocabulary_completion': {
-      const { count: totalWords } = await supabase
-        .from('vocabulary_words')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_active', true);
-
-      const { count: masteredWords } = await supabase
-        .from('student_vocabulary_progress')
-        .select('id', { count: 'exact', head: true })
-        .eq('student_account_id', studentAccountId)
-        .gte('confidence_level', 3);
-
-      const total = totalWords || 0;
-      const mastered = masteredWords || 0;
-      current = total > 0 ? Math.round((mastered / total) * 100) : 0;
+      // The Math vocab tab, counted as the server does (0139): a word counts once answered right.
+      const [{ count: totalWords }, { data: learned }] = await Promise.all([
+        supabase
+          .from('vocabulary_words')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_active', true)
+          .eq('subject', 'math'),
+        supabase
+          .from('student_vocabulary_progress')
+          .select('word_id, vocabulary_words!inner(id)')
+          .eq('student_account_id', studentAccountId)
+          .eq('vocabulary_words.is_active', true)
+          .eq('vocabulary_words.subject', 'math'),
+      ]);
+      // shortcut: one request reads at most 1,000 learned words; page it if the Math list passes 1,000.
+      current = new Set(learned?.map(p => p.word_id)).size;
+      target = totalWords || 0;
       break;
     }
 

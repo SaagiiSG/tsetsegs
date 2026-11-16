@@ -484,16 +484,16 @@ export const badgeDefinitions: BadgeDefinition[] = [
   {
     id: 'the-penguin',
     name: 'The Penguin',
-    description: 'Solve all 68 questions with variants + Solve all 1074 CB math problems + Practice test average 750+ + Vocabulary 100% completion',
+    description: 'Solve all 68 questions with variants + Solve all CB math problems + Practice test average 750+ + Math vocabulary 100% completion',
     rarity: 'legendary',
     pointValue: 30000,
     iconName: 'Bird',
     category: 'legendary',
     requirements: [
       { type: 'all_68_questions', target: 68, label: 'All 68 questions with variants' },
-      { type: 'all_cb_problems', target: 1074, label: 'All 1074 CB math problems' },
+      { type: 'all_cb_problems', target: 1074, label: 'All CB math problems' },
       { type: 'practice_test_avg', target: 750, label: 'Practice test average 750+' },
-      { type: 'vocabulary_completion', target: 100, label: 'Vocabulary 100% completion' }
+      { type: 'vocabulary_completion', target: 100, label: 'Math vocabulary 100% completion' }
     ]
   },
   {

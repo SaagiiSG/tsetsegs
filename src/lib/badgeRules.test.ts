@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ubDay, longestDayRun, bestCorrectRun, hasAccurateWindow,
-  countAccurateSessions, longestPerfectRun, hasQualifyingSession, percentOf,
+  countAccurateSessions, longestPerfectRun, hasQualifyingSession, percentOf, solvedQuestionIds,
 } from './badgeRules';
 
 const at = (i: number) => new Date(Date.UTC(2026, 9, 1, 0, 0, i)).toISOString();
@@ -57,5 +57,26 @@ describe('badge rules (same as the server)', () => {
     expect(percentOf(300, 300)).toBe(100);
     expect(percentOf(15, 10)).toBe(100);
     expect(percentOf(0, 0)).toBe(0);
+  });
+
+  it('counts a solved variant for its original, like the CB tab', () => {
+    const answers = [
+      { question_id: 'a', is_correct: true },
+      { question_id: 'b-var', is_correct: true },
+      { question_id: 'c-var', is_correct: false },
+      { question_id: 'd-68var', is_correct: true },
+      { question_id: 'e-var', is_correct: true },
+    ];
+    const variants = [
+      { id: 'b-var', parent_question_id: 'b', question_set: 'CollegeBoard' },
+      { id: 'c-var', parent_question_id: 'c', question_set: 'CollegeBoard' },
+      { id: 'd-68var', parent_question_id: 'd', question_set: '68' },
+      { id: 'e-var', parent_question_id: 'b-var', question_set: null },
+      { id: 'f-var', parent_question_id: 'e-var', question_set: null },
+    ];
+    const solved = solvedQuestionIds(answers, variants);
+    expect(['a', 'b', 'b-var', 'e-var'].every(id => solved.has(id))).toBe(true);
+    expect(['c', 'd', 'e-var-parent', 'f-var'].some(id => solved.has(id))).toBe(false);
+    expect(solvedQuestionIds(answers).has('b')).toBe(false);
   });
 });

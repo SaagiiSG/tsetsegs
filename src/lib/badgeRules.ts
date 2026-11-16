@@ -1,4 +1,4 @@
-// The server's badge rules (student_badge_earned in drizzle/migrations 0027/0029/0052),
+// The server's badge rules (student_badge_earned in drizzle/migrations 0027/0029/0052/0139),
 // used only to draw progress bars. Unlocking is decided by the server.
 
 export interface AttemptRow { is_correct: boolean | null; time_spent_seconds: number | null; attempted_at: string }
@@ -72,3 +72,13 @@ export const hasQualifyingSession = (
 /** Rounds down, so 299/300 shows 99% and not a finished bar. */
 export const percentOf = (current: number, target: number) =>
   target > 0 ? Math.min(100, Math.floor((current / target) * 100)) : 0;
+
+export interface VariantRow { id: string; parent_question_id: string | null; question_set: string | null }
+
+/** Questions answered right. As on the CB tab (0139), a solved variant outside the 68 set also solves its original. */
+export function solvedQuestionIds(attempts: { question_id: string; is_correct: boolean | null }[], variants: VariantRow[] = []) {
+  const direct = new Set(attempts.filter(a => a.is_correct).map(a => a.question_id));
+  const solved = new Set(direct);
+  variants.forEach(v => { if (v.parent_question_id && v.question_set !== '68' && direct.has(v.id)) solved.add(v.parent_question_id); });
+  return solved;
+}

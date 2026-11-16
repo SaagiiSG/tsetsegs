@@ -39,6 +39,7 @@ export function BadgeProgressSection({ inProgressBadges, onBadgeClick }: BadgePr
           const currentProgress = typeof rawProgress === 'object' && rawProgress !== null
             ? ((rawProgress as { current?: number }).current ?? 0)
             : (typeof rawProgress === 'number' ? rawProgress : 0);
+          const target = (typeof rawProgress === 'object' && rawProgress !== null && (rawProgress as { target?: number }).target) || firstReq?.target;
 
           return (
             <motion.div
@@ -63,7 +64,7 @@ export function BadgeProgressSection({ inProgressBadges, onBadgeClick }: BadgePr
                 <Progress value={badge.progress} className="h-1.5" />
                 {firstReq && (
                   <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {currentProgress}/{firstReq.target} - {firstReq.label}
+                    {currentProgress}/{target} - {firstReq.label}
                   </p>
                 )}
               </div>
