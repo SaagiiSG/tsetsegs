@@ -1,4 +1,4 @@
-// The server's badge rules (student_badge_earned in drizzle/migrations 0027/0029/0052/0139),
+// The server's badge rules (student_badge_earned in drizzle/migrations 0027/0029/0052/0139/0141),
 // used only to draw progress bars. Unlocking is decided by the server.
 
 export interface AttemptRow { is_correct: boolean | null; time_spent_seconds: number | null; attempted_at: string }

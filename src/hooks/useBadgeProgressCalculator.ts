@@ -125,13 +125,23 @@ async function calculateRequirementProgress(
 
     case 'all_68_questions':
     case 'all_cb_problems': {
-      // The 68 and CB Math tabs, counted as the server does (0139); the target is the tab's real size.
+      // The 68 and CB Math tabs, counted as the server does (0139, 0141); the target is the tab's real size.
       const cb = req.type === 'all_cb_problems';
-      const { total, solved } = await solvedIn(studentAccountId, fetchAll<{ id: string }>((from, to) => {
+      const pool = fetchAll<{ id: string }>((from, to) => {
         const q = supabase.from(qTable).select('id').eq('is_active', true).eq('subject', 'math').eq('hide_from_practice', false);
         return (cb ? q.eq('is_original', true).not('question_set', 'in', '("68","SATMathTraining800","ANP120Aug3")') : q.eq('question_set', '68'))
           .order('id')
           .range(from, to);
+      });
+      // The tabs hide questions used in Bluebook tests (0141), so they don't count either.
+      const inTests = fetchAll<{ question_id: string | null }>((from, to) => supabase
+        .from('bluebook_module_questions')
+        .select('question_id')
+        .order('id')
+        .range(from, to));
+      const { total, solved } = await solvedIn(studentAccountId, Promise.all([pool, inTests]).then(([qs, tests]) => {
+        const skip = new Set(tests.map(t => t.question_id));
+        return qs.filter(q => !skip.has(q.id));
       }), cb ? fetchAll<VariantRow>((from, to) => supabase
         .from(qTable)
         .select('id, parent_question_id, question_set')
