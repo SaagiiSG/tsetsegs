@@ -1517,6 +1517,21 @@ export type Database = {
         }
         Relationships: []
       }
+      early_bird_signups: {
+        Row: {
+          created_at: string
+          email: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
       educator_demo_requests: {
         Row: {
           approved_at: string | null
@@ -6944,6 +6959,7 @@ export type Database = {
       is_free_solo_user: { Args: never; Returns: boolean }
       is_platform_staff: { Args: never; Returns: boolean }
       is_staff_or_center_member: { Args: never; Returns: boolean }
+      join_early_bird: { Args: { _email: string }; Returns: undefined }
       landing_public_stats: { Args: never; Returns: Json }
       live_answer_allowed: {
         Args: { _participant: string; _question: string; _session: string }
