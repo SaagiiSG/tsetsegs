@@ -1,7 +1,7 @@
 import { LegalPage } from "@/components/landing/LegalPage";
 
 // Owner name "Tsetsegs SAT Prep" is a placeholder until the company is set up (Saagii, 12 Nov 2026). Have a lawyer review both pages.
-const UPDATED = "12 November 2026";
+const UPDATED = "17 November 2026";
 const EMAIL = <a href="mailto:manager@tsetsegs.com">manager@tsetsegs.com</a>;
 
 export function Terms() {
@@ -93,9 +93,10 @@ export function Privacy() {
         <li><strong>Class sign-up details:</strong> when a center enrolls you, it may record a parent or guardian’s name and phone number.</li>
         <li><strong>Practice activity:</strong> the questions you answer, your answers, how long you take, scores, points, streaks, badges, test results and use of tools like the calculator. Teachers may add attendance and notes.</li>
         <li><strong>Device and security data:</strong> when you sign in, your IP address and browser details. Students in the main portal also get a random device ID and a code made from browser settings (such as screen size, time zone and language), so an account can only be used on a limited number of devices.</li>
+        <li><strong>Early bird list:</strong> your email address, if you join the list before solo accounts open.</li>
         <li><strong>Messages you send us:</strong> what you write in our contact, support and educator forms, bug reports and screenshots, and replies to our text messages.</li>
       </ul>
-      <p>When you create a solo account, we check which country you are connecting from, because solo accounts are not available in Mongolia. We don’t store it.</p>
+      <p>When you create a solo account or join the early bird list, we check which country you are connecting from, because solo accounts are not available in Mongolia. We don’t store it.</p>
       <p>When paid plans launch, your card is handled by our payment provider. We will not see or store your full card number.</p>
 
       <h2>How we use it</h2>
@@ -103,6 +104,7 @@ export function Privacy() {
         <li>to run flowersos: sign you in, save your progress and show your results, predicted scores and study plan;</li>
         <li>to run leaderboards, leagues, live games and other features you take part in;</li>
         <li>to send sign-in codes, account emails and, for center students, text messages about classes;</li>
+        <li>if you joined the early bird list, to email you SAT tips and tell you when solo accounts open, until you unsubscribe;</li>
         <li>to keep accounts secure and personal, and to stop account sharing and cheating;</li>
         <li>to answer your questions and fix problems;</li>
         <li>to improve our questions and features.</li>

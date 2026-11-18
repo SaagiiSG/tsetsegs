@@ -1002,6 +1002,13 @@
       "when": 1794810769868,
       "tag": "0142_apply_pending_0141",
       "breakpoints": true
+    },
+    {
+      "idx": 143,
+      "version": "7",
+      "when": 1794965907337,
+      "tag": "0143_early_bird_list",
+      "breakpoints": true
     }
   ]
 }

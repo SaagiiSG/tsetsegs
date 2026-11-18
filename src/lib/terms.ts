@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 // The date /terms and /privacy last changed in a way that matters. Bump it with them: the next agreement is kept as a new row (0129).
-export const TERMS_VERSION = '2026-11-12';
+export const TERMS_VERSION = '2026-11-17';
 // Absolute: center portals live on their own subdomain, which has no /terms route.
 export const TERMS_URL = 'https://flowersos.co/terms';
 export const PRIVACY_URL = 'https://flowersos.co/privacy';

@@ -26,10 +26,11 @@ const BEST_GAIN = 198;
 // 1,425 Math, 900 English, Free capped at 30 Math, 155 videos: his numbers (10 Nov), hardcoded like BEST_GAIN. All English is free (12 Nov).
 const FREE_PLAN = ["All 900 English questions", "30 Math questions", "Speed mode, 10 sessions a day", "1 full practice test", "The first lesson of every video topic", "Analytics and a predicted SAT score", "Mistake review", "Streaks, badges and the global league"];
 const PREMIUM_PLAN = ["Step-by-step explanations for every Math question", "All 1,425 Math questions, including the hardest problems for 800", "Unlimited speed mode", "Every practice test", "155 video lessons for SAT Math and English"];
+// Launch sale and early bird list (Saagii, 17 Nov): $27 and $50 crossed out, and early birds get 14 trial days instead of 7.
 const PLANS = [
-  { name: "Free", price: "$0", per: "forever", note: "No card needed", cta: "Start free", list: FREE_PLAN },
-  { name: "Monthly", price: "$19", per: "/month", note: "7-day free trial", cta: "Start free trial", list: PREMIUM_PLAN },
-  { name: "Yearly", price: "$39", per: "/year", note: "7-day free trial · about $3.25 a month", cta: "Start free trial", list: PREMIUM_PLAN, best: true },
+  { name: "Free", price: "$0", per: "forever", note: "No card needed", list: FREE_PLAN },
+  { name: "Monthly", was: "$27", price: "$19", per: "/month", note: "14-day free trial for early birds", list: PREMIUM_PLAN },
+  { name: "Yearly", was: "$50", price: "$39", per: "/year", note: "14-day free trial for early birds · about $3.25 a month", list: PREMIUM_PLAN, best: true },
 ];
 
 const Index = () => {
@@ -39,7 +40,7 @@ const Index = () => {
   const reveal = reduce ? {} : { initial: { opacity: 0, y: 16 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "-60px" }, transition: { duration: .4 } };
 
   const { data: s, isError } = useQuery({
-    // One retry, not the default three: while it loads the cards sit at 0, and "0 active users" shouldn't stay up ~8s when the call is failing.
+    // One retry, not the default three: while it loads the cards sit at 0, and "0 active students" shouldn't stay up ~8s when the call is failing.
     queryKey: ["landing-public-stats"], staleTime: 10 * 60_000, retry: 1,
     queryFn: async () => { const { data, error } = await supabase.rpc("landing_public_stats" as never); if (error) throw error; return data as unknown as Stats; },
   });
@@ -48,7 +49,7 @@ const Index = () => {
     <div className={`flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
       {/* Solo sign-up is English only (Mongolian visitors are center students), so the Mongolian page keeps the demo. */}
       {lang === "eng"
-        ? <Button size="lg" asChild className="h-12 rounded-full px-7"><a href="/solo?lang=eng">Start free<ArrowRight /></a></Button>
+        ? <Button size="lg" asChild className="h-12 rounded-full px-7"><a href="/solo?lang=eng">Join early bird<ArrowRight /></a></Button>
         : <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">Демо үзэх<ArrowRight /></Button>}
       <Button size="lg" variant="outline" onClick={() => navigate(`/educators?lang=${lang}`)} className="h-12 rounded-full border-2 px-7">{text("Би багш", "I am an educator")}</Button>
       <Button size="lg" variant="ghost" onClick={() => navigate("/practice")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}</Button>
@@ -56,7 +57,7 @@ const Index = () => {
   );
 
   const proof = [
-    { to: s?.students, f: fmt, l: text("хэрэглэгч", "active users"), c: "lv-blue" },
+    { to: s?.students, f: fmt, l: text("сурагч", "active students"), c: "lv-blue" },
     { to: BEST_GAIN, f: (n: number) => `+${n}`, l: text("дундаж хамгийн өндөр өсөлт (Math)", "average best Math gain"), c: "lv-green" },
     { to: s?.gained100_pct, f: (n: number) => `${n}%`, l: text("нь 100+ оноо ахисан", "gained 100+ points"), c: "lv-violet" },
     { to: 720, f: fmt, l: text("сурагч Math 700+ оноо авсан", "students scored 700+ Math"), c: "lv-orange" },
@@ -161,14 +162,14 @@ const Index = () => {
 
         {lang === "eng" && <section id="pricing" className="py-20"><div className="lv-container">
           <motion.h2 {...reveal} className="lv-h2">Pricing</motion.h2>
-          <p className="lv-lead mt-4 max-w-2xl">Practice free for as long as you like. Premium unlocks everything, and both plans start with a 7-day free trial.</p>
+          <p className="lv-lead mt-4 max-w-2xl">Practice free for as long as you like. Premium unlocks everything. Join the early bird list now and both plans start with 14 days free when we launch.</p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">{PLANS.map(p => (
             <motion.div key={p.name} {...reveal} className={`lv-card flex flex-col p-6 ${p.best ? "ring-2 ring-accent" : ""}`}>
-              <div className="flex items-center justify-between gap-2"><p className="font-semibold">{p.name}</p>{p.best && <Badge className="rounded-full">Best value</Badge>}</div>
-              <p className="mt-4"><span className="font-mono text-4xl font-semibold">{p.price}</span> <span className="text-muted-foreground">{p.per}</span></p>
+              <div className="flex items-center justify-between gap-2"><p className="font-semibold">{p.name}</p><div className="flex gap-1.5">{p.was && <Badge variant="secondary" className="rounded-full">Launch sale</Badge>}{p.best && <Badge className="rounded-full">Best value</Badge>}</div></div>
+              <p className="mt-4">{p.was && <><s className="mr-2 font-mono text-2xl text-muted-foreground"><span className="sr-only">Was </span>{p.was}</s><span className="sr-only">now </span></>}<span className="font-mono text-4xl font-semibold">{p.price}</span> <span className="text-muted-foreground">{p.per}</span></p>
               <p className="mt-1 text-sm text-muted-foreground">{p.note}</p>
               <ul className="mt-6 flex-1 space-y-2 text-sm">{p.name !== "Free" && <li className="font-medium">Everything in Free, plus:</li>}{p.list.map(f => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{f}</li>)}</ul>
-              <Button asChild variant={p.best ? "default" : "outline"} className="mt-6 rounded-full"><a href={`/solo?lang=${lang}`}>{p.cta}</a></Button>
+              <Button asChild variant={p.best ? "default" : "outline"} className="mt-6 rounded-full"><a href={`/solo?lang=${lang}`}>Join early bird</a></Button>
             </motion.div>
           ))}</div>
         </div></section>}
