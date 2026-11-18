@@ -175,6 +175,7 @@ Solo sign-up closed on 13 Nov (0134) and there is no checkout yet, so Saagii cho
 - Pricing cards show a "Launch sale" tag with $27 crossed out to $19/month and $50 crossed out to $39/year. Every pricing and hero button says "Join early bird" and goes to /solo.
 - Between now and launch Saagii wants to email the list SAT tips, methods and the story of the platform. Lovable's mailer only sends app emails, so this needs a newsletter tool. **Which tool, and whether the list syncs to it, is still open** (Saagii, 17 Nov: "lets talk about the email marketing after my head gets clearer").
 - The privacy policy names the list and the tips emails (TERMS_VERSION 2026-11-17).
+- The Free card no longer lists "All 900 English questions" (Saagii, 17 Nov). 527 of them are hidden on every intl account (12 Nov decision), so the number was wrong.
 
 ## Not doing now
 
