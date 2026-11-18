@@ -172,7 +172,7 @@ Solo sign-up closed on 13 Nov (0134) and there is no checkout yet, so Saagii cho
 
 - Signed-out visitors to /solo (outside Mongolia) leave an email. `join_early_bird()` saves it in `early_bird_signups` (0143): lower-cased, once, never read back to the public. Mongolian connections are refused like in `solo_join()`. Only platform admins can read the list.
 - **At launch, every email on the list gets a 14-day Premium trial instead of 7.** The card still goes in first. Checkout looks the student's email up in `early_bird_signups`.
-- Pricing cards show a "Launch sale" tag with $27 crossed out to $19/month and $50 crossed out to $39/year. Every pricing and hero button says "Join early bird" and goes to /solo.
+- Pricing cards stay at $19/month and $39/year with "14-day free trial for early birds". No crossed-out prices: Saagii tried $27/$50 crossed out on 17 Nov and dropped it the same day. Every pricing and hero button says "Join early bird" and goes to /solo.
 - Between now and launch Saagii wants to email the list SAT tips, methods and the story of the platform. Lovable's mailer only sends app emails, so this needs a newsletter tool. **Which tool, and whether the list syncs to it, is still open** (Saagii, 17 Nov: "lets talk about the email marketing after my head gets clearer").
 - The privacy policy names the list and the tips emails (TERMS_VERSION 2026-11-17).
 - The Free card no longer lists "All 900 English questions" (Saagii, 17 Nov). 527 of them are hidden on every intl account (12 Nov decision), so the number was wrong.
