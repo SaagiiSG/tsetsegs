@@ -47,11 +47,9 @@ describe('solo premium page', () => {
     expect(html).not.toContain('Go Premium');
   });
 
-  it('welcomes a student once Premium is on, and never shows a second checkout', () => {
-    const welcome = render(premium, '/student/premium?payment=pay_1&status=succeeded');
-    expect(welcome).toContain('Welcome to Premium');
-    expect(welcome).toContain('href="/student/billing"');
-    // Any other visit goes to Billing (<Navigate> renders nothing; the redirect runs on mount).
+  it('once Premium is on, never shows a second checkout', () => {
+    // After paying it goes to the dashboard, any other visit to Billing (<Navigate> renders nothing; it runs on mount).
+    expect(render(premium, '/student/premium?payment=pay_1&status=succeeded')).toBe('');
     expect(render(premium)).toBe('');
   });
 

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from 'next-themes';
 import { loadWhop } from '@whop/elements';
 import { Checkout, CheckoutElement, WhopElements } from '@whop/elements-react';
 import { Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PREMIUM_PLAN, PRICE } from '@/solo/plans';
@@ -43,25 +43,17 @@ export function SoloPremium() {
   const [params] = useSearchParams();
   const status = params.get('status');
   const [cycle, setCycle] = useState<Cycle>('yearly');
+  // Paid and the webhook has landed: back to the dashboard with a welcome (Saagii, 19 Nov).
+  const welcome = premium && status === 'succeeded';
+  useEffect(() => {
+    if (welcome) toast.success('Welcome to Premium', { description: 'Every Math explanation, practice test and video lesson is open to you.' });
+  }, [welcome]);
 
   if (!isSolo) return <Navigate to="/student" replace />;
   if (!ready) return <Skeleton className="h-96 w-full max-w-xl rounded-xl" />;
-  // Premium already: Billing shows the plan (19 Nov). Right after paying, a welcome first.
-  if (premium && status !== 'succeeded') return <Navigate to="/student/billing" replace />;
-  if (premium) {
-    return (
-      <Card className="max-w-xl">
-        <CardHeader>
-          <CardTitle>Welcome to Premium</CardTitle>
-          <CardDescription>Every Math explanation, practice test and video lesson is open to you.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button asChild><Link to="/student">Start practicing</Link></Button>
-          <Button asChild variant="outline"><Link to="/student/billing">Billing</Link></Button>
-        </CardContent>
-      </Card>
-    );
-  }
+  if (welcome) return <Navigate to="/student" replace />;
+  // Premium already: Billing shows the plan (19 Nov).
+  if (premium) return <Navigate to="/student/billing" replace />;
   if (status === 'succeeded') return <Activating />;
 
   return (
@@ -85,6 +77,7 @@ export function SoloPremium() {
 
 function CheckoutForm({ cycle }: { cycle: Cycle }) {
   const { resolvedTheme } = useTheme();
+  const navigate = useNavigate();
   const session = useQuery({ queryKey: ['whop-checkout', cycle], queryFn: () => startCheckout(cycle), staleTime: Infinity, retry: false });
   const loading = <Skeleton className="h-96 w-full rounded-xl" />;
   if (session.isPending) return loading;
@@ -94,7 +87,10 @@ function CheckoutForm({ cycle }: { cycle: Cycle }) {
     // skipPixel: no Whop ad tracking on a page our students use.
     <WhopElements elements={getWhop()} environment={environment} skipPixel
       appearance={{ theme: { appearance: resolvedTheme === 'dark' ? 'dark' : 'light', accentColor: 'sky' } }}>
-      <Checkout checkoutConfiguration={id} returnUrl={`${window.location.origin}/solo/student/premium`} fallback={loading}>
+      {/* onComplete: an on-page payment never leaves, so go to the wait screen ourselves. That also skips Whop's success
+          screen, which offers to claim the purchase into a Whop account by emailing a code. */}
+      <Checkout checkoutConfiguration={id} returnUrl={`${window.location.origin}/solo/student/premium`} fallback={loading}
+        onComplete={() => navigate('/student/premium?status=succeeded', { replace: true })}>
         <CheckoutElement buyerEmail={email} lockBuyerEmail />
       </Checkout>
     </WhopElements>
