@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTheme } from 'next-themes';
 import { loadWhop } from '@whop/elements';
@@ -43,15 +42,12 @@ export function SoloPremium() {
   const [params] = useSearchParams();
   const status = params.get('status');
   const [cycle, setCycle] = useState<Cycle>('yearly');
-  // Paid and the webhook has landed: back to the dashboard with a welcome (Saagii, 19 Nov).
+  // Paid and the webhook has landed: the dashboard, under the Premium welcome dialog (PremiumWelcome, 19 Nov).
   const welcome = premium && status === 'succeeded';
-  useEffect(() => {
-    if (welcome) toast.success('Welcome to Premium', { description: 'Every Math explanation, practice test and video lesson is open to you.' });
-  }, [welcome]);
 
   if (!isSolo) return <Navigate to="/student" replace />;
   if (!ready) return <Skeleton className="h-96 w-full max-w-xl rounded-xl" />;
-  if (welcome) return <Navigate to="/student" replace />;
+  if (welcome) return <Navigate to="/student" replace state={{ premiumWelcome: true }} />;
   // Premium already: Billing shows the plan (19 Nov).
   if (premium) return <Navigate to="/student/billing" replace />;
   if (status === 'succeeded') return <Activating />;

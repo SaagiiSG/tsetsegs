@@ -40,6 +40,7 @@ import { CenterPracticeTests } from './CenterPracticeTests';
 import { CenterPracticeTest } from './CenterPracticeTest';
 import { SoloPremium } from './SoloPremium';
 import { SoloBilling, SoloMenuLinks, WHOP_ORDERS, useBillingSummary } from './SoloBilling';
+import { PremiumWelcome } from './PremiumWelcome';
 import { CenterProctorJoin } from './CenterProctorJoin';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
@@ -221,6 +222,7 @@ export default function CenterStudentPortal() {
               {me.data.student.class_id && <StudentLive studentId={me.data.student.id} classId={me.data.student.class_id} />}
               <MyBadgeWatcher me={me.data} />
               <RingPrizeCelebration colors={SKY_RING} />
+              <PremiumWelcome />
               <Routes>
                 <Route index element={<HomePage me={me.data} />} />
                 <Route path="practice" element={<PracticePage me={me.data} />} />
