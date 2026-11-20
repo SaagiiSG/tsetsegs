@@ -21,6 +21,8 @@ import { X, Route as RouteIcon, Folder, FolderPlus, Library, Inbox, MoreHorizont
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { RoadmapOrderDialog } from '@/components/concept-videos/RoadmapOrderDialog';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { isEnglish } from '@/portal/videoTopics';
 
 type Draft = Omit<ConceptVideo, 'id'> & { id?: string };
 const empty: Draft = {
@@ -305,6 +307,14 @@ export default function ConceptVideosAdmin() {
           {draft && (
             <div className="space-y-3">
               <div className="space-y-1">
+                <Label>Subject</Label>
+                <ToggleGroup type="single" variant="outline" className="justify-start" value={isEnglish(draft) ? 'english' : 'math'} aria-label="Subject"
+                  onValueChange={(s) => s && (s === 'english') !== isEnglish(draft) && setDraft({ ...draft, domain: CONCEPT_DOMAINS.find((d) => isEnglish({ domain: d }) === (s === 'english'))! })}>
+                  <ToggleGroupItem value="math">Math</ToggleGroupItem>
+                  <ToggleGroupItem value="english">English</ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+              <div className="space-y-1">
                 <Label>Video</Label>
                 <div className="flex gap-2">
                   <Input
@@ -331,7 +341,7 @@ export default function ConceptVideosAdmin() {
                   <Label>Topic</Label>
                   <Select value={draft.domain} onValueChange={(v) => setDraft({ ...draft, domain: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{CONCEPT_DOMAINS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                    <SelectContent>{CONCEPT_DOMAINS.filter((d) => isEnglish({ domain: d }) === isEnglish(draft)).map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1"><Label>Module</Label><Input value={draft.module ?? ''} onChange={(e) => setDraft({ ...draft, module: e.target.value })} placeholder="Quadratics" /></div>
