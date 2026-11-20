@@ -1,7 +1,7 @@
 // Whop calls this on membership.activated and membership.updated. It checks Whop's signature, then hands the
 // membership's state to whop_sync_membership (0145), which turns solo Premium on or off.
 // The student comes from the metadata whop-checkout put on the checkout. Secret: WHOP_WEBHOOK_SECRET (the ws_ value,
-// as Whop shows it once). verify_jwt is off for this function: Whop signs its requests instead of sending a JWT.
+// as Whop shows it once); when WHOP_ENV is 'production', WHOP_WEBHOOK_SECRET_LIVE wins if set (20 Nov). verify_jwt is off for this function: Whop signs its requests instead of sending a JWT.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { unwrapWebhook } from 'npm:@whop/sdk@2.8.1/helpers'
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 })
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  const secret = Deno.env.get('WHOP_WEBHOOK_SECRET') ?? ''
+  const secret = (Deno.env.get('WHOP_ENV') === 'production' && Deno.env.get('WHOP_WEBHOOK_SECRET_LIVE')) || Deno.env.get('WHOP_WEBHOOK_SECRET') || ''
   // A 500 makes Whop retry, so events sent before the secrets are set still land once they are.
   if (!supabaseUrl || !serviceKey || !secret) return new Response('Server misconfigured', { status: 500 })
 

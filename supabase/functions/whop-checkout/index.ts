@@ -2,7 +2,8 @@
 // Made here, not in the browser, so the student id in the metadata (what whop-webhook keys Premium on) and the
 // early-bird trial can't be picked by the buyer. Early birds (0143) get the 14-day plans, everyone else 7 days.
 // Secrets: WHOP_API_KEY, WHOP_ENV ('production' or anything else for sandbox), and WHOP_PLAN_IDS, a JSON object
-// {"monthly","yearly","monthly_early","yearly_early"} of plan_ ids from the same environment.
+// {"monthly","yearly","monthly_early","yearly_early"} of plan_ ids from the same environment. In production the
+// WHOP_API_KEY_LIVE and WHOP_PLAN_IDS_LIVE twins win when set (Saagii, 20 Nov), so going live is WHOP_ENV alone.
 // While WHOP_ENV isn't production, only the comma-separated emails in WHOP_TESTERS get a checkout: a sandbox checkout
 // takes Whop's test cards, so anyone else could unlock Premium for free on the live site.
 
@@ -22,10 +23,11 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  const apiKey = Deno.env.get('WHOP_API_KEY') ?? ''
   const production = Deno.env.get('WHOP_ENV') === 'production'
+  const secret = (name: string) => (production && Deno.env.get(`${name}_LIVE`)) || Deno.env.get(name) || ''
+  const apiKey = secret('WHOP_API_KEY')
   let plans: Record<string, string> = {}
-  try { plans = JSON.parse(Deno.env.get('WHOP_PLAN_IDS') ?? '{}') } catch (_err) { /* checked below */ }
+  try { plans = JSON.parse(secret('WHOP_PLAN_IDS') || '{}') } catch (_err) { /* checked below */ }
   if (!supabaseUrl || !serviceKey) return json({ error: 'Server misconfigured' }, 500)
 
   const admin = createClient(supabaseUrl, serviceKey)
