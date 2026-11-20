@@ -1049,7 +1049,6 @@ export type Database = {
           draft_flags: Json
           draft_saved_at: string | null
           draft_times: Json
-          finalized_at: string | null
           focus_violations: number
           id: string
           joined_at: string
@@ -1068,7 +1067,6 @@ export type Database = {
           draft_flags?: Json
           draft_saved_at?: string | null
           draft_times?: Json
-          finalized_at?: string | null
           focus_violations?: number
           id?: string
           joined_at?: string
@@ -1087,7 +1085,6 @@ export type Database = {
           draft_flags?: Json
           draft_saved_at?: string | null
           draft_times?: Json
-          finalized_at?: string | null
           focus_violations?: number
           id?: string
           joined_at?: string
@@ -6752,7 +6749,7 @@ export type Database = {
       }
       class_test_finalize: { Args: { p_test_id: string }; Returns: number }
       class_test_join: {
-        Args: { p_device_key?: string; p_join_code: string; p_phone: string }
+        Args: { p_join_code: string; p_phone: string }
         Returns: {
           display_name: string
           duration_seconds: number
@@ -6766,7 +6763,7 @@ export type Database = {
         }[]
       }
       class_test_load_draft: {
-        Args: { p_device_key?: string; p_participant_id: string }
+        Args: { p_participant_id: string }
         Returns: {
           answers: Json
           flags: Json
@@ -6777,7 +6774,7 @@ export type Database = {
         }[]
       }
       class_test_my_review: {
-        Args: { p_device_key?: string; p_participant_id: string }
+        Args: { p_participant_id: string }
         Returns: {
           alternate_answers: string[]
           answer: string
@@ -6786,7 +6783,7 @@ export type Database = {
         }[]
       }
       class_test_paper: {
-        Args: { p_device_key?: string; p_participant_id: string }
+        Args: { p_participant_id: string }
         Returns: {
           choice_images: Json
           figure_description: string
@@ -6800,14 +6797,9 @@ export type Database = {
           question_type: string
         }[]
       }
-      class_test_release_seat: {
-        Args: { p_participant: string }
-        Returns: undefined
-      }
       class_test_save_draft: {
         Args: {
           p_answers: Json
-          p_device_key?: string
           p_flags?: Json
           p_participant_id: string
           p_times?: Json
@@ -6818,7 +6810,6 @@ export type Database = {
       class_test_submit: {
         Args: {
           p_answers: Json
-          p_device_key?: string
           p_flags?: Json
           p_participant_id: string
           p_times?: Json
