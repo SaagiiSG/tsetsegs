@@ -60,15 +60,20 @@ export function billingSummary(b: Billing, now = new Date()) {
   return { kind: 'paid' as const, title, line: `Renews on ${fmt(end)}${cycle ? ` for ${PRICE[cycle]}` : ''}.` };
 }
 
+/** The signed-in solo student's summary, null while loading. A failed details read falls back to the plan alone. */
+export function useBillingSummary() {
+  const { premium, ready } = useSoloPlan();
+  const billing = useSoloBilling();
+  if (!ready || billing.isPending) return null;
+  return billingSummary(billing.data ?? { plan: premium ? 'premium' : 'free', premium_until: null, whop_membership_id: null, whop_status: null, whop_period_end: null, whop_cancel_at_period_end: null, whop_billing_period_days: null });
+}
+
 /** Billing for solo students (Saagii, 19 Nov): the plan, its next date, and Whop's page to cancel or change the card. */
 export function SoloBilling() {
-  const { isSolo, premium, ready } = useSoloPlan();
-  const billing = useSoloBilling();
+  const { isSolo } = useSoloPlan();
+  const s = useBillingSummary();
   if (!isSolo) return <Navigate to="/student" replace />;
-  if (!ready || billing.isPending) return <Skeleton className="h-64 w-full max-w-xl rounded-xl" />;
-  // A failed details read falls back to the plan alone.
-  const b: Billing = billing.data ?? { plan: premium ? 'premium' : 'free', premium_until: null, whop_membership_id: null, whop_status: null, whop_period_end: null, whop_cancel_at_period_end: null, whop_billing_period_days: null };
-  const s = billingSummary(b);
+  if (!s) return <Skeleton className="h-64 w-full max-w-xl rounded-xl" />;
   return (
     <div className="max-w-xl space-y-4">
       <PageHeader title="Billing" description="Your plan and payments." />

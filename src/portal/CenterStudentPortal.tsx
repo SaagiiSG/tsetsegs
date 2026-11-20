@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VideoRoadmap } from './VideoRoadmap';
-import { NavLink, Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, NavLink, Navigate, Route, Routes, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Calculator, Lightbulb, Home, BookOpen, RotateCcw, Zap, Trophy, PlayCircle, Award, LogOut, Megaphone, Timer, MoreHorizontal,
@@ -39,7 +39,7 @@ import { CenterReviewPage } from './CenterReviewPage';
 import { CenterPracticeTests } from './CenterPracticeTests';
 import { CenterPracticeTest } from './CenterPracticeTest';
 import { SoloPremium } from './SoloPremium';
-import { SoloBilling, SoloMenuLinks } from './SoloBilling';
+import { SoloBilling, SoloMenuLinks, WHOP_ORDERS, useBillingSummary } from './SoloBilling';
 import { CenterProctorJoin } from './CenterProctorJoin';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
@@ -57,7 +57,7 @@ import { RoadmapPreview } from './RoadmapPreview';
 import { topicUnits } from './videoTopics';
 import { SkyDepth, AURORA, CARD_WAVES } from './SkyDepth';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, Monitor, Settings as SettingsIcon } from 'lucide-react';
+import { Sun, Moon, Monitor, CreditCard, Settings as SettingsIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -827,9 +827,31 @@ const THEMES = [
   { value: 'system', label: 'Match device', hint: 'Follows your phone or computer', icon: Monitor },
 ] as const;
 
+/** Solo students' plan in Settings (Saagii, 19 Nov): the same line as Billing, with Upgrade or Whop's manage page. */
+function SoloPlanSettings() {
+  const s = useBillingSummary();
+  if (!s) return null;
+  return (
+    <Glass className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="sky-tile sky-tile-blue"><CreditCard /></span>
+        <div><p className="text-lg font-bold">Plan & billing</p><p className="text-sm text-muted-foreground">{s.title}</p></div>
+      </div>
+      <p className="text-sm">{s.line}</p>
+      <div className="flex flex-wrap gap-2">
+        {s.kind === 'free' && <Button asChild><Link to="/student/premium">Upgrade to Premium</Link></Button>}
+        {(s.kind === 'trial' || s.kind === 'paid') && <>
+          <Button asChild variant="outline"><a href={WHOP_ORDERS} target="_blank" rel="noopener noreferrer">Manage or cancel</a></Button>
+          <Button asChild variant="ghost"><Link to="/student/billing">Billing details</Link></Button>
+        </>}
+      </div>
+    </Glass>
+  );
+}
+
 function StudentSettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { name } = useCenter();
+  const { name, isSolo } = useCenter();
   const current = theme ?? 'system';
   return (
     <div className="max-w-2xl space-y-5">
@@ -856,6 +878,7 @@ function StudentSettingsPage() {
           })}
         </div>
       </Glass>
+      {isSolo && <SoloPlanSettings />}
       <Glass className="flex items-center justify-between gap-3">
         <div className="min-w-0"><p className="text-sm text-muted-foreground">Signed in as</p><p className="font-semibold truncate">{name}</p></div>
       </Glass>
