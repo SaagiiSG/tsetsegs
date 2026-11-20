@@ -98,7 +98,6 @@ export default function SoloSignIn() {
         <p className="text-sm text-muted-foreground">Free, no card needed. <a className="underline underline-offset-4 hover:text-foreground" href="/?lang=eng#pricing">See plans</a></p>
       </div>
       <div className="space-y-3">
-        <TermsCheck checked={agreed} onChange={setAgreed} />
         <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('google')}><GoogleMark className="h-5 w-5" />Continue with Google</Button>
         <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('apple')}><AppleMark className="h-5 w-5" />Continue with Apple</Button>
         <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('microsoft')}><MicrosoftMark className="h-5 w-5" />Continue with Microsoft</Button>
@@ -116,6 +115,8 @@ export default function SoloSignIn() {
         <form onSubmit={sendCode} className="space-y-4">
           <div className="space-y-1.5"><Label htmlFor="solo-name" className={authLabelClasses}>Your name</Label><Input id="solo-name" required autoComplete="name" className={authInputClasses} value={name} onChange={e => setName(e.target.value)} /></div>
           <div className="space-y-1.5"><Label htmlFor="solo-email" className={authLabelClasses}>Email</Label><Input id="solo-email" type="email" required autoComplete="email" className={authInputClasses} value={email} onChange={e => setEmail(e.target.value)} /></div>
+          {/* Under the inputs (Saagii, 19 Nov); it still unlocks the Google, Apple and Microsoft buttons above too. */}
+          <TermsCheck checked={agreed} onChange={setAgreed} />
           <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !agreed || !name.trim()}>Email me a code</Button>
         </form>
       )}
