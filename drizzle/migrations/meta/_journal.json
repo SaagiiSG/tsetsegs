@@ -1030,6 +1030,20 @@
       "when": 1794975722526,
       "tag": "0146_early_bird_off_solo_testers",
       "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1795145816195,
+      "tag": "0147_0145_whop_premium",
+      "breakpoints": true
+    },
+    {
+      "idx": 148,
+      "version": "7",
+      "when": 1795145836701,
+      "tag": "0148_0146_early_bird_off_solo_testers",
+      "breakpoints": true
     }
   ]
 }

@@ -3865,6 +3865,8 @@ export type Database = {
           provider: string | null
           updated_at: string
           user_id: string
+          whop_membership_id: string | null
+          whop_updated_at: string | null
         }
         Insert: {
           created_at?: string
@@ -3875,6 +3877,8 @@ export type Database = {
           provider?: string | null
           updated_at?: string
           user_id: string
+          whop_membership_id?: string | null
+          whop_updated_at?: string | null
         }
         Update: {
           created_at?: string
@@ -3885,6 +3889,20 @@ export type Database = {
           provider?: string | null
           updated_at?: string
           user_id?: string
+          whop_membership_id?: string | null
+          whop_updated_at?: string | null
+        }
+        Relationships: []
+      }
+      solo_testers: {
+        Row: {
+          email: string
+        }
+        Insert: {
+          email: string
+        }
+        Update: {
+          email?: string
         }
         Relationships: []
       }
@@ -6959,7 +6977,6 @@ export type Database = {
       is_free_solo_user: { Args: never; Returns: boolean }
       is_platform_staff: { Args: never; Returns: boolean }
       is_staff_or_center_member: { Args: never; Returns: boolean }
-      join_early_bird: { Args: { _email: string }; Returns: undefined }
       landing_public_stats: { Args: never; Returns: Json }
       live_answer_allowed: {
         Args: { _participant: string; _question: string; _session: string }
@@ -7650,6 +7667,16 @@ export type Database = {
       verify_student_password: {
         Args: { input_password: string; stored_hash: string }
         Returns: boolean
+      }
+      whop_sync_membership: {
+        Args: {
+          _membership: string
+          _period_end: string
+          _status: string
+          _updated_at: string
+          _user: string
+        }
+        Returns: string
       }
     }
     Enums: {
