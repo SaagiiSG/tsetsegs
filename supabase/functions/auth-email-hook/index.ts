@@ -15,7 +15,7 @@ const corsHeaders = {
 }
 
 // Configuration
-const SITE_NAME = "FlowersOS"
+const SITE_NAME = "flowersos"
 const SENDER_DOMAIN = "notify.flowersos.co"
 const ROOT_DOMAIN = "flowersos.co"
 const FROM_DOMAIN = "flowersos.co"
@@ -152,7 +152,7 @@ const handler = createAuthEmailHandler({
         }),
     },
     magiclink: {
-      subject: 'Your login link',
+      subject: 'Your sign-in code',
       render: (data) =>
         React.createElement(MagicLinkEmail, {
           siteName: SITE_NAME,
