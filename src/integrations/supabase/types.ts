@@ -1040,6 +1040,24 @@ export type Database = {
           },
         ]
       }
+      class_test_join_failures: {
+        Row: {
+          created_at: string
+          ip: string
+          test_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          ip: string
+          test_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          ip?: string
+          test_id?: string | null
+        }
+        Relationships: []
+      }
       class_test_participants: {
         Row: {
           answered_count: number
@@ -1049,6 +1067,7 @@ export type Database = {
           draft_flags: Json
           draft_saved_at: string | null
           draft_times: Json
+          finalized_at: string | null
           focus_violations: number
           id: string
           joined_at: string
@@ -1067,6 +1086,7 @@ export type Database = {
           draft_flags?: Json
           draft_saved_at?: string | null
           draft_times?: Json
+          finalized_at?: string | null
           focus_violations?: number
           id?: string
           joined_at?: string
@@ -1085,6 +1105,7 @@ export type Database = {
           draft_flags?: Json
           draft_saved_at?: string | null
           draft_times?: Json
+          finalized_at?: string | null
           focus_violations?: number
           id?: string
           joined_at?: string
@@ -1108,6 +1129,32 @@ export type Database = {
             columns: ["test_id"]
             isOneToOne: false
             referencedRelation: "class_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_test_seat_keys: {
+        Row: {
+          bound_at: string
+          key_hash: string
+          participant_id: string
+        }
+        Insert: {
+          bound_at?: string
+          key_hash: string
+          participant_id: string
+        }
+        Update: {
+          bound_at?: string
+          key_hash?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_test_seat_keys_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "class_test_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -6748,8 +6795,23 @@ export type Database = {
         }[]
       }
       class_test_finalize: { Args: { p_test_id: string }; Returns: number }
+      class_test_grade: {
+        Args: {
+          p_answers: Json
+          p_flags?: Json
+          p_participant_id: string
+          p_times?: Json
+          p_violations?: number
+        }
+        Returns: {
+          answered_count: number
+          correct_count: number
+          results: Json
+          submitted_at: string
+        }[]
+      }
       class_test_join: {
-        Args: { p_join_code: string; p_phone: string }
+        Args: { p_device_key?: string; p_join_code: string; p_phone: string }
         Returns: {
           display_name: string
           duration_seconds: number
@@ -6763,7 +6825,7 @@ export type Database = {
         }[]
       }
       class_test_load_draft: {
-        Args: { p_participant_id: string }
+        Args: { p_device_key?: string; p_participant_id: string }
         Returns: {
           answers: Json
           flags: Json
@@ -6774,7 +6836,7 @@ export type Database = {
         }[]
       }
       class_test_my_review: {
-        Args: { p_participant_id: string }
+        Args: { p_device_key?: string; p_participant_id: string }
         Returns: {
           alternate_answers: string[]
           answer: string
@@ -6783,7 +6845,7 @@ export type Database = {
         }[]
       }
       class_test_paper: {
-        Args: { p_participant_id: string }
+        Args: { p_device_key?: string; p_participant_id: string }
         Returns: {
           choice_images: Json
           figure_description: string
@@ -6797,9 +6859,14 @@ export type Database = {
           question_type: string
         }[]
       }
+      class_test_release_seat: {
+        Args: { p_participant: string }
+        Returns: undefined
+      }
       class_test_save_draft: {
         Args: {
           p_answers: Json
+          p_device_key?: string
           p_flags?: Json
           p_participant_id: string
           p_times?: Json
@@ -6807,9 +6874,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      class_test_seat_ok: {
+        Args: { p_key: string; p_participant: string }
+        Returns: boolean
+      }
       class_test_submit: {
         Args: {
           p_answers: Json
+          p_device_key?: string
           p_flags?: Json
           p_participant_id: string
           p_times?: Json
