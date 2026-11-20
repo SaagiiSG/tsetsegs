@@ -101,6 +101,7 @@ export default function SoloSignIn() {
         <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('google')}><GoogleMark className="h-5 w-5" />Continue with Google</Button>
         <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('apple')}><AppleMark className="h-5 w-5" />Continue with Apple</Button>
         <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('microsoft')}><MicrosoftMark className="h-5 w-5" />Continue with Microsoft</Button>
+        {!agreed && <p className="text-center text-xs text-muted-foreground">Tick the box below to continue.</p>}
       </div>
       <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
       {sent ? (

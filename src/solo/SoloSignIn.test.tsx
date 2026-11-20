@@ -23,6 +23,7 @@ it('the sign-in page sits on the cloud sky and offers Google, Apple and Microsof
   for (const p of ['Google', 'Apple', 'Microsoft']) expect(html).toContain(`Continue with ${p}`);
   expect(html.match(/<button[^>]*>\s*<svg/g)?.length).toBe(3);
   expect(html).toContain('Email me a code');
+  expect(html).toContain('Tick the box below to continue.');
 });
 
 it('the closed screen says opening soon, takes no email and offers only a sign-in for existing accounts', () => {
