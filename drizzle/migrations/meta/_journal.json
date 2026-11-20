@@ -1065,6 +1065,13 @@
       "when": 1795153632290,
       "tag": "0151_open_solo_signup",
       "breakpoints": true
+    },
+    {
+      "idx": 152,
+      "version": "7",
+      "when": 1795156324055,
+      "tag": "0152_apply_pending_0151",
+      "breakpoints": true
     }
   ]
 }
