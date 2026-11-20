@@ -1051,6 +1051,13 @@
       "when": 1795149436701,
       "tag": "0149_solo_billing_details",
       "breakpoints": true
+    },
+    {
+      "idx": 150,
+      "version": "7",
+      "when": 1795150032290,
+      "tag": "0150_apply_pending_0149",
+      "breakpoints": true
     }
   ]
 }
