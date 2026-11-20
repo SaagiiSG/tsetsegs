@@ -28,6 +28,8 @@ export const SoloShell = ({ children }: { children: React.ReactNode }) => (
 );
 
 const oauthButton = 'w-full h-12 rounded-full gap-3 bg-card text-base font-medium';
+// Must match the email code length in the Supabase auth settings: the emails carry 8 digits (Saagii, 19 Nov).
+const CODE_LENGTH = 8;
 
 // No-session path passes onHaveAccount; a refused join passes onSignOut instead, since "I already have an account" would only bounce back here.
 export function SoloBlocked({ onHaveAccount, onSignOut }: { onHaveAccount?: () => void; onSignOut?: () => void }) {
@@ -104,9 +106,10 @@ export default function SoloSignIn() {
       <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
       {sent ? (
         <div className="space-y-3">
-          <p className="text-sm">We sent a 6-digit code to {email.trim()}. Enter it here, or tap the link in the email.</p>
-          <InputOTP maxLength={6} value={code} disabled={busy} onChange={v => { setCode(v); if (v.length === 6) void verify(v); }} aria-label="6-digit code">
-            <InputOTPGroup>{[0, 1, 2, 3, 4, 5].map(i => <InputOTPSlot key={i} index={i} />)}</InputOTPGroup>
+          <p className="text-sm">We sent a code to {email.trim()}. Enter it here, or tap the link in the email.</p>
+          <InputOTP maxLength={CODE_LENGTH} value={code} disabled={busy} onChange={v => { setCode(v); if (v.length === CODE_LENGTH) void verify(v); }} aria-label={`${CODE_LENGTH}-digit code`}>
+            {/* w-9 below sm so 8 boxes fit a 360px phone. */}
+            <InputOTPGroup>{Array.from({ length: CODE_LENGTH }, (_, i) => <InputOTPSlot key={i} index={i} className="w-9 sm:w-10" />)}</InputOTPGroup>
           </InputOTP>
         </div>
       ) : (
