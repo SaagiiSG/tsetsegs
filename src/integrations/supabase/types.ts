@@ -6672,35 +6672,20 @@ export type Database = {
           pretty: string
         }[]
       }
-      all_time_leaderboard:
-        | {
-            Args: { p_limit?: number; p_window?: string }
-            Returns: {
-              highest_tier: string
-              ruby_weeks: number
-              sat_english_score: number
-              sat_math_score: number
-              sat_score_date: string
-              sat_total_score: number
-              student_account_id: string
-              total_points: number
-              username: string
-            }[]
-          }
-        | {
-            Args: { p_cohort?: string; p_limit?: number; p_window?: string }
-            Returns: {
-              highest_tier: string
-              ruby_weeks: number
-              sat_english_score: number
-              sat_math_score: number
-              sat_score_date: string
-              sat_total_score: number
-              student_account_id: string
-              total_points: number
-              username: string
-            }[]
-          }
+      all_time_leaderboard: {
+        Args: { p_cohort?: string; p_limit?: number; p_window?: string }
+        Returns: {
+          highest_tier: string
+          ruby_weeks: number
+          sat_english_score: number
+          sat_math_score: number
+          sat_score_date: string
+          sat_total_score: number
+          student_account_id: string
+          total_points: number
+          username: string
+        }[]
+      }
       all_time_my_standing: {
         Args: { p_cohort?: string; p_window?: string }
         Returns: {
