@@ -22,7 +22,10 @@ it('the sign-in page sits on the cloud sky and offers Google, Apple and Microsof
   expect(html).toContain('auth-sky');
   for (const p of ['Google', 'Apple', 'Microsoft']) expect(html).toContain(`Continue with ${p}`);
   expect(html.match(/<button[^>]*>\s*<svg/g)?.length).toBe(3);
-  expect(html).toContain('Tick the box below to continue.');
+  // Nothing is locked on load: the terms ask is a pop-up when an account starts (20 Nov).
+  expect(html).not.toContain('Tick the box');
+  expect(html).not.toContain('role="checkbox"');
+  expect(html).not.toMatch(/<button[^>]*disabled=""[^>]*>\s*<svg[^>]*>[\s\S]*?Continue with Google/);
 });
 
 it('creating an account asks for email and password, not a name', () => {

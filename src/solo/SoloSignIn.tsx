@@ -10,8 +10,11 @@ import clouds from '@/assets/landing/07-clouds-near.svg';
 import '@/components/landing/landing.css';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
-import { TermsCheck } from '@/components/auth/TermsCheck';
-import { TERMS_VERSION } from '@/lib/terms';
+import { PRIVACY_URL, TERMS_URL, TERMS_VERSION, rememberTick } from '@/lib/terms';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // AuthSplitLayout's cloud sky, with plain links: before joining, /solo has no router for its <Link>s.
 export const SoloShell = ({ children }: { children: React.ReactNode }) => (
@@ -85,7 +88,11 @@ export default function SoloSignIn({ start = 'signup' }: { start?: 'signup' | 's
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  // The terms ask comes as a pop-up when they start an account, not as a box on the page (Saagii, 20 Nov).
   const [agreed, setAgreed] = useState(false);
+  const [pending, setPending] = useState<(() => void) | null>(null);
+  const withTerms = (go: () => void) => (agreed ? go() : setPending(() => go));
+  const agree = () => { setAgreed(true); rememberTick(true); const go = pending; setPending(null); go?.(); };
   const [codeFor, setCodeFor] = useState<'signup' | 'email'>('signup'); // a sign-up confirmation, or a sign-in code
   const to = (m: Mode) => { setMode(m); setError(null); setInfo(null); setCode(''); };
 
@@ -101,8 +108,7 @@ export default function SoloSignIn({ start = 'signup' }: { start?: 'signup' | 's
   const oauth = (provider: 'google' | 'apple' | 'microsoft') =>
     run(() => lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin + '/solo' }) as Promise<Result>);
   // A session here means the project skips email confirmation; otherwise the email carries the code.
-  const signUp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const signUp = async () => {
     let next: Mode | null = null;
     await run(async () => {
       const r = await supabase.auth.signUp({ email: addr, password, options: { emailRedirectTo: window.location.origin + '/solo', data: { terms_version: TERMS_VERSION } } });
@@ -167,13 +173,13 @@ export default function SoloSignIn({ start = 'signup' }: { start?: 'signup' | 's
         </form>
       ) : <>
         <div className="space-y-3">
-          <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('google')}><GoogleMark className="h-5 w-5" />Continue with Google</Button>
-          <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('apple')}><AppleMark className="h-5 w-5" />Continue with Apple</Button>
-          <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('microsoft')}><MicrosoftMark className="h-5 w-5" />Continue with Microsoft</Button>
-          {!agreed && <p className="text-center text-xs text-muted-foreground">Tick the box below to continue.</p>}
+          {/* Google, Apple or Microsoft may create an account, so they ask for the terms first, in either mode. */}
+          <Button variant="outline" className={oauthButton} disabled={busy} onClick={() => withTerms(() => void oauth('google'))}><GoogleMark className="h-5 w-5" />Continue with Google</Button>
+          <Button variant="outline" className={oauthButton} disabled={busy} onClick={() => withTerms(() => void oauth('apple'))}><AppleMark className="h-5 w-5" />Continue with Apple</Button>
+          <Button variant="outline" className={oauthButton} disabled={busy} onClick={() => withTerms(() => void oauth('microsoft'))}><MicrosoftMark className="h-5 w-5" />Continue with Microsoft</Button>
         </div>
         <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
-        <form onSubmit={mode === 'signin' ? signIn : signUp} className="space-y-4">
+        <form onSubmit={mode === 'signin' ? signIn : e => { e.preventDefault(); withTerms(() => void signUp()); }} className="space-y-4">
           <div className="space-y-1.5"><Label htmlFor="solo-email" className={authLabelClasses}>Email</Label><Input id="solo-email" type="email" required autoComplete="email" className={authInputClasses} value={email} onChange={e => setEmail(e.target.value)} /></div>
           <div className="space-y-1.5">
             <div className="flex items-baseline justify-between">
@@ -183,14 +189,12 @@ export default function SoloSignIn({ start = 'signup' }: { start?: 'signup' | 's
             <PasswordInput id="solo-password" value={password} onChange={setPassword} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} />
             {mode === 'signup' && <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD} characters.</p>}
           </div>
-          {/* Under the inputs (Saagii, 19 Nov); it also unlocks the Google, Apple and Microsoft buttons above. */}
-          <TermsCheck checked={agreed} onChange={setAgreed} />
           {mode === 'signin'
             ? <>
                 <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !addr || !password}>Sign in</Button>
                 <Button type="button" variant="outline" className={oauthButton} disabled={busy} onClick={() => void sendSignInCode()}>Email me a sign-in code instead</Button>
               </>
-            : <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !agreed || !addr || password.length < MIN_PASSWORD}>Create account</Button>}
+            : <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !addr || password.length < MIN_PASSWORD}>Create account</Button>}
           <p className="text-center text-sm text-muted-foreground">
             {mode === 'signin'
               ? <>New here? <button type="button" className={link} onClick={() => to('signup')}>Create an account</button></>
@@ -200,6 +204,20 @@ export default function SoloSignIn({ start = 'signup' }: { start?: 'signup' | 's
       </>}
       {info && <p role="status" className="text-sm text-muted-foreground">{info}</p>}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      <AlertDialog open={!!pending} onOpenChange={o => { if (!o) setPending(null); }}>
+        <AlertDialogContent className="max-w-sm rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Before you continue</AlertDialogTitle>
+            <AlertDialogDescription>
+              By creating an account, you agree to our <a className="underline underline-offset-4 hover:text-foreground" href={TERMS_URL} target="_blank" rel="noopener noreferrer">Terms of Use</a> and <a className="underline underline-offset-4 hover:text-foreground" href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction className="rounded-full" onClick={agree}>Agree and continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SoloShell>
   );
 }
