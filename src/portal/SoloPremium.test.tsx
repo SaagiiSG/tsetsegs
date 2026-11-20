@@ -60,3 +60,18 @@ describe('solo premium page', () => {
     expect(render(free, '/student/premium', false)).toBe('');
   });
 });
+
+describe('starting a checkout', () => {
+  it('shows our message, not a crash, when the function call fails without a Response', async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    (supabase as { functions?: unknown }).functions = { invoke: async () => ({ data: null, error: { name: 'FunctionsFetchError', context: new TypeError('Failed to fetch') } }) };
+    const { startCheckout } = await import('./SoloPremium');
+    await expect(startCheckout('monthly')).rejects.toThrow('Checkout is unavailable right now. Please try again.');
+  });
+  it("passes on the function's own error message", async () => {
+    const { supabase } = await import('@/integrations/supabase/client');
+    (supabase as { functions?: unknown }).functions = { invoke: async () => ({ data: null, error: { context: new Response(JSON.stringify({ error: "Premium isn't open yet." }), { status: 403 }) } }) };
+    const { startCheckout } = await import('./SoloPremium');
+    await expect(startCheckout('yearly')).rejects.toThrow("Premium isn't open yet.");
+  });
+});

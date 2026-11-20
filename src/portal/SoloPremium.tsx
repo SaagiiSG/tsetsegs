@@ -22,10 +22,12 @@ let whop: ReturnType<typeof loadWhop> | undefined;
 const getWhop = () => (whop ??= loadWhop());
 
 /** whop-checkout picks the plan (14 days for early birds) and puts the student's id on the checkout. */
-async function startCheckout(cycle: Cycle): Promise<Session> {
+export async function startCheckout(cycle: Cycle): Promise<Session> {
   const { data, error } = await supabase.functions.invoke('whop-checkout', { body: { cycle } });
   if (error) {
-    const msg = await (error as { context?: Response }).context?.json().then((j: { error?: string }) => j.error).catch(() => null);
+    // Only an HTTP error carries a Response; a network or missing-function error carries something else (19 Nov).
+    const ctx = (error as { context?: unknown }).context;
+    const msg = ctx instanceof Response ? await ctx.json().then((j: { error?: string }) => j.error).catch(() => null) : null;
     throw new Error(msg || 'Checkout is unavailable right now. Please try again.');
   }
   return data as Session;
