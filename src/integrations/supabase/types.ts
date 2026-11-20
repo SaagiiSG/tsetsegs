@@ -6302,6 +6302,7 @@ export type Database = {
       tenant_students: {
         Row: {
           active: boolean
+          avatar: string | null
           class_id: string | null
           created_at: string
           email: string | null
@@ -6323,6 +6324,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          avatar?: string | null
           class_id?: string | null
           created_at?: string
           email?: string | null
@@ -6344,6 +6346,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          avatar?: string | null
           class_id?: string | null
           created_at?: string
           email?: string | null
@@ -7613,6 +7616,10 @@ export type Database = {
       tenant_sat_state: { Args: { _attempt: string }; Returns: Json }
       tenant_save_sat_prediction: {
         Args: { _institution: string; p_sim: number }
+        Returns: undefined
+      }
+      tenant_set_my_avatar: {
+        Args: { _avatar: string; _institution: string }
         Returns: undefined
       }
       tenant_settings: { Args: { _institution: string }; Returns: Json }
