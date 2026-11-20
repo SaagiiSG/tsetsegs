@@ -7,6 +7,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
+import { SoloMenuLinks } from './SoloBilling';
 
 export const NAV = [
   { to: '/student', label: 'Home', icon: Home, end: true },
@@ -40,7 +41,7 @@ const label = 'whitespace-nowrap opacity-0 transition-opacity duration-200 motio
 
 /** The student's name at the foot of the rail; hovering it (or a click or Enter) opens the account menu. */
 function AccountMenu({ open, setOpen }: { open: boolean; setOpen: (o: boolean) => void }) {
-  const { name, signOut } = useCenter();
+  const { name, signOut, isSolo } = useCenter();
   const { resolvedTheme, setTheme } = useTheme();
   const shut = useRef<ReturnType<typeof setTimeout>>();
   // Opened by hover, closing must not hand focus back to the name: a focused name keeps the rail open (has-[:focus-visible]).
@@ -68,6 +69,7 @@ function AccountMenu({ open, setOpen }: { open: boolean; setOpen: (o: boolean) =
         {ACCOUNT_LINKS.map(({ to, label: text, icon: Icon }) => (
           <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2" />{text}</NavLink></DropdownMenuItem>
         ))}
+        {isSolo && <SoloMenuLinks />}
         <DropdownMenuCheckboxItem className="pl-2 [&>span:first-child]:hidden" checked={dark} onCheckedChange={c => setTheme(c ? 'dark' : 'light')} onSelect={e => e.preventDefault()}>
           <Moon className="h-4 w-4 mr-2" />Dark mode<Switch className="ml-auto pointer-events-none" tabIndex={-1} checked={dark} aria-hidden />
         </DropdownMenuCheckboxItem>

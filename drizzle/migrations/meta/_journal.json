@@ -1044,6 +1044,13 @@
       "when": 1795145836701,
       "tag": "0148_0146_early_bird_off_solo_testers",
       "breakpoints": true
+    },
+    {
+      "idx": 149,
+      "version": "7",
+      "when": 1795149436701,
+      "tag": "0149_solo_billing_details",
+      "breakpoints": true
     }
   ]
 }

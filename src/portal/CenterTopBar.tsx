@@ -15,6 +15,7 @@ import { useCenterRingPrizeClaimer, useCenterRingPrizes } from './useCenterRingP
 import { prizeLeft, type PrizeKey } from '@/lib/ringPrizes';
 import { activeSprintId, rankFromBoard, ringStatus, todayPoints } from './studentStats';
 import type { QMeta } from './questionMeta';
+import { PlanChip } from './SoloBilling';
 
 export { RingChip };
 
@@ -78,6 +79,7 @@ export function CenterTopBar({ studentId, attempts, meta }: { studentId: string;
       <TodayPointsChip points={prog.ready ? todayPoints(attempts, prog.runs, new Date(), rows) : undefined} />
       <StreakChip days={streak.current} onClick={() => setStreakOpen(true)} />
       <RankChip rank={rank} onClick={() => navigate('/student/leaderboard')} />
+      <PlanChip />
       {prog.ready && goalsRead.data && <RingChip p={[frac(prog.speed, goals.speed), frac(prog.hard, goals.hard), frac(prog.medium, goals.medium)]} closed={status.closed} left={left} earned={rows.reduce((n, r) => n + r.points, 0)} allPaid={paid.has('all')} onClick={() => setRingOpen(true)} />}
       <CenterStreakDialog open={streakOpen} onOpenChange={setStreakOpen} streak={streak} history={history} goals={goals} />
       <CenterRingHistoryDialog open={ringOpen} onOpenChange={setRingOpen} history={history} goals={goals} />

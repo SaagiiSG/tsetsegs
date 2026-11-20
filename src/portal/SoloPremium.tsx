@@ -10,15 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PREMIUM_PLAN } from '@/solo/plans';
+import { PREMIUM_PLAN, PRICE } from '@/solo/plans';
 import { PageHeader } from './admin/ui';
 import { useSoloPlan } from './soloPlan';
 
 type Cycle = 'monthly' | 'yearly';
-
-// shortcut: Whop's shared Orders page, not the membership's own manage_url (webhooks may leave it out), and live Whop
-// only, so a sandbox tester cancels in the sandbox dashboard. Swap to manage_url if buyers get lost there.
-const WHOP_ORDERS = 'https://whop.com/@me/settings/orders/';
 type Session = { id: string; environment: 'production' | 'sandbox'; email: string };
 
 // Whop's hosted script loads on the first visit to this page, once, and never on any other page.
@@ -48,19 +44,18 @@ export function SoloPremium() {
 
   if (!isSolo) return <Navigate to="/student" replace />;
   if (!ready) return <Skeleton className="h-96 w-full max-w-xl rounded-xl" />;
+  // Premium already: Billing shows the plan (19 Nov). Right after paying, a welcome first.
+  if (premium && status !== 'succeeded') return <Navigate to="/student/billing" replace />;
   if (premium) {
     return (
       <Card className="max-w-xl">
         <CardHeader>
-          <CardTitle>{status === 'succeeded' ? 'Welcome to Premium' : 'You have Premium'}</CardTitle>
+          <CardTitle>Welcome to Premium</CardTitle>
           <CardDescription>Every Math explanation, practice test and video lesson is open to you.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <Button asChild><Link to="/student">Start practicing</Link></Button>
-            <Button asChild variant="outline"><a href={WHOP_ORDERS} target="_blank" rel="noopener noreferrer">Manage or cancel</a></Button>
-          </div>
-          <p className="text-xs text-muted-foreground">Whop handles your billing. Sign in there with this account's email to change your card or cancel.</p>
+        <CardContent className="flex flex-wrap gap-2">
+          <Button asChild><Link to="/student">Start practicing</Link></Button>
+          <Button asChild variant="outline"><Link to="/student/billing">Billing</Link></Button>
         </CardContent>
       </Card>
     );
@@ -76,8 +71,8 @@ export function SoloPremium() {
       </ul>
       <Tabs value={cycle} onValueChange={v => setCycle(v as Cycle)}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="monthly">Monthly · $19</TabsTrigger>
-          <TabsTrigger value="yearly">Yearly · $39</TabsTrigger>
+          <TabsTrigger value="monthly">Monthly · {PRICE.monthly}</TabsTrigger>
+          <TabsTrigger value="yearly">Yearly · {PRICE.yearly}</TabsTrigger>
         </TabsList>
       </Tabs>
       {/* A new checkout per plan: Whop fixes what's being bought when the form mounts. */}
@@ -109,7 +104,7 @@ function Activating() {
   const qc = useQueryClient();
   const [slow, setSlow] = useState(false);
   useEffect(() => {
-    const tick = setInterval(() => qc.invalidateQueries({ queryKey: ['solo-plan'] }), 2000);
+    const tick = setInterval(() => { qc.invalidateQueries({ queryKey: ['solo-plan'] }); qc.invalidateQueries({ queryKey: ['solo-billing'] }); }, 2000);
     const late = setTimeout(() => setSlow(true), 60_000);
     return () => { clearInterval(tick); clearTimeout(late); };
   }, [qc]);

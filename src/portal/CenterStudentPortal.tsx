@@ -39,6 +39,7 @@ import { CenterReviewPage } from './CenterReviewPage';
 import { CenterPracticeTests } from './CenterPracticeTests';
 import { CenterPracticeTest } from './CenterPracticeTest';
 import { SoloPremium } from './SoloPremium';
+import { SoloBilling, SoloMenuLinks } from './SoloBilling';
 import { CenterProctorJoin } from './CenterProctorJoin';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
 import { SatSimulationIsland } from '@/components/student/dashboard/StudentSatSimulationCard';
@@ -145,7 +146,7 @@ const DOCK_KEY = 'center_dock_edge';
 
 /** Floating dock for phones/iPad: drag the handle and it snaps to the nearest screen edge (vertical on left/right). */
 function MovableDock({ edge, setEdge }: { edge: DockEdge; setEdge: (e: DockEdge) => void }) {
-  const { signOut } = useCenter();
+  const { signOut, isSolo } = useCenter();
   const { resolvedTheme, setTheme } = useTheme();
   const dark = resolvedTheme === 'dark';
   const x = useMotionValue(0), y = useMotionValue(0);
@@ -171,7 +172,7 @@ function MovableDock({ edge, setEdge }: { edge: DockEdge; setEdge: (e: DockEdge)
         {NAV.slice(0, 5).map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} aria-label={label} draggable={false} className={({ isActive }) => `rounded-full p-2.5 transition-all active:scale-90 ${isActive ? 'bg-primary text-primary-foreground scale-105' : 'text-foreground/65'}`}><Icon className="h-4 w-4" /></NavLink>
         ))}
-        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side={side} align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}<DropdownMenuItem asChild><NavLink to="/student/profile"><UserRound className="h-4 w-4 mr-2"/>Profile</NavLink></DropdownMenuItem><DropdownMenuItem asChild><NavLink to="/student/settings"><SettingsIcon className="h-4 w-4 mr-2"/>Settings</NavLink></DropdownMenuItem><DropdownMenuCheckboxItem className="pl-2 [&>span:first-child]:hidden" checked={dark} onCheckedChange={c => setTheme(c ? 'dark' : 'light')} onSelect={e => e.preventDefault()}><Moon className="h-4 w-4 mr-2"/>Dark mode<Switch className="ml-auto pointer-events-none" tabIndex={-1} checked={dark} aria-hidden /></DropdownMenuCheckboxItem><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive dark:text-red-400 dark:focus:text-red-400" onSelect={signOut}><LogOut className="h-4 w-4 mr-2"/>Log out</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="More pages"><MoreHorizontal className="h-4 w-4"/></Button></DropdownMenuTrigger><DropdownMenuContent side={side} align="end">{NAV.slice(5).map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to}><Icon className="h-4 w-4 mr-2"/>{label}</NavLink></DropdownMenuItem>)}<DropdownMenuItem asChild><NavLink to="/student/profile"><UserRound className="h-4 w-4 mr-2"/>Profile</NavLink></DropdownMenuItem><DropdownMenuItem asChild><NavLink to="/student/settings"><SettingsIcon className="h-4 w-4 mr-2"/>Settings</NavLink></DropdownMenuItem>{isSolo && <SoloMenuLinks />}<DropdownMenuCheckboxItem className="pl-2 [&>span:first-child]:hidden" checked={dark} onCheckedChange={c => setTheme(c ? 'dark' : 'light')} onSelect={e => e.preventDefault()}><Moon className="h-4 w-4 mr-2"/>Dark mode<Switch className="ml-auto pointer-events-none" tabIndex={-1} checked={dark} aria-hidden /></DropdownMenuCheckboxItem><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive dark:text-red-400 dark:focus:text-red-400" onSelect={signOut}><LogOut className="h-4 w-4 mr-2"/>Log out</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       </motion.nav>
     </div>
   );
@@ -237,6 +238,7 @@ export default function CenterStudentPortal() {
                 <Route path="settings" element={<StudentSettingsPage />} />
                 <Route path="help" element={<CenterHelpPage />} />
                 <Route path="premium" element={<SoloPremium />} />
+                <Route path="billing" element={<SoloBilling />} />
                 <Route path="*" element={<Navigate to="/student" replace />} />
               </Routes>
             </div>

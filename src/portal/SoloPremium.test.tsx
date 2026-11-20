@@ -48,12 +48,11 @@ describe('solo premium page', () => {
   });
 
   it('welcomes a student once Premium is on, and never shows a second checkout', () => {
-    expect(render(premium, '/student/premium?payment=pay_1&status=succeeded')).toContain('Welcome to Premium');
-    const html = render(premium);
-    expect(html).toContain('You have Premium');
-    expect(html).toContain('href="https://whop.com/@me/settings/orders/"');
-    expect(html).toContain('Manage or cancel');
-    expect(html).not.toContain('Go Premium');
+    const welcome = render(premium, '/student/premium?payment=pay_1&status=succeeded');
+    expect(welcome).toContain('Welcome to Premium');
+    expect(welcome).toContain('href="/student/billing"');
+    // Any other visit goes to Billing (<Navigate> renders nothing; the redirect runs on mount).
+    expect(render(premium)).toBe('');
   });
 
   it('is only for solo students', () => {

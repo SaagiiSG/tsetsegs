@@ -10,7 +10,10 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 type MembershipEvent = {
   type: string
-  data: { id: string; status: string; current_period_end: string | null; updated_at: string; metadata?: Record<string, unknown> }
+  data: {
+    id: string; status: string; current_period_end: string | null; updated_at: string; metadata?: Record<string, unknown>
+    cancel_at_period_end?: boolean; billing_period_days?: number | null
+  }
 }
 
 Deno.serve(async (req) => {
@@ -37,6 +40,8 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
   const { data, error } = await admin.rpc('whop_sync_membership', {
     _user: user, _membership: m.id, _status: m.status, _period_end: m.current_period_end, _updated_at: m.updated_at,
+    // For the Billing page and the plan chip (0149).
+    _cancel_at_period_end: m.cancel_at_period_end ?? null, _billing_period_days: m.billing_period_days ?? null,
   })
   if (error) {
     console.error('whop_sync_membership', m.id, error.message)
