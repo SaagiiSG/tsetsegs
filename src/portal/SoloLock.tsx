@@ -1,9 +1,10 @@
+import { Link } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-/** Until checkout exists, it opens the pricing section. A plain link: the solo portal's router lives under /solo, and pricing is on the site root. */
-const TryPremium = () => <Button asChild><a href="/?lang=eng#pricing">Try Premium free for 7 days</a></Button>;
+/** Opens the checkout page (SoloPremium). No day count: early birds get 14, everyone else 7. */
+const TryPremium = () => <Button asChild><Link to="/student/premium">Try Premium free</Link></Button>;
 
 /** What a free solo student sees in place of a Premium feature. */
 export function SoloLock({ title }: { title: string }) {

@@ -25,12 +25,11 @@ it('the sign-in page sits on the cloud sky and offers Google, Apple and Microsof
   expect(html).toContain('Email me a code');
 });
 
-it('the closed screen takes an early bird email and offers only a sign-in for existing accounts', () => {
+it('the closed screen says opening soon, takes no email and offers only a sign-in for existing accounts', () => {
   const html = renderToStaticMarkup(<SoloClosed onHaveAccount={() => {}} />);
-  expect(html).toMatch(/<h1[^>]*>Get in before we open<\/h1>/);
-  expect(html).toContain('14 days of Premium free');
-  expect(html).toContain('Join early bird');
-  expect(html).toContain('href="/privacy"');
+  expect(html).toMatch(/<h1[^>]*>Opening soon<\/h1>/);
+  expect(html).not.toMatch(/early bird/i);
+  expect(html).not.toContain('<form');
   expect(html).toContain('I already have a solo account');
   expect(html).not.toContain('Continue with Google');
   expect(html).not.toContain('Email me a code');

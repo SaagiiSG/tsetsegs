@@ -1,13 +1,14 @@
 import { LegalPage } from "@/components/landing/LegalPage";
 
-// Owner name "Tsetsegs SAT Prep" is a placeholder until the company is set up (Saagii, 12 Nov 2026). Have a lawyer review both pages.
-const UPDATED = "17 November 2026";
+// Run by Saran-Ochir Sergelen, the seller on Whop, until a company takes over (Saagii, 19 Nov 2026); the address stays the
+// Ulaanbaatar office. Have a lawyer review both pages.
+const UPDATED = "19 November 2026";
 const EMAIL = <a href="mailto:manager@tsetsegs.com">manager@tsetsegs.com</a>;
 
 export function Terms() {
   return (
     <LegalPage title="Terms of Use" updated={UPDATED}>
-      <p>These terms cover your use of flowersos, the SAT practice platform at flowersos.co, including the student, teacher and center portals. flowersos is run by <strong>Tsetsegs SAT Prep</strong> (“we”, “us”), 1114, Ikh Nayad East Tower, 15-r khoroo, Khan-Uul district, Ulaanbaatar, Mongolia. By creating an account or using flowersos, you agree to these terms and to our <a href="/privacy">Privacy Policy</a>.</p>
+      <p>These terms cover your use of flowersos, the SAT practice platform at flowersos.co, including the student, teacher and center portals. flowersos is run by <strong>Saran-Ochir Sergelen</strong> (“we”, “us”), 1114, Ikh Nayad East Tower, 15-r khoroo, Khan-Uul district, Ulaanbaatar, Mongolia. By creating an account or using flowersos, you agree to these terms and to our <a href="/privacy">Privacy Policy</a>.</p>
 
       <h2>Who can use flowersos</h2>
       <ul>
@@ -27,6 +28,7 @@ export function Terms() {
       <ul>
         <li>The Free plan needs no card and never expires, but it has limits, such as how many questions, speed sessions and practice tests you can use. Our <a href="/?lang=eng#pricing">pricing section</a> shows exactly what it includes.</li>
         <li>Paid plans renew automatically each month or year until you cancel. Prices are shown before you pay.</li>
+        <li>We sell the paid plans. Whop, our payment provider, takes the payments, and you can cancel or change your card on Whop.</li>
         <li>A free trial of a paid plan needs a card. We remind you before the trial ends. If you don’t cancel before it ends, the plan starts and you are charged.</li>
         <li>You can cancel at any time. You keep paid features until the end of the period you paid for, then your account moves to the Free plan. Your progress stays.</li>
         <li>If a payment fails, your account moves to the Free plan.</li>
@@ -83,7 +85,7 @@ export function Terms() {
 export function Privacy() {
   return (
     <LegalPage title="Privacy Policy" updated={UPDATED}>
-      <p>This policy explains what personal data flowersos collects, why, who can see it, and what you can do about it. flowersos is run by <strong>Tsetsegs SAT Prep</strong> (“we”, “us”), 1114, Ikh Nayad East Tower, 15-r khoroo, Khan-Uul district, Ulaanbaatar, Mongolia. Contact us at {EMAIL}.</p>
+      <p>This policy explains what personal data flowersos collects, why, who can see it, and what you can do about it. flowersos is run by <strong>Saran-Ochir Sergelen</strong> (“we”, “us”), 1114, Ikh Nayad East Tower, 15-r khoroo, Khan-Uul district, Ulaanbaatar, Mongolia. Contact us at {EMAIL}.</p>
       <p>If a school or tutoring center gave you your account, that center also decides what is recorded in its classes. You can ask your center or us about your data.</p>
 
       <h2>What we collect</h2>
@@ -93,11 +95,11 @@ export function Privacy() {
         <li><strong>Class sign-up details:</strong> when a center enrolls you, it may record a parent or guardian’s name and phone number.</li>
         <li><strong>Practice activity:</strong> the questions you answer, your answers, how long you take, scores, points, streaks, badges, test results and use of tools like the calculator. Teachers may add attendance and notes.</li>
         <li><strong>Device and security data:</strong> when you sign in, your IP address and browser details. Students in the main portal also get a random device ID and a code made from browser settings (such as screen size, time zone and language), so an account can only be used on a limited number of devices.</li>
-        <li><strong>Early bird list:</strong> your email address, if you join the list before solo accounts open.</li>
+        <li><strong>Early bird list:</strong> your email address, if you joined the list before it closed.</li>
         <li><strong>Messages you send us:</strong> what you write in our contact, support and educator forms, bug reports and screenshots, and replies to our text messages.</li>
       </ul>
-      <p>When you create a solo account or join the early bird list, we check which country you are connecting from, because solo accounts are not available in Mongolia. We don’t store it.</p>
-      <p>When paid plans launch, your card is handled by our payment provider. We will not see or store your full card number.</p>
+      <p>When you create a solo account, we check which country you are connecting from, because solo accounts are not available in Mongolia. We don’t store it.</p>
+      <p>When you pay for a plan, your card is handled by Whop, our payment provider. We never see or store your full card number.</p>
 
       <h2>How we use it</h2>
       <ul>
@@ -123,6 +125,7 @@ export function Privacy() {
       <p>These companies process data for us so flowersos can work:</p>
       <ul>
         <li><strong>Supabase</strong>: database, sign-in and file storage.</li>
+        <li><strong>Whop</strong>: takes payments for paid plans. It gets your email, your card and billing details, and your account ID so we know who paid.</li>
         <li><strong>Lovable</strong>: hosting, sign-in with Google, Apple and Microsoft, and sending email.</li>
         <li><strong>Google, Apple and Microsoft</strong>: only if you choose to sign in with them.</li>
         <li><strong>OpenAI</strong> (through Lovable): writes study tips from your practice statistics, such as accuracy by topic. We don’t send your name, and the data isn’t kept for training.</li>

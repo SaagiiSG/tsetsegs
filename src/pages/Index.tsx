@@ -16,6 +16,7 @@ import { StudentStories } from "@/components/landing/StudentStories";
 import { DesmosSection } from "@/components/landing/DesmosSection";
 import { LegalFooter } from "@/components/landing/LegalFooter";
 import { mathExplanationsLabel, videoCountLabel } from "@/lib/educatorLanding";
+import { PREMIUM_PLAN } from "@/solo/plans";
 
 type Stats = { students: number; avg_gain: number; best_gain: number; gained100_pct: number; club700: number; club800: number; answers: number; bluebook: number; math_explanations: number };
 const FB = "https://www.facebook.com/tsetsegs.agency";
@@ -25,12 +26,11 @@ const BEST_GAIN = 198;
 // Solo plans (Saagii, 10 Nov): Free needs no card, both paid plans open with a 7-day trial. English only: Mongolian visitors are center students.
 // 1,425 Math, Free capped at 30 Math, 155 videos: his numbers (10 Nov), hardcoded like BEST_GAIN. No English count on the cards (17 Nov): 527 are hidden on intl accounts.
 const FREE_PLAN = ["30 Math questions", "Speed mode, 10 sessions a day", "1 full practice test", "The first lesson of every video topic", "Analytics and a predicted SAT score", "Mistake review", "Streaks, badges and the global league"];
-const PREMIUM_PLAN = ["Step-by-step explanations for every Math question", "All 1,425 Math questions, including the hardest problems for 800", "Unlimited speed mode", "Every practice test", "155 video lessons for SAT Math and English"];
-// Early bird list (Saagii, 17 Nov): early birds get 14 trial days instead of 7.
+// Both paid plans open with a 7-day trial. Early birds who joined by 19 Nov still get 14 at checkout (whop-checkout).
 const PLANS = [
   { name: "Free", price: "$0", per: "forever", note: "No card needed", list: FREE_PLAN },
-  { name: "Monthly", price: "$19", per: "/month", note: "14-day free trial for early birds", list: PREMIUM_PLAN },
-  { name: "Yearly", price: "$39", per: "/year", note: "14-day free trial for early birds · about $3.25 a month", list: PREMIUM_PLAN, best: true },
+  { name: "Monthly", price: "$19", per: "/month", note: "7-day free trial", list: PREMIUM_PLAN },
+  { name: "Yearly", price: "$39", per: "/year", note: "7-day free trial · about $3.25 a month", list: PREMIUM_PLAN, best: true },
 ];
 
 const Index = () => {
@@ -49,7 +49,7 @@ const Index = () => {
     <div className={`flex flex-wrap gap-3 ${center ? "justify-center" : ""}`}>
       {/* Solo sign-up is English only (Mongolian visitors are center students), so the Mongolian page keeps the demo. */}
       {lang === "eng"
-        ? <Button size="lg" asChild className="h-12 rounded-full px-7"><a href="/solo?lang=eng">Join early bird<ArrowRight /></a></Button>
+        ? <Button size="lg" asChild className="h-12 rounded-full px-7"><a href="/solo?lang=eng">Start free<ArrowRight /></a></Button>
         : <Button size="lg" onClick={() => window.location.assign(`/demo?signup=practice&lang=${lang}`)} className="h-12 rounded-full px-7">Демо үзэх<ArrowRight /></Button>}
       <Button size="lg" variant="outline" onClick={() => navigate(`/educators?lang=${lang}`)} className="h-12 rounded-full border-2 px-7">{text("Би багш", "I am an educator")}</Button>
       <Button size="lg" variant="ghost" onClick={() => navigate("/practice")} className="h-12 rounded-full px-7">{text("Нэвтрэх", "Sign in")}</Button>
@@ -162,14 +162,14 @@ const Index = () => {
 
         {lang === "eng" && <section id="pricing" className="py-20"><div className="lv-container">
           <motion.h2 {...reveal} className="lv-h2">Pricing</motion.h2>
-          <p className="lv-lead mt-4 max-w-2xl">Practice free for as long as you like. Premium unlocks everything. Join the early bird list now and both plans start with 14 days free when we launch.</p>
+          <p className="lv-lead mt-4 max-w-2xl">Practice free for as long as you like. Premium unlocks everything, and both plans start with a 7-day free trial.</p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">{PLANS.map(p => (
             <motion.div key={p.name} {...reveal} className={`lv-card flex flex-col p-6 ${p.best ? "ring-2 ring-accent" : ""}`}>
               <div className="flex items-center justify-between gap-2"><p className="font-semibold">{p.name}</p>{p.best && <Badge className="rounded-full">Best value</Badge>}</div>
               <p className="mt-4"><span className="font-mono text-4xl font-semibold">{p.price}</span> <span className="text-muted-foreground">{p.per}</span></p>
               <p className="mt-1 text-sm text-muted-foreground">{p.note}</p>
               <ul className="mt-6 flex-1 space-y-2 text-sm">{p.name !== "Free" && <li className="font-medium">Everything in Free, plus:</li>}{p.list.map(f => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{f}</li>)}</ul>
-              <Button asChild variant={p.best ? "default" : "outline"} className="mt-6 rounded-full"><a href={`/solo?lang=${lang}`}>Join early bird</a></Button>
+              <Button asChild variant={p.best ? "default" : "outline"} className="mt-6 rounded-full"><a href={`/solo?lang=${lang}`}>Start free</a></Button>
             </motion.div>
           ))}</div>
         </div></section>}

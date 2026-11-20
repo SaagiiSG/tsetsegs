@@ -93,7 +93,7 @@ describe('concept videos page', () => {
   it('a free solo user sees the Premium lock under a topic (the server sends only its first lesson)', () => {
     const free = render('/student/videos', videos, ['e1'], { plan: 'free', premium_until: null });
     expect(free).toContain('Every lesson in this topic');
-    expect(free).toContain('Try Premium free for 7 days');
+    expect(free).toContain('Try Premium free');
     expect(render('/student/videos', videos, ['e1'], { plan: 'premium', premium_until: null })).not.toContain('Every lesson in this topic');
     expect(render('/student/videos')).not.toContain('Every lesson in this topic');
   });

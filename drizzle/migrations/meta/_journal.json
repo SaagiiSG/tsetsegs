@@ -1016,6 +1016,20 @@
       "when": 1794968522526,
       "tag": "0144_apply_pending_0143",
       "breakpoints": true
+    },
+    {
+      "idx": 145,
+      "version": "7",
+      "when": 1794972122526,
+      "tag": "0145_whop_premium",
+      "breakpoints": true
+    },
+    {
+      "idx": 146,
+      "version": "7",
+      "when": 1794975722526,
+      "tag": "0146_early_bird_off_solo_testers",
+      "breakpoints": true
     }
   ]
 }

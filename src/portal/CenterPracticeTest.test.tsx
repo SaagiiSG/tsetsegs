@@ -62,7 +62,7 @@ describe('practice test runner', () => {
     const free = render({ ...ctx, center: { ...ctx.center, slug: 'solo' }, isSolo: true });
     expect(free).toContain('1/2 or .5');
     expect(free).toContain('Step-by-step explanations');
-    expect(free).toContain('Try Premium free for 7 days');
+    expect(free).toContain('Try Premium free');
     expect(free).not.toContain('Half of one is one over two.');
     query.plan = { plan: 'premium', premium_until: null };
     expect(render({ ...ctx, center: { ...ctx.center, slug: 'solo' }, isSolo: true })).toContain('Half of one is one over two.');

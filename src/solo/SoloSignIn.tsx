@@ -47,45 +47,16 @@ export function SoloBlocked({ onHaveAccount, onSignOut }: { onHaveAccount?: () =
   );
 }
 
-// Sign-up paused (Saagii, 13 Nov; 0134 refuses new joins too), so new visitors join the early bird list (17 Nov, 0143):
-// 14 days of Premium free at launch instead of 7. Solo students who already joined still sign in.
+// Sign-up closed until Whop takes real cards (Saagii, 13 Nov; 0134 refuses new joins too). The early bird list closed
+// 19 Nov (0146). Solo students who already joined, and emails in solo_testers, sign in with the button.
 export function SoloClosed({ onHaveAccount }: { onHaveAccount: () => void }) {
-  const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [joined, setJoined] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const join = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true); setError(null);
-    const { error: err } = await supabase.rpc('join_early_bird' as never, { _email: email.trim() } as never);
-    setBusy(false);
-    if (err) setError(err.message || 'Something went wrong. Try again.'); else setJoined(true);
-  };
-
   return (
     <SoloShell>
-      {joined ? (
-        <div className="space-y-3">
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Early bird</p>
-          <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">You're on the list</h1>
-          <p className="text-sm text-muted-foreground">We'll email {email.trim()} when flowersos opens. Your 14 days of Premium free will be waiting.</p>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-3">
-            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Early bird</p>
-            <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">Get in before we open</h1>
-            <p className="text-sm text-muted-foreground">Join the early bird list and get 14 days of Premium free when we launch, instead of 7. <a className="underline underline-offset-4 hover:text-foreground" href="/?lang=eng#pricing">See plans</a></p>
-          </div>
-          <form onSubmit={join} className="space-y-4">
-            <div className="space-y-1.5"><Label htmlFor="early-email" className={authLabelClasses}>Email</Label><Input id="early-email" type="email" required autoComplete="email" className={authInputClasses} value={email} onChange={e => setEmail(e.target.value)} /></div>
-            <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !email.trim()}>Join early bird</Button>
-            <p className="text-xs text-muted-foreground">We'll email you SAT tips and tell you when we open. Unsubscribe any time. <a className="underline underline-offset-4 hover:text-foreground" href="/privacy">Privacy Policy</a></p>
-          </form>
-          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-        </>
-      )}
+      <div className="space-y-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Solo practice</p>
+        <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">Opening soon</h1>
+        <p className="text-sm text-muted-foreground">Solo accounts open soon. Free practice, no card needed. <a className="underline underline-offset-4 hover:text-foreground" href="/?lang=eng#pricing">See plans</a></p>
+      </div>
       <Button variant="outline" className={oauthButton} onClick={onHaveAccount}>I already have a solo account</Button>
     </SoloShell>
   );

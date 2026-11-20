@@ -1,0 +1,126 @@
+import { useEffect, useState } from 'react';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTheme } from 'next-themes';
+import { loadWhop } from '@whop/elements';
+import { Checkout, CheckoutElement, WhopElements } from '@whop/elements-react';
+import { Check } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PREMIUM_PLAN } from '@/solo/plans';
+import { PageHeader } from './admin/ui';
+import { useSoloPlan } from './soloPlan';
+
+type Cycle = 'monthly' | 'yearly';
+
+// shortcut: Whop's shared Orders page, not the membership's own manage_url (webhooks may leave it out), and live Whop
+// only, so a sandbox tester cancels in the sandbox dashboard. Swap to manage_url if buyers get lost there.
+const WHOP_ORDERS = 'https://whop.com/@me/settings/orders/';
+type Session = { id: string; environment: 'production' | 'sandbox'; email: string };
+
+// Whop's hosted script loads on the first visit to this page, once, and never on any other page.
+let whop: ReturnType<typeof loadWhop> | undefined;
+const getWhop = () => (whop ??= loadWhop());
+
+/** whop-checkout picks the plan (14 days for early birds) and puts the student's id on the checkout. */
+async function startCheckout(cycle: Cycle): Promise<Session> {
+  const { data, error } = await supabase.functions.invoke('whop-checkout', { body: { cycle } });
+  if (error) {
+    const msg = await (error as { context?: Response }).context?.json().then((j: { error?: string }) => j.error).catch(() => null);
+    throw new Error(msg || 'Checkout is unavailable right now. Please try again.');
+  }
+  return data as Session;
+}
+
+/**
+ * Solo Premium checkout: our page around Whop's card form (Saagii, 17 Nov). Premium turns on only from Whop's webhook
+ * (whop-webhook, 0145), never from this page. Whop sends the buyer back here with ?status= after paying, or after a
+ * bank check such as 3D Secure, so `succeeded` waits for the webhook and anything else shows the form again.
+ */
+export function SoloPremium() {
+  const { isSolo, premium, ready } = useSoloPlan();
+  const [params] = useSearchParams();
+  const status = params.get('status');
+  const [cycle, setCycle] = useState<Cycle>('yearly');
+
+  if (!isSolo) return <Navigate to="/student" replace />;
+  if (!ready) return <Skeleton className="h-96 w-full max-w-xl rounded-xl" />;
+  if (premium) {
+    return (
+      <Card className="max-w-xl">
+        <CardHeader>
+          <CardTitle>{status === 'succeeded' ? 'Welcome to Premium' : 'You have Premium'}</CardTitle>
+          <CardDescription>Every Math explanation, practice test and video lesson is open to you.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Button asChild><Link to="/student">Start practicing</Link></Button>
+            <Button asChild variant="outline"><a href={WHOP_ORDERS} target="_blank" rel="noopener noreferrer">Manage or cancel</a></Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Whop handles your billing. Sign in there with this account's email to change your card or cancel.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  if (status === 'succeeded') return <Activating />;
+
+  return (
+    <div className="max-w-xl space-y-4">
+      <PageHeader title="Go Premium" description="Your free trial starts today. The form below shows the date of your first charge." />
+      {status && <p className="text-sm text-destructive">Your payment didn't go through. You can try again below.</p>}
+      <ul className="space-y-2 text-sm">
+        {PREMIUM_PLAN.map(item => <li key={item} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />{item}</li>)}
+      </ul>
+      <Tabs value={cycle} onValueChange={v => setCycle(v as Cycle)}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="monthly">Monthly · $19</TabsTrigger>
+          <TabsTrigger value="yearly">Yearly · $39</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {/* A new checkout per plan: Whop fixes what's being bought when the form mounts. */}
+      <CheckoutForm key={cycle} cycle={cycle} />
+    </div>
+  );
+}
+
+function CheckoutForm({ cycle }: { cycle: Cycle }) {
+  const { resolvedTheme } = useTheme();
+  const session = useQuery({ queryKey: ['whop-checkout', cycle], queryFn: () => startCheckout(cycle), staleTime: Infinity, retry: false });
+  const loading = <Skeleton className="h-96 w-full rounded-xl" />;
+  if (session.isPending) return loading;
+  if (session.isError) return <p className="text-sm text-destructive">{session.error.message}</p>;
+  const { id, environment, email } = session.data;
+  return (
+    // skipPixel: no Whop ad tracking on a page our students use.
+    <WhopElements elements={getWhop()} environment={environment} skipPixel
+      appearance={{ theme: { appearance: resolvedTheme === 'dark' ? 'dark' : 'light', accentColor: 'sky' } }}>
+      <Checkout checkoutConfiguration={id} returnUrl={`${window.location.origin}/solo/student/premium`} fallback={loading}>
+        <CheckoutElement buyerEmail={email} lockBuyerEmail />
+      </Checkout>
+    </WhopElements>
+  );
+}
+
+/** Paid: Whop's webhook usually lands within seconds. Re-read the plan until it does. */
+function Activating() {
+  const qc = useQueryClient();
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const tick = setInterval(() => qc.invalidateQueries({ queryKey: ['solo-plan'] }), 2000);
+    const late = setTimeout(() => setSlow(true), 60_000);
+    return () => { clearInterval(tick); clearTimeout(late); };
+  }, [qc]);
+  return (
+    <Card className="max-w-xl">
+      <CardHeader>
+        <CardTitle>Turning on Premium…</CardTitle>
+        <CardDescription>
+          {slow ? 'Your payment went through, but Premium is taking longer than usual. Check back in a few minutes, or contact us from Help.' : 'Your payment went through. This takes a few seconds.'}
+        </CardDescription>
+      </CardHeader>
+    </Card>
+  );
+}

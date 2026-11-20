@@ -26,7 +26,7 @@ describe('practice tests on the free solo plan', () => {
     const html = render([test], { plan: 'free', premium_until: null });
     expect(html).toContain('Practice Test 1');
     expect(html).toContain('5 more practice tests');
-    expect(html).toContain('Try Premium free for 7 days');
+    expect(html).toContain('Try Premium free');
   });
   it('a free user with no free test still sees the lock, not "No tests"', () => {
     const html = render([], { plan: 'free', premium_until: null });

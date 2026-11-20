@@ -37,3 +37,5 @@ project_id = "plfaixcjzrhpaxfhfstd"
     verify_jwt = false
   [functions.verify-password-reset]
     verify_jwt = false
+  [functions.whop-webhook]
+    verify_jwt = false
