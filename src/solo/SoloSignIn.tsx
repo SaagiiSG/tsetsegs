@@ -49,21 +49,6 @@ export function SoloBlocked({ onHaveAccount, onSignOut }: { onHaveAccount?: () =
   );
 }
 
-// Sign-up closed until Whop takes real cards (Saagii, 13 Nov; 0134 refuses new joins too). The early bird list closed
-// 19 Nov (0146). Solo students who already joined, and emails in solo_testers, sign in with the button.
-export function SoloClosed({ onHaveAccount }: { onHaveAccount: () => void }) {
-  return (
-    <SoloShell>
-      <div className="space-y-3">
-        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Solo practice</p>
-        <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">Opening soon</h1>
-        <p className="text-sm text-muted-foreground">Solo accounts open soon. Free practice, no card needed. <a className="underline underline-offset-4 hover:text-foreground" href="/?lang=eng#pricing">See plans</a></p>
-      </div>
-      <Button variant="outline" className={oauthButton} onClick={onHaveAccount}>I already have a solo account</Button>
-    </SoloShell>
-  );
-}
-
 export default function SoloSignIn() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
