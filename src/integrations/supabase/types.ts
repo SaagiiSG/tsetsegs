@@ -3863,6 +3863,7 @@ export type Database = {
           plan: string
           premium_until: string | null
           provider: string | null
+          trial_reminded_for: string | null
           updated_at: string
           user_id: string
           whop_billing_period_days: number | null
@@ -3879,6 +3880,7 @@ export type Database = {
           plan?: string
           premium_until?: string | null
           provider?: string | null
+          trial_reminded_for?: string | null
           updated_at?: string
           user_id: string
           whop_billing_period_days?: number | null
@@ -3895,6 +3897,7 @@ export type Database = {
           plan?: string
           premium_until?: string | null
           provider?: string | null
+          trial_reminded_for?: string | null
           updated_at?: string
           user_id?: string
           whop_billing_period_days?: number | null
@@ -6746,6 +6749,16 @@ export type Database = {
         Args: { _challenge_id: string }
         Returns: boolean
       }
+      claim_trial_reminders: {
+        Args: never
+        Returns: {
+          billing_period_days: number
+          email: string
+          name: string
+          period_end: string
+          user_id: string
+        }[]
+      }
       class_test_finalize: { Args: { p_test_id: string }; Returns: number }
       class_test_join: {
         Args: { p_join_code: string; p_phone: string }
@@ -7675,6 +7688,10 @@ export type Database = {
       tenant_user_in_center: {
         Args: { _except?: string; _institution: string; _uid: string }
         Returns: boolean
+      }
+      unclaim_trial_reminder: {
+        Args: { _period_end: string; _user: string }
+        Returns: undefined
       }
       verify_student_password: {
         Args: { input_password: string; stored_hash: string }
