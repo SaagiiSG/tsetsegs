@@ -2,16 +2,8 @@
 
 import * as React from 'npm:react@18.3.1'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
+import { Button, Text } from 'npm:@react-email/components@0.0.22'
+import { EmailLayout, button, code, text } from '../email-layout.tsx'
 
 interface MagicLinkEmailProps {
   siteName: string
@@ -20,77 +12,27 @@ interface MagicLinkEmailProps {
 }
 
 export const MagicLinkEmail = ({
-  siteName,
   confirmationUrl,
   token,
 }: MagicLinkEmailProps) => (
-  <Html lang="en" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>Your login link for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Your login link</Heading>
-        <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
-          shortly.
-        </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Log In
-        </Button>
-        {token && (
-          <>
-            <Text style={text}>Or enter this code on the sign-in page:</Text>
-            <Text style={codeStyle}>{token}</Text>
-          </>
-        )}
-        <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+  <EmailLayout
+    preview={token ? `Your sign-in code is ${token}` : 'Your sign-in link'}
+    heading={token ? 'Your sign-in code' : 'Your sign-in link'}
+    footer="Didn't ask to sign in? You can ignore this email."
+  >
+    {token && (
+      <>
+        <Text style={text}>Enter this code on the sign-in page.</Text>
+        <Text style={code}>{token}</Text>
+      </>
+    )}
+    <Text style={text}>
+      {token ? 'Or tap the button to sign in.' : 'Tap the button to sign in.'}
+    </Text>
+    <Button style={button} href={confirmationUrl}>
+      Sign in
+    </Button>
+  </EmailLayout>
 )
 
 export default MagicLinkEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#1a1a2e',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const button = {
-  backgroundColor: '#F0627E',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #F0627E',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const codeStyle = {
-  fontFamily: 'Courier, monospace',
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#1a1a2e',
-  margin: '0 0 30px',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-`
