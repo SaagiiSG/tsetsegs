@@ -5,9 +5,11 @@ import {
   Home, BookOpen, ClipboardList, RotateCcw, Zap, Trophy, PlayCircle, Award, BarChart3, LifeBuoy, UserRound, Settings, Moon, LogOut,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { CenterLogo, centerDisplayName, useCenter } from './centerContext';
 import { SoloMenuLinks } from './SoloBilling';
+import { avatarSrc } from './centerProfile';
 
 export const NAV = [
   { to: '/student', label: 'Home', icon: Home, end: true },
@@ -41,7 +43,7 @@ const label = 'whitespace-nowrap opacity-0 transition-opacity duration-200 motio
 
 /** The student's name at the foot of the rail; hovering it (or a click or Enter) opens the account menu. */
 function AccountMenu({ open, setOpen }: { open: boolean; setOpen: (o: boolean) => void }) {
-  const { name, signOut, isSolo } = useCenter();
+  const { name, avatar, signOut, isSolo } = useCenter();
   const { resolvedTheme, setTheme } = useTheme();
   const shut = useRef<ReturnType<typeof setTimeout>>();
   // Opened by hover, closing must not hand focus back to the name: a focused name keeps the rail open (has-[:focus-visible]).
@@ -58,7 +60,7 @@ function AccountMenu({ open, setOpen }: { open: boolean; setOpen: (o: boolean) =
           onPointerDown={e => { if (e.pointerType === 'mouse' && open) e.preventDefault(); }}
           onKeyDown={() => { byHover.current = false; }}
           className="sky-nav flex h-10 w-full items-center gap-3 rounded-full px-1 text-base transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
-          <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full sky-avatar !text-xs font-semibold">{initials(name)}</span>
+          <Avatar aria-hidden className="h-8 w-8"><AvatarImage src={avatarSrc(avatar)} alt="" /><AvatarFallback className="sky-avatar !text-xs font-semibold">{initials(name)}</AvatarFallback></Avatar>
           <span className={`min-w-0 truncate font-medium ${label}`}>{name}</span>
         </button>
       </DropdownMenuTrigger>

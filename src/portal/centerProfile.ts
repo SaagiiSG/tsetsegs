@@ -3,6 +3,16 @@ import { TIER_ORDER, type BadgeRarity, type TierType } from '@/data/badgeDefinit
 import { PRACTICE_SETS } from './practiceSets';
 import { dayKey } from './CenterStreak';
 
+/** Profile pictures (0157): public/avatars/n01-n16.svg, Notionists by Zoish (CC0). The database accepts only these names. */
+export const AVATARS = Array.from({ length: 16 }, (_, i) => `n${String(i + 1).padStart(2, '0')}`);
+export const avatarSrc = (a?: string | null) => (a ? `/avatars/${a}.svg` : undefined);
+
+/** Study time as "3h 20m", "45m" or "<1m". */
+export function studyTime(seconds: number): string {
+  const m = Math.floor(seconds / 60), h = Math.floor(m / 60);
+  return h ? `${h}h ${m % 60}m` : m ? `${m}m` : '<1m';
+}
+
 /** Same formula as the leaderboard: level L starts at 100 * (2^(L-1) - 1) points. */
 export function centerLevel(points: number): { level: number; progress: number; toNext: number } {
   let level = 1;
@@ -30,7 +40,9 @@ export function centerBadges(i: { answered: number; correct: number; present: nu
   ];
 }
 
-export type RawProfile = { name: string; class_name: string | null; joined: string; tier: string; points: number; practice_answered: number; practice_correct: number; math_correct: number; english_correct: number; speed_runs: number; best_speed: number | null; present: number; solved_ids: string[]; last_active: string | null; activity: { date: string; points: number; answers: number }[]; history: { sprint: string; tier: string; next_tier: string; position: number; points: number }[] };
+export type RawProfile = { name: string; class_name: string | null; joined: string; tier: string; points: number; practice_answered: number; practice_correct: number; math_correct: number; english_correct: number; speed_runs: number; best_speed: number | null; present: number; solved_ids: string[]; last_active: string | null; activity: { date: string; points: number; answers: number }[]; history: { sprint: string; tier: string; next_tier: string; position: number; points: number }[];
+  // 0157: avatar for everyone; study_seconds only on the student's own profile (null for a classmate).
+  avatar?: string | null; study_seconds?: number | null };
 
 const asTier = (t: string): TierType => (TIER_ORDER as readonly string[]).includes(t) ? t as TierType : 'unranked';
 

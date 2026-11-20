@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { centerLevel, centerBadges, toProfileView, type RawProfile } from './centerProfile';
+import { centerLevel, centerBadges, toProfileView, studyTime, AVATARS, type RawProfile } from './centerProfile';
+import { boardName } from './EditProfileDialog';
 const raw: RawProfile = { name: 'Ana Lee', class_name: 'SAT A', joined: '2026-09-01T00:00:00Z', tier: 'gold', points: 250, practice_answered: 40, practice_correct: 30, math_correct: 20, english_correct: 10, speed_runs: 3, best_speed: 9, present: 10, solved_ids: ['q1', 'q2'], last_active: '2026-10-24T10:00:00Z',
   activity: [{ date: '2026-10-23', points: 20, answers: 3 }, { date: '2026-10-24', points: 15, answers: 2 }],
   history: [{ sprint: 'Sprint 1', tier: 'silver', next_tier: 'gold', position: 4, points: 120 }, { sprint: 'Sprint 2', tier: 'gold', next_tier: 'silver', position: 30, points: 10 }] };
@@ -55,3 +56,22 @@ describe('master badges on the free solo plan', () => it('are left out entirely,
   expect(free.some(b => b.key.startsWith('master_'))).toBe(false);
   expect(free.map(b => b.key)).toEqual(['first_steps', 'centurion', 'marathon', 'sharpshooter', 'regular']);
 }));
+
+describe('profile edits (0157)', () => {
+  it('previews the board name the way the database makes it', () => {
+    expect(boardName('Saran Ochir Sergelen')).toBe('Saran S.');
+    expect(boardName('  saagii ')).toBe('saagii');
+    expect(boardName('Ana  maria')).toBe('Ana M.');
+    expect(boardName('   ')).toBe('');
+  });
+  it('shows study time in hours and minutes', () => {
+    expect(studyTime(0)).toBe('<1m');
+    expect(studyTime(59)).toBe('<1m');
+    expect(studyTime(45 * 60)).toBe('45m');
+    expect(studyTime(3 * 3600 + 20 * 60 + 5)).toBe('3h 20m');
+  });
+  it('has exactly the 16 pictures the database accepts', () => {
+    expect(AVATARS).toHaveLength(16);
+    expect(AVATARS.every(a => /^n(0[1-9]|1[0-6])$/.test(a))).toBe(true);
+  });
+});

@@ -8,7 +8,9 @@ export type Center = { id: string; name: string; country: string; slug: string; 
 export type CenterRole = 'center_admin' | 'teacher' | 'student';
 
 // rename: the portal's own copy of the name, after a solo student sets it in onboarding (solo_set_name, 0155).
-type Ctx = { center: Center; role: CenterRole | null; name: string; userId: string | null; isSolo: boolean; signOut: () => void; reloadCenter: () => void; rename?: (name: string) => void };
+// avatar / setAvatar: a student's picture (0157), and the same kind of copy after they pick one on their profile.
+type Ctx = { center: Center; role: CenterRole | null; name: string; userId: string | null; isSolo: boolean; signOut: () => void; reloadCenter: () => void; rename?: (name: string) => void;
+  avatar?: string | null; setAvatar?: (avatar: string | null) => void };
 export const CenterContext = createContext<Ctx | null>(null);
 export function useCenter() {
   const ctx = useContext(CenterContext);

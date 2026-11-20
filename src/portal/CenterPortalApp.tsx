@@ -32,6 +32,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [role, setRole] = useState<CenterRole | null | undefined>(undefined);
   const [memberName, setMemberName] = useState('');
+  const [memberAvatar, setMemberAvatar] = useState<string | null>(null);
   const [access, setAccess] = useState<{ blocked: boolean; warnings: number } | null>(null);
   const [recovering, setRecovering] = useState(false);
   const [canContact, setCanContact] = useState(false);
@@ -76,7 +77,12 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
       ]);
       if (cancelled) return;
       if (member?.active) { setRole(member.role as CenterRole); setMemberName(member.display_name); }
-      else if (student?.active) { setRole('student'); setMemberName(student.name); }
+      else if (student?.active) {
+        setRole('student'); setMemberName(student.name);
+        // Its own read, so the sign-in check above never depends on 0157's column: before it's applied this just fails to null.
+        const { data: pic } = await supabase.from('tenant_students').select('avatar').eq('institution_id', center.id).eq('user_id', uid).maybeSingle();
+        if (!cancelled) setMemberAvatar(pic?.avatar ?? null);
+      }
       else setRole(null);
     })();
     return () => { cancelled = true; };
@@ -135,7 +141,7 @@ export default function CenterPortalApp({ slug }: { slug: string }) {
   const isSolo = center.slug === 'solo';
   const home = role === 'center_admin' ? '/admin' : role === 'teacher' ? '/teacher' : role === 'student' ? (afterSignIn() ?? '/student') : '/';
   return (
-    <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, isSolo, signOut, reloadCenter: loadCenter, rename: setMemberName }}>
+    <CenterContext.Provider value={{ center, role: role ?? null, name: memberName, userId: session?.user.id ?? null, isSolo, signOut, reloadCenter: loadCenter, rename: setMemberName, avatar: memberAvatar, setAvatar: setMemberAvatar }}>
       {role === 'center_admin' && (access?.warnings ?? 0) > 0 && (
         <div role="alert" className="relative z-50 bg-status-risk/10 text-status-risk text-sm text-center px-4 py-2 border-b border-status-risk/20">
           Payment overdue — warning {access!.warnings} of 3. After 3 warnings, access to this portal can be paused. To settle your bill, <ContactSupport centerId={center.id} variant="link" className="h-auto p-0 text-status-risk underline" />.

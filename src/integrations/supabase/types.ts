@@ -6302,6 +6302,7 @@ export type Database = {
       tenant_students: {
         Row: {
           active: boolean
+          avatar: string | null
           class_id: string | null
           created_at: string
           email: string | null
@@ -6323,6 +6324,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          avatar?: string | null
           class_id?: string | null
           created_at?: string
           email?: string | null
@@ -6344,6 +6346,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          avatar?: string | null
           class_id?: string | null
           created_at?: string
           email?: string | null
@@ -7660,6 +7663,10 @@ export type Database = {
           student_id: string
           tier: string
         }[]
+      }
+      tenant_set_my_avatar: {
+        Args: { _avatar: string; _institution: string }
+        Returns: undefined
       }
       tenant_student_profile: {
         Args: { _institution: string; _student: string; _tz?: string }

@@ -73,6 +73,26 @@ export function useBillingSummary() {
   return billingSummary(billing.data ?? { plan: premium ? 'premium' : 'free', premium_until: null, whop_membership_id: null, whop_status: null, whop_period_end: null, whop_cancel_at_period_end: null, whop_billing_period_days: null });
 }
 
+/** Solo students' plan on their profile (Saagii: 19 Nov in Settings, 20 Nov moved to the merged Profile): the same line as
+ *  Billing, with Upgrade or Manage billing. */
+export function SoloPlanCard() {
+  const s = useBillingSummary();
+  if (!s) return null;
+  return (
+    <div className="sky-card space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="sky-tile sky-tile-blue"><CreditCard /></span>
+        <div><p className="text-lg font-bold">Plan & billing</p><p className="text-sm text-muted-foreground">{s.title}</p></div>
+      </div>
+      <p className="text-sm">{s.line}</p>
+      <div className="flex flex-wrap gap-2">
+        {s.kind === 'free' && <Button asChild><Link to="/student/premium">Upgrade to Premium</Link></Button>}
+        {(s.kind === 'trial' || s.kind === 'paid') && <Button asChild variant="outline"><Link to="/student/billing">Manage billing</Link></Button>}
+      </div>
+    </div>
+  );
+}
+
 /** Cancel at the period end, or undo that, through whop-manage; the plan queries refresh with Whop's answer. */
 function useManage() {
   const qc = useQueryClient();

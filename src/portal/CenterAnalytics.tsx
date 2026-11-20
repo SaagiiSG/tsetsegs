@@ -73,7 +73,7 @@ function compute(attempts: Attempt[], meta: Record<string, QMeta>, subject: 'mat
   return { topicAccuracy, diff, ep, progressHistory, consistency, total, correct, overall, mastered, currentScore: Math.round(overall * 16) };
 }
 
-export function CenterAnalyticsPage({ attempts, meta, streak }: { attempts: Attempt[]; meta: Record<string, QMeta>; streak: number }) {
+export function CenterAnalyticsPage({ attempts, meta, streak, target = 1400 }: { attempts: Attempt[]; meta: Record<string, QMeta>; streak: number; target?: number }) {
   const [subject, setSubject] = useState<'math' | 'english'>('math');
   const a = useMemo(() => compute(attempts, meta, subject), [attempts, meta, subject]);
   const [ai, setAi] = useState(''); const [aiErr, setAiErr] = useState(''); const [loading, setLoading] = useState(false);
@@ -134,7 +134,7 @@ export function CenterAnalyticsPage({ attempts, meta, streak }: { attempts: Atte
         <ErrorPatternTracker errorPatterns={a.ep} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ProgressVelocityGraph progressHistory={a.progressHistory} currentScore={a.currentScore} targetScore={1400} />
+        <ProgressVelocityGraph progressHistory={a.progressHistory} currentScore={a.currentScore} targetScore={target} />
         <ConsistencyScoreCard consistencyMetrics={a.consistency} />
       </div>
     </div>
