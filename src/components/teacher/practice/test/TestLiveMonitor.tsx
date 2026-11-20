@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, CheckCircle2, Loader2, RefreshCw, Users } from 'lucide-react';
 import { ClassTestResults } from './ClassTestResults';
+import { ReleaseSeatButton } from './ReleaseSeatButton';
 
 function fmt(s: number) {
   const m = Math.floor(s / 60);
@@ -13,7 +14,8 @@ function fmt(s: number) {
 }
 
 /**
- * While the exam runs the teacher only needs the clock and a way to end it.
+ * While the exam runs the teacher only needs the clock, a way to end it, and the roster to release the seat of a
+ * student who switched phones.
  * Students work fully offline and upload their paper once at submit, so there is
  * no per-question progress to stream — results appear on the results page after.
  */
@@ -138,6 +140,27 @@ export function TestLiveMonitor({ testId, onBack }: { testId: string; onBack: ()
           Refresh count
         </Button>
       </Card>
+
+      {participants.length > 0 && (
+        <Card className="p-4">
+          <div className="text-sm font-semibold">Students</div>
+          <p className="text-xs text-muted-foreground mb-3">
+            A student who switched phones can't join again until you release their seat.
+          </p>
+          <div className="space-y-1.5 max-h-[320px] overflow-y-auto">
+            {participants.map((p) => (
+              <div key={p.id} className="flex items-center gap-2 text-sm pl-2 pr-1 py-1 rounded-md bg-muted/40">
+                <span className="min-w-0 flex-1 truncate">{p.display_name}</span>
+                {p.submitted_at ? (
+                  <span className="px-2 text-xs text-muted-foreground">Submitted</span>
+                ) : (
+                  <ReleaseSeatButton participantId={p.id} name={p.display_name} />
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

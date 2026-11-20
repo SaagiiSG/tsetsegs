@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Loader2, Play, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { ReleaseSeatButton } from './ReleaseSeatButton';
 
 /**
  * Lobby the teacher projects: students scan the QR, enter their phone number and
@@ -97,8 +98,9 @@ export function TestJoinScreen({
           ) : (
             <div className="space-y-1.5 max-h-[420px] overflow-y-auto">
               {participants.map((p) => (
-                <div key={p.id} className="text-sm px-2 py-1.5 rounded-md bg-muted/40 truncate">
-                  {p.display_name}
+                <div key={p.id} className="flex items-center gap-2 text-sm pl-2 pr-1 py-1 rounded-md bg-muted/40">
+                  <span className="min-w-0 flex-1 truncate">{p.display_name}</span>
+                  <ReleaseSeatButton participantId={p.id} name={p.display_name} />
                 </div>
               ))}
             </div>

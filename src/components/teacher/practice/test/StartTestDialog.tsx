@@ -104,9 +104,7 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
     }
     if (picks.length === 0) return;
     setCreating(true);
-    const code = Array.from({ length: 6 }, () =>
-      'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)],
-    ).join('');
+    // The join code is made on the server (0160) and read back below.
     const { data, error } = await supabase
       .from('class_tests')
       .insert({
@@ -118,7 +116,6 @@ export function StartTestDialog({ open, onOpenChange, onStarted }: Props) {
         duration_seconds: effectiveDuration * 60,
         starts_at: new Date().toISOString(),
         status: 'scheduled',
-        join_code: code,
       })
       .select('id, join_code')
       .maybeSingle();

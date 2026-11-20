@@ -53,9 +53,10 @@ export function ClassTestResultScreen({ test, questions, answers, serverScore, k
   );
 
 
-  const score = serverScore ? serverScore.correct : results.filter((r) => r.correct).length;
+  // After a reload the server's score is gone and the key waits for the end, so there is nothing to count yet.
+  const score = serverScore ? serverScore.correct : keyLoaded ? results.filter((r) => r.correct).length : null;
   const total = questions.length || test.question_ids.length;
-  const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+  const accuracy = total > 0 && score !== null ? Math.round((score / total) * 100) : 0;
 
 
   return (
@@ -64,15 +65,17 @@ export function ClassTestResultScreen({ test, questions, answers, serverScore, k
         <div className="text-center">
           <div className="text-xs uppercase tracking-wide text-muted-foreground">{test.title}</div>
           <div className="mt-3 font-mono text-6xl font-bold tabular-nums">
-            {score}
+            {score ?? '–'}
             <span className="text-muted-foreground text-3xl"> / {total}</span>
           </div>
-          <div className="mt-1 text-sm text-muted-foreground">{accuracy}% accuracy</div>
+          {score !== null && <div className="mt-1 text-sm text-muted-foreground">{accuracy}% accuracy</div>}
         </div>
 
         {!keyLoaded && (
           <p className="text-center text-xs text-muted-foreground">
-            Loading the answer key for your review…
+            {test.status === 'finished'
+              ? 'Loading the answer key for your review…'
+              : "Your answers are in. You'll see the correct answers when your teacher ends the test."}
           </p>
         )}
 
@@ -134,9 +137,9 @@ export function ClassTestResultScreen({ test, questions, answers, serverScore, k
                     <span
                       className={cn(
                         'mt-0.5 h-5 w-5 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold',
-                        r.correct
+                        keyLoaded && r.correct
                           ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                          : r.answered
+                          : keyLoaded && r.answered
                           ? 'bg-destructive/15 text-destructive'
                           : 'bg-muted text-muted-foreground',
                       )}

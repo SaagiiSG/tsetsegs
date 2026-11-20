@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,26 @@ interface JoinResult {
 
 const STORAGE_PREFIX = 'class-exam:';
 
+/** This phone's key for its seat, made once and kept beside the number. The first phone to join binds the seat with
+ *  it, so a classmate who knows your number can't take the seat over. Saved before joining: a join that lands on the
+ *  server but loses its reply must not leave the phone with a key the seat doesn't know. */
+function seatKey(code: string): string {
+  let saved: { phone?: string; key?: string } = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(STORAGE_PREFIX + code) ?? '{}') ?? {};
+  } catch {
+    /* ignore */
+  }
+  if (typeof saved.key === 'string' && saved.key.length >= 32) return saved.key;
+  const key = Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, '0')).join('');
+  try {
+    localStorage.setItem(STORAGE_PREFIX + code, JSON.stringify({ ...saved, key }));
+  } catch {
+    /* no storage: the key lasts while this page is open */
+  }
+  return key;
+}
+
 export default function ClassExam() {
   const { joinCode = '' } = useParams();
   const code = joinCode.toUpperCase();
@@ -34,6 +54,7 @@ export default function ClassExam() {
   const [test, setTest] = useState<ClassTest | null>(null);
   const [loadingTest, setLoadingTest] = useState(true);
   const [exited, setExited] = useState(false);
+  const deviceKey = useMemo(() => seatKey(code), [code]);
 
   /* ---------- live test row (public read) ----------
      Only swap state when something meaningful changed. Returning a fresh object
@@ -109,13 +130,15 @@ export default function ClassExam() {
       const { data, error } = await supabase.rpc('class_test_join', {
         p_join_code: code,
         p_phone: rawPhone,
+        p_device_key: deviceKey,
       });
       const row = (Array.isArray(data) ? data[0] : data) as JoinResult | undefined;
       if (error || !row) {
-        if (!silent) toast.error(error?.message ?? 'Could not join this exam');
+        // No row, no error: a wrong code or a number not in this class (the server doesn't say which).
+        if (!silent) toast.error(error?.message ?? 'Check the code and your number.');
         return false;
       }
-      localStorage.setItem(STORAGE_PREFIX + code, JSON.stringify({ phone: rawPhone }));
+      localStorage.setItem(STORAGE_PREFIX + code, JSON.stringify({ phone: rawPhone, key: deviceKey }));
       setJoined(row);
       return true;
     } finally {
@@ -237,6 +260,7 @@ export default function ClassExam() {
     <ClassTestRunner
       test={test}
       participantId={joined.participant_id}
+      deviceKey={deviceKey}
       alreadySubmitted={!!joined.submitted_at}
       ended={finished}
       onExit={() => setExited(true)}

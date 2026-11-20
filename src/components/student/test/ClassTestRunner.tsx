@@ -259,6 +259,7 @@ const ReviewPanel = memo(function ReviewPanel({
 export function ClassTestRunner({
   test,
   participantId,
+  deviceKey,
   alreadySubmitted = false,
   ended = false,
   onExit,
@@ -266,6 +267,8 @@ export function ClassTestRunner({
   test: ClassTest;
   /** Participant row created when the student joined with their phone number. */
   participantId: string;
+  /** This phone's seat key (ClassExam): every call sends it, so only the phone that took the seat can use it. */
+  deviceKey: string;
   alreadySubmitted?: boolean;
   /** Teacher ended the test early or the clock expired — force-submit and show the score. */
   ended?: boolean;
@@ -340,7 +343,7 @@ export function ClassTestRunner({
 
     // The paper comes without `answer`: the answer key never touches the student's device while the
     // exam is live (grading happens on the server). Signed-out phones can't read `questions` directly.
-    (supabase.rpc as any)('class_test_paper', { p_participant_id: participantId })
+    (supabase.rpc as any)('class_test_paper', { p_participant_id: participantId, p_device_key: deviceKey })
       .then(({ data }: { data: QuestionRow[] | null }) => {
         if (!data?.length) { loadedKeyRef.current = null; return; } // never cache an empty paper
         const byId = new Map((data ?? []).map((q: any) => [q.id, q as QuestionRow]));
@@ -352,7 +355,7 @@ export function ClassTestRunner({
           /* storage full — the test still works, just no offline cache */
         }
       });
-  }, [idsKey, paperKey, participantId]);
+  }, [idsKey, paperKey, participantId, deviceKey]);
 
 
   /* ---------- restore progress from this device (no network) ---------- */
@@ -393,7 +396,7 @@ export function ClassTestRunner({
       return;
     }
     supabase
-      .rpc('class_test_load_draft', { p_participant_id: participantId })
+      .rpc('class_test_load_draft', { p_participant_id: participantId, p_device_key: deviceKey })
       .then(({ data }) => {
         if (cancelled) return;
         const row = (Array.isArray(data) ? data[0] : data) as any;
@@ -417,7 +420,7 @@ export function ClassTestRunner({
     return () => {
       cancelled = true;
     };
-  }, [participantId, startedKey, progressKey]);
+  }, [participantId, deviceKey, startedKey, progressKey]);
 
   /* ---------- persist progress locally on every change ----------
      `cursor` rides along so a refresh (or any remount) puts the student back on the
@@ -463,13 +466,14 @@ export function ClassTestRunner({
       p_flags: flagsRef.current,
       p_times: timesRef.current,
       p_violations: violationsRef.current,
+      p_device_key: deviceKey,
     });
     setDraftSyncing(false);
     if (!error) {
       draftSentRef.current = snapshot;
       draftDirtyRef.current = false;
     }
-  }, [participantId]);
+  }, [participantId, deviceKey]);
 
   useEffect(() => {
     if (!restored || submitted) return;
@@ -501,36 +505,28 @@ export function ClassTestRunner({
   }, [answers, restored, submitted, pushDraft]);
 
 
-  /* ---------- already submitted on another device / cache lost: pull the paper back ---------- */
+  /* ---------- answer key arrives only once the paper is in and the teacher has ended the test ----------
+     The same call brings back the student's own answers if this device lost them (cache cleared). */
   useEffect(() => {
-    if (!submitted || !participantId) return;
-    if (Object.keys(answersRef.current).length > 0) return;
-    (supabase.rpc as any)('class_test_my_review', { p_participant_id: participantId })
-      .then(({ data }: { data: { question_id: string; selected_answer: string | null }[] | null }) => {
-        if (!data || data.length === 0) return;
-        const map: Record<string, string> = {};
-        for (const r of data as any[]) if (r.selected_answer != null) map[r.question_id] = r.selected_answer;
-        setAnswers(map);
-      });
-  }, [submitted, participantId]);
-
-  /* ---------- answer key arrives only once the paper is in ---------- */
-  useEffect(() => {
-    if (!submitted || !idsKey || !participantId) return;
+    if (!submitted || !ended || !idsKey || !participantId) return;
     if (Object.keys(answerKey).length > 0) return;
-    (supabase.rpc as any)('class_test_my_review', { p_participant_id: participantId })
-      .then(({ data }: { data: { question_id: string; answer: string | null; alternate_answers: string[] | null }[] | null }) => {
+    supabase
+      .rpc('class_test_my_review', { p_participant_id: participantId, p_device_key: deviceKey })
+      .then(({ data }) => {
         if (!data?.length) return;
         const key: Record<string, string> = {};
         const alts: Record<string, string[]> = {};
+        const mine: Record<string, string> = {};
         for (const r of data) {
           key[r.question_id] = r.answer ?? '';
           alts[r.question_id] = Array.isArray(r.alternate_answers) ? r.alternate_answers : [];
+          if (r.selected_answer != null) mine[r.question_id] = r.selected_answer;
         }
         setAnswerKey(key);
         setAlternateKey(alts);
+        if (Object.keys(answersRef.current).length === 0) setAnswers(mine);
       });
-  }, [submitted, idsKey, answerKey, participantId]);
+  }, [submitted, ended, idsKey, answerKey, participantId, deviceKey]);
 
 
 
@@ -573,10 +569,18 @@ export function ClassTestRunner({
         p_flags: payloadFlags,
         p_times: payloadTimes,
         p_violations: violationsRef.current,
+        p_device_key: deviceKey,
       });
       const row = (Array.isArray(data) ? data[0] : data) as
         | { correct_count: number; answered_count: number }
         | undefined;
+      // The teacher released this seat and another phone took it: retrying can't help.
+      if (error?.message.includes('another phone')) {
+        setPendingUpload(false);
+        submittingRef.current = false;
+        toast.error(error.message);
+        return;
+      }
       if (error || !row) {
         fail();
         return;
@@ -589,7 +593,7 @@ export function ClassTestRunner({
     setPendingUpload(false);
     setSubmitted(true);
     if (auto) toast('Time is up — your test was submitted');
-  }, [participantId, questions]);
+  }, [participantId, deviceKey, questions]);
 
   submitTestRef.current = submitTest;
 
