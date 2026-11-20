@@ -39,7 +39,7 @@ import { CenterReviewPage } from './CenterReviewPage';
 import { CenterPracticeTests } from './CenterPracticeTests';
 import { CenterPracticeTest } from './CenterPracticeTest';
 import { SoloPremium } from './SoloPremium';
-import { SoloBilling, SoloMenuLinks, WHOP_ORDERS, useBillingSummary } from './SoloBilling';
+import { SoloBilling, SoloMenuLinks, useBillingSummary } from './SoloBilling';
 import { PremiumWelcome } from './PremiumWelcome';
 import { CenterProctorJoin } from './CenterProctorJoin';
 import { CenterSpeedLobby, type SpeedConfig, type SpeedRun } from './CenterSpeedLobby';
@@ -842,10 +842,7 @@ function SoloPlanSettings() {
       <p className="text-sm">{s.line}</p>
       <div className="flex flex-wrap gap-2">
         {s.kind === 'free' && <Button asChild><Link to="/student/premium">Upgrade to Premium</Link></Button>}
-        {(s.kind === 'trial' || s.kind === 'paid') && <>
-          <Button asChild variant="outline"><a href={WHOP_ORDERS} target="_blank" rel="noopener noreferrer">Manage or cancel</a></Button>
-          <Button asChild variant="ghost"><Link to="/student/billing">Billing details</Link></Button>
-        </>}
+        {(s.kind === 'trial' || s.kind === 'paid') && <Button asChild variant="outline"><Link to="/student/billing">Manage billing</Link></Button>}
       </div>
     </Glass>
   );

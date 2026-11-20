@@ -13,7 +13,7 @@ const whop = (over: Partial<Billing>): Billing => ({ ...base, plan: 'premium', p
 describe('billing summary', () => {
   it('free', () => expect(billingSummary(base, now)).toMatchObject({ kind: 'free', title: 'Free' }));
   it('a yearly trial says when it ends and what comes next', () => {
-    expect(billingSummary(whop({}), now)).toEqual({ kind: 'trial', title: 'Premium · Yearly', line: 'Free trial ends 26 Nov 2026, then $39 a year.' });
+    expect(billingSummary(whop({}), now)).toEqual({ kind: 'trial', title: 'Premium · Yearly', line: 'Free trial ends 26 Nov 2026, then $39 a year.', until: '26 Nov 2026', cancel: false });
   });
   it('a trial canceled early promises no charge', () => {
     expect(billingSummary(whop({ whop_cancel_at_period_end: true }), now).line).toBe("Your trial ends 26 Nov 2026. You won't be charged.");
@@ -47,10 +47,20 @@ describe('billing page', () => {
     const html = render(<SoloBilling />, base);
     expect(html).toContain('Billing'); expect(html).toContain('href="/student/premium"'); expect(html).not.toContain('Manage or cancel');
   });
-  it('trial: the plan line, the Whop link and the refund rule', () => {
+  it('trial: the plan line, cancelling right here, the card link and the refund rule', () => {
     const html = render(<SoloBilling />, trial);
     expect(html).toContain('Premium · Yearly'); expect(html).toContain('Free trial ends 1 Jan 2099, then $39 a year.');
+    expect(html).toContain('Cancel subscription'); expect(html).not.toContain('Keep Premium');
     expect(html).toContain('href="https://whop.com/@me/settings/orders/"'); expect(html).toContain('within 14 days');
+  });
+  it('after a cancel: the end date and Keep Premium to undo it', () => {
+    const html = render(<SoloBilling />, { ...trial, whop_cancel_at_period_end: true });
+    expect(html).toContain("Your trial ends 1 Jan 2099. You won&#x27;t be charged.");
+    expect(html).toContain('Keep Premium'); expect(html).not.toContain('Cancel subscription');
+  });
+  it('Premium given by an admin has nothing to cancel', () => {
+    const html = render(<SoloBilling />, { ...base, plan: 'premium', premium_until: '2099-01-02T12:00:00Z' });
+    expect(html).not.toContain('Cancel subscription'); expect(html).not.toContain('Keep Premium');
   });
   it('is only for solo students', () => expect(render(<SoloBilling />, base, false)).toBe(''));
 });

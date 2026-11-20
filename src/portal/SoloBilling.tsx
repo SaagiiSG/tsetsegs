@@ -1,9 +1,14 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { Link, Navigate, NavLink } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { CreditCard, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,12 +56,13 @@ export function billingSummary(b: Billing, now = new Date()) {
   }
   const price = cycle && `${PRICE[cycle]} a ${cycle === 'yearly' ? 'year' : 'month'}`;
   const cancel = !!b.whop_cancel_at_period_end || b.whop_status === 'canceling';
+  const until = fmt(end);
   if (b.whop_status === 'trialing') {
-    const line = cancel ? `Your trial ends ${fmt(end)}. You won't be charged.` : `Free trial ends ${fmt(end)}${price ? `, then ${price}` : ''}.`;
-    return { kind: 'trial' as const, title, line };
+    const line = cancel ? `Your trial ends ${until}. You won't be charged.` : `Free trial ends ${until}${price ? `, then ${price}` : ''}.`;
+    return { kind: 'trial' as const, title, line, until, cancel };
   }
-  if (cancel) return { kind: 'paid' as const, title, line: `Cancels on ${fmt(end)}. You keep Premium until then.` };
-  return { kind: 'paid' as const, title, line: `Renews on ${fmt(end)}${cycle ? ` for ${PRICE[cycle]}` : ''}.` };
+  if (cancel) return { kind: 'paid' as const, title, line: `Cancels on ${until}. You keep Premium until then.`, until, cancel };
+  return { kind: 'paid' as const, title, line: `Renews on ${until}${cycle ? ` for ${PRICE[cycle]}` : ''}.`, until, cancel };
 }
 
 /** The signed-in solo student's summary, null while loading. A failed details read falls back to the plan alone. */
@@ -67,8 +73,31 @@ export function useBillingSummary() {
   return billingSummary(billing.data ?? { plan: premium ? 'premium' : 'free', premium_until: null, whop_membership_id: null, whop_status: null, whop_period_end: null, whop_cancel_at_period_end: null, whop_billing_period_days: null });
 }
 
-/** Billing for solo students (Saagii, 19 Nov): the plan, its next date, and Whop's page to cancel or change the card. */
+/** Cancel at the period end, or undo that, through whop-manage; the plan queries refresh with Whop's answer. */
+function useManage() {
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const run = async (action: 'cancel' | 'resume') => {
+    setBusy(true);
+    const { error } = await supabase.functions.invoke('whop-manage', { body: { action } });
+    setBusy(false);
+    if (error) {
+      const ctx = (error as { context?: unknown }).context;
+      const msg = ctx instanceof Response ? await ctx.json().then((j: { error?: string }) => j.error).catch(() => null) : null;
+      toast.error(msg || "That didn't go through. Please try again.");
+      return;
+    }
+    toast.success(action === 'cancel' ? 'Your subscription is canceled.' : 'Premium will keep going.');
+    qc.invalidateQueries({ queryKey: ['solo-billing'] });
+    qc.invalidateQueries({ queryKey: ['solo-plan'] });
+  };
+  return { busy, run };
+}
+
+/** Billing for solo students (Saagii, 19–20 Nov): the plan, its next date, and cancelling or undoing it right here. */
 export function SoloBilling() {
+  const manage = useManage();
+  const [confirm, setConfirm] = useState(false);
   const { isSolo } = useSoloPlan();
   const s = useBillingSummary();
   if (!isSolo) return <Navigate to="/student" replace />;
@@ -84,11 +113,32 @@ export function SoloBilling() {
         <CardContent className="space-y-3">
           {s.kind === 'free' && <Button asChild><Link to="/student/premium">Upgrade to Premium</Link></Button>}
           {(s.kind === 'trial' || s.kind === 'paid') && <>
-            <Button asChild variant="outline"><a href={WHOP_ORDERS} target="_blank" rel="noopener noreferrer">Manage or cancel</a></Button>
-            <p className="text-xs text-muted-foreground">Whop handles your billing. Sign in there with this account's email to change your card or cancel.</p>
+            {s.cancel
+              ? <Button disabled={manage.busy} onClick={() => void manage.run('resume')}>Keep Premium</Button>
+              : <Button variant="outline" disabled={manage.busy} onClick={() => setConfirm(true)}>Cancel subscription</Button>}
+            {/* Whop keeps the card, so changing it is the one step that still happens on Whop. */}
+            <p className="text-xs text-muted-foreground">To change your card, <a className="underline underline-offset-4 hover:text-foreground" href={WHOP_ORDERS} target="_blank" rel="noopener noreferrer">sign in to Whop</a> with this account's email.</p>
           </>}
         </CardContent>
       </Card>
+      {(s.kind === 'trial' || s.kind === 'paid') && (
+        <AlertDialog open={confirm} onOpenChange={setConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancel Premium?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {s.kind === 'trial'
+                  ? `Your free trial ends ${s.until}. You won't be charged, and Premium stays on until then.`
+                  : `Premium stays on until ${s.until}. You won't be charged again.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep Premium</AlertDialogCancel>
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => void manage.run('cancel')}>Cancel subscription</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
       {(s.kind === 'trial' || s.kind === 'paid') && (
         <p className="text-xs text-muted-foreground">Refunds: email manager@tsetsegs.com within 14 days of a payment. <a className="underline underline-offset-4 hover:text-foreground" href={`${TERMS_URL}#refunds`} target="_blank" rel="noopener noreferrer">Refund rules</a></p>
       )}
