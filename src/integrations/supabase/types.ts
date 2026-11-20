@@ -7345,6 +7345,7 @@ export type Database = {
       solo_has_premium: { Args: { _user: string }; Returns: boolean }
       solo_institution_id: { Args: never; Returns: string }
       solo_join: { Args: never; Returns: string }
+      solo_set_name: { Args: { _name: string }; Returns: string }
       solo_speed_runs_left: { Args: never; Returns: number }
       speed_window_counts: {
         Args: { p_seconds: number; p_student: string }
