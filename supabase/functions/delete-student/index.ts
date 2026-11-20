@@ -6,23 +6,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function requireAdminOrTeacher(req: Request, supabaseAdmin: any): Promise<Response | null> {
+type Caller = { fail: Response } | { fail?: undefined; isAdmin: boolean; username: string }
+
+async function requireAdminOrTeacher(req: Request, supabaseAdmin: any): Promise<Caller> {
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    return { fail: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }) }
   }
   const token = authHeader.replace('Bearer ', '')
   const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token)
   if (userErr || !userData?.user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    return { fail: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }) }
   }
   const { data: roles } = await supabaseAdmin.from('user_roles')
     .select('role').eq('user_id', userData.user.id)
-  const allowed = (roles ?? []).some((r: any) => r.role === 'admin' || r.role === 'teacher')
+  const isAdmin = (roles ?? []).some((r: any) => r.role === 'admin')
+  const allowed = isAdmin || (roles ?? []).some((r: any) => r.role === 'teacher')
   if (!allowed) {
-    return new Response(JSON.stringify({ error: 'Admin or teacher access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    return { fail: new Response(JSON.stringify({ error: 'Admin or teacher access required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }) }
   }
-  return null
+  // get_current_teacher_username() reads the same field.
+  return { isAdmin, username: String(userData.user.user_metadata?.username ?? '') }
 }
 
 serve(async (req) => {
@@ -37,8 +41,8 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const authFail = await requireAdminOrTeacher(req, supabaseAdmin)
-    if (authFail) return authFail
+    const caller = await requireAdminOrTeacher(req, supabaseAdmin)
+    if (caller.fail) return caller.fail
 
     const { studentId, batchId } = await req.json()
 
@@ -49,12 +53,26 @@ serve(async (req) => {
     // Get the student's phone to find linked account
     const { data: student } = await supabaseAdmin
       .from('students')
-      .select('phone')
+      .select('phone, batch_id')
       .eq('id', studentId)
       .single()
 
     if (!student) {
       throw new Error('Student not found')
+    }
+
+    // Security scan 20 Nov: a teacher deletes only students in a batch they teach (admins anyone), by the same name
+    // match the students RLS uses for teachers (20260123114419: batches.teacher ILIKE '%' || teachers.name || '%').
+    if (!caller.isAdmin) {
+      const { data: teacher } = await supabaseAdmin.from('teachers').select('name').eq('username', caller.username).maybeSingle()
+      const { data: batch } = student.batch_id
+        ? await supabaseAdmin.from('batches').select('teacher').eq('id', student.batch_id).maybeSingle()
+        : { data: null }
+      const name = String(teacher?.name ?? '').toLowerCase()
+      const owns = !!caller.username && !!name && String(batch?.teacher ?? '').toLowerCase().includes(name)
+      if (!owns) {
+        return new Response(JSON.stringify({ error: 'You can only delete students in your own classes' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
     }
 
     // Find linked student account
