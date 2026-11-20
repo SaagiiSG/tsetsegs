@@ -49,63 +49,187 @@ export function SoloBlocked({ onHaveAccount, onSignOut }: { onHaveAccount?: () =
   );
 }
 
-export default function SoloSignIn() {
-  const [name, setName] = useState('');
+type Mode = 'signup' | 'signin' | 'forgot' | 'code';
+type Result = { error?: { message?: string } | null };
+
+/** A password box with a Show/Hide toggle, as most apps have. */
+function PasswordInput({ id, value, onChange, autoComplete }: { id: string; value: string; onChange: (v: string) => void; autoComplete: string }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="relative">
+      <Input id={id} type={shown ? 'text' : 'password'} required minLength={MIN_PASSWORD} autoComplete={autoComplete} className={`${authInputClasses} pr-16`} value={value} onChange={e => onChange(e.target.value)} />
+      <button type="button" onClick={() => setShown(v => !v)} aria-label={shown ? 'Hide password' : 'Show password'}
+        className="absolute inset-y-0 right-3 my-auto h-8 rounded-full px-2 text-xs font-medium text-muted-foreground hover:text-foreground">{shown ? 'Hide' : 'Show'}</button>
+    </div>
+  );
+}
+
+const MIN_PASSWORD = 8;
+// Supabase's words, in ours.
+const friendly = (m?: string) =>
+  /invalid login credentials/i.test(m ?? '') ? 'Wrong email or password.'
+  : /already registered|already exists/i.test(m ?? '') ? 'That email already has an account. Sign in instead.'
+  : /token has expired or is invalid/i.test(m ?? '') ? 'That code is wrong or has expired. Send a new one.'
+  : /signups not allowed/i.test(m ?? '') ? 'No account with that email yet. Create an account first.'
+  : m || 'Something went wrong. Try again.';
+
+/**
+ * Solo sign-in like most apps (Saagii, 20 Nov): email and password, with Create account, Sign in and Forgot password.
+ * No name here; onboarding asks for it. When Supabase wants the email confirmed, an 8-digit code finishes sign-up.
+ */
+export default function SoloSignIn({ start = 'signup' }: { start?: 'signup' | 'signin' }) {
+  const [mode, setMode] = useState<Mode>(start);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
-  const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
+  const [codeFor, setCodeFor] = useState<'signup' | 'email'>('signup'); // a sign-up confirmation, or a sign-in code
+  const to = (m: Mode) => { setMode(m); setError(null); setInfo(null); setCode(''); };
 
-  const run = async (fn: () => Promise<{ error?: { message?: string } | null }>) => {
+  const run = async (fn: () => Promise<Result>) => {
     setBusy(true); setError(null);
-    try { const { error: e } = await fn(); if (e) setError(e.message ?? 'Something went wrong. Try again.'); else return true; }
-    catch (e) { setError((e as Error)?.message || 'Something went wrong. Try again.'); }
+    try { const { error: e } = await fn(); if (e) setError(friendly(e.message)); else return true; }
+    catch (e) { setError(friendly((e as Error)?.message)); }
     finally { setBusy(false); }
     return false;
   };
+  const addr = email.trim();
 
   const oauth = (provider: 'google' | 'apple' | 'microsoft') =>
-    run(() => lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin + '/solo' }) as Promise<{ error?: { message?: string } | null }>);
-  const sendCode = async (e: React.FormEvent) => {
+    run(() => lovable.auth.signInWithOAuth(provider, { redirect_uri: window.location.origin + '/solo' }) as Promise<Result>);
+  // A session here means the project skips email confirmation; otherwise the email carries the code.
+  const signUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const ok = await run(() => supabase.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + '/solo', data: { full_name: name.trim(), terms_version: TERMS_VERSION } } }));
-    if (ok) setSent(true);
+    let next: Mode | null = null;
+    await run(async () => {
+      const r = await supabase.auth.signUp({ email: addr, password, options: { emailRedirectTo: window.location.origin + '/solo', data: { terms_version: TERMS_VERSION } } });
+      if (r.error || r.data.session) return r;
+      // Supabase answers a taken, confirmed email with a user that has no identities (and sends nothing).
+      if (r.data.user?.identities?.length === 0) return { error: { message: 'already registered' } };
+      next = 'code';
+      return r;
+    });
+    if (next) { setCodeFor('signup'); to(next); }
   };
-  const verify = async (token: string) => { if (!(await run(() => supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' })))) setCode(''); };
+  const signIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    const { error: err } = await supabase.auth.signInWithPassword({ email: addr, password });
+    setBusy(false);
+    if (!err) return;
+    // An account that never confirmed its email: send a fresh code and finish here.
+    if (/not confirmed/i.test(err.message)) { await supabase.auth.resend({ type: 'signup', email: addr }); setCodeFor('signup'); to('code'); return; }
+    setError(friendly(err.message));
+  };
+  const forgot = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (await run(() => supabase.auth.resetPasswordForEmail(addr, { redirectTo: window.location.origin + '/solo' }))) setInfo(`If ${addr} has an account, we've emailed it a link to set a new password.`);
+  };
+  // Sign in with a code instead of the password (Saagii, 20 Nov), for existing accounts only.
+  const emailCode = () => supabase.auth.signInWithOtp({ email: addr, options: { shouldCreateUser: false } });
+  const sendSignInCode = async () => {
+    if (!addr) { setError('Enter your email first.'); return; }
+    if (await run(emailCode)) { setCodeFor('email'); to('code'); }
+  };
+  const verify = async (token: string) => { if (!(await run(() => supabase.auth.verifyOtp({ email: addr, token, type: codeFor })))) setCode(''); };
+  const resend = async () => {
+    if (await run(() => (codeFor === 'email' ? emailCode() : supabase.auth.resend({ type: 'signup', email: addr })))) setInfo('We sent a new code.');
+  };
 
+  const link = 'font-medium text-foreground underline underline-offset-4';
+  const heading = mode === 'signin' ? 'Welcome back' : mode === 'forgot' ? 'Reset your password' : mode === 'code' ? 'Check your email' : 'Start practicing SAT';
   return (
     <SoloShell>
       <div className="space-y-3">
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Solo practice</p>
-        <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">Start practicing SAT</h1>
-        <p className="text-sm text-muted-foreground">Free, no card needed. <a className="underline underline-offset-4 hover:text-foreground" href="/?lang=eng#pricing">See plans</a></p>
+        <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">{heading}</h1>
+        {mode === 'signup' && <p className="text-sm text-muted-foreground">Free, no card needed. <a className="underline underline-offset-4 hover:text-foreground" href="/?lang=eng#pricing">See plans</a></p>}
       </div>
-      <div className="space-y-3">
-        <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('google')}><GoogleMark className="h-5 w-5" />Continue with Google</Button>
-        <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('apple')}><AppleMark className="h-5 w-5" />Continue with Apple</Button>
-        <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('microsoft')}><MicrosoftMark className="h-5 w-5" />Continue with Microsoft</Button>
-        {!agreed && <p className="text-center text-xs text-muted-foreground">Tick the box below to continue.</p>}
-      </div>
-      <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
-      {sent ? (
+
+      {mode === 'code' ? (
         <div className="space-y-3">
-          <p className="text-sm">We sent a code to {email.trim()}. Enter it here, or tap the link in the email.</p>
+          <p className="text-sm">We sent a code to {addr}. Enter it here, or tap the link in the email.</p>
           <InputOTP maxLength={CODE_LENGTH} value={code} disabled={busy} onChange={v => { setCode(v); if (v.length === CODE_LENGTH) void verify(v); }} aria-label={`${CODE_LENGTH}-digit code`}>
             {/* w-9 below sm so 8 boxes fit a 360px phone. */}
             <InputOTPGroup>{Array.from({ length: CODE_LENGTH }, (_, i) => <InputOTPSlot key={i} index={i} className="w-9 sm:w-10" />)}</InputOTPGroup>
           </InputOTP>
+          <p className="text-sm text-muted-foreground">No email? <button type="button" className={link} disabled={busy} onClick={() => void resend()}>Send a new code</button></p>
+          <p className="text-sm text-muted-foreground"><button type="button" className={link} onClick={() => to('signin')}>Back to sign in</button></p>
         </div>
-      ) : (
-        <form onSubmit={sendCode} className="space-y-4">
-          <div className="space-y-1.5"><Label htmlFor="solo-name" className={authLabelClasses}>Your name</Label><Input id="solo-name" required autoComplete="name" className={authInputClasses} value={name} onChange={e => setName(e.target.value)} /></div>
+      ) : mode === 'forgot' ? (
+        <form onSubmit={forgot} className="space-y-4">
           <div className="space-y-1.5"><Label htmlFor="solo-email" className={authLabelClasses}>Email</Label><Input id="solo-email" type="email" required autoComplete="email" className={authInputClasses} value={email} onChange={e => setEmail(e.target.value)} /></div>
-          {/* Under the inputs (Saagii, 19 Nov); it still unlocks the Google, Apple and Microsoft buttons above too. */}
-          <TermsCheck checked={agreed} onChange={setAgreed} />
-          <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !agreed || !name.trim()}>Email me a code</Button>
+          <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !addr}>Email me a reset link</Button>
+          <p className="text-sm text-muted-foreground"><button type="button" className={link} onClick={() => to('signin')}>Back to sign in</button></p>
         </form>
-      )}
+      ) : <>
+        <div className="space-y-3">
+          <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('google')}><GoogleMark className="h-5 w-5" />Continue with Google</Button>
+          <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('apple')}><AppleMark className="h-5 w-5" />Continue with Apple</Button>
+          <Button variant="outline" className={oauthButton} disabled={busy || !agreed} onClick={() => oauth('microsoft')}><MicrosoftMark className="h-5 w-5" />Continue with Microsoft</Button>
+          {!agreed && <p className="text-center text-xs text-muted-foreground">Tick the box below to continue.</p>}
+        </div>
+        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
+        <form onSubmit={mode === 'signin' ? signIn : signUp} className="space-y-4">
+          <div className="space-y-1.5"><Label htmlFor="solo-email" className={authLabelClasses}>Email</Label><Input id="solo-email" type="email" required autoComplete="email" className={authInputClasses} value={email} onChange={e => setEmail(e.target.value)} /></div>
+          <div className="space-y-1.5">
+            <div className="flex items-baseline justify-between">
+              <Label htmlFor="solo-password" className={authLabelClasses}>Password</Label>
+              {mode === 'signin' && <button type="button" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground" onClick={() => to('forgot')}>Forgot password?</button>}
+            </div>
+            <PasswordInput id="solo-password" value={password} onChange={setPassword} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} />
+            {mode === 'signup' && <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD} characters.</p>}
+          </div>
+          {/* Under the inputs (Saagii, 19 Nov); it also unlocks the Google, Apple and Microsoft buttons above. */}
+          <TermsCheck checked={agreed} onChange={setAgreed} />
+          {mode === 'signin'
+            ? <>
+                <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !addr || !password}>Sign in</Button>
+                <Button type="button" variant="outline" className={oauthButton} disabled={busy} onClick={() => void sendSignInCode()}>Email me a sign-in code instead</Button>
+              </>
+            : <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || !agreed || !addr || password.length < MIN_PASSWORD}>Create account</Button>}
+          <p className="text-center text-sm text-muted-foreground">
+            {mode === 'signin'
+              ? <>New here? <button type="button" className={link} onClick={() => to('signup')}>Create an account</button></>
+              : <>Already have an account? <button type="button" className={link} onClick={() => to('signin')}>Sign in</button></>}
+          </p>
+        </form>
+      </>}
+      {info && <p role="status" className="text-sm text-muted-foreground">{info}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+    </SoloShell>
+  );
+}
+
+/** After a reset link: the link signs them in, then this sets the new password before the app opens. */
+export function SoloSetPassword({ onDone }: { onDone: () => void }) {
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setError(null);
+    const { error: err } = await supabase.auth.updateUser({ password });
+    setBusy(false);
+    if (err) setError(friendly(err.message)); else onDone();
+  };
+  return (
+    <SoloShell>
+      <div className="space-y-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Solo practice</p>
+        <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">Set a new password</h1>
+      </div>
+      <form onSubmit={save} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="solo-new-password" className={authLabelClasses}>New password</Label>
+          <PasswordInput id="solo-new-password" value={password} onChange={setPassword} autoComplete="new-password" />
+          <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD} characters.</p>
+        </div>
+        <Button type="submit" className={authPrimaryButtonClasses} disabled={busy || password.length < MIN_PASSWORD}>Save password</Button>
+      </form>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     </SoloShell>
   );

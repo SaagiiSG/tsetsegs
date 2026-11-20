@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { deviceLanguage } from '@/lib/publicLanguage';
 import CenterPortalApp from '@/portal/CenterPortalApp';
-import SoloSignIn, { SoloBlocked, SoloShell } from './SoloSignIn';
+import SoloSignIn, { SoloBlocked, SoloSetPassword, SoloShell } from './SoloSignIn';
 
 type Joined = 'pending' | 'ok' | string;
 
@@ -19,11 +19,12 @@ export default function SoloPortal() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [joined, setJoined] = useState<Joined>('pending');
   const [haveAccount, setHaveAccount] = useState(false);
+  const [recovering, setRecovering] = useState(false); // a password reset link signed them in: set the password first
   const userId = session?.user.id;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session)).catch(() => setSession(null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    const { data: sub } = supabase.auth.onAuthStateChange((e, s) => { if (e === 'PASSWORD_RECOVERY') setRecovering(true); setSession(s); });
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -44,9 +45,10 @@ export default function SoloPortal() {
 
   let body;
   if (session === undefined) body = loading;
-  else if (!session && haveAccount) body = <SoloSignIn />;
+  else if (!session && haveAccount) body = <SoloSignIn start="signin" />;
   // Sign-up open (launch, 20 Nov; 0151): everyone outside Mongolia gets the sign-in page, which also creates accounts.
   else if (!session) body = deviceLanguage() === 'mon' ? <SoloBlocked onHaveAccount={() => setHaveAccount(true)} /> : <SoloSignIn />;
+  else if (recovering) body = <SoloSetPassword onDone={() => setRecovering(false)} />;
   else if (joined === 'pending') body = loading;
   else if (joined !== 'ok') {
     body = /mongolia/i.test(joined) ? <SoloBlocked onSignOut={signOut} /> : (

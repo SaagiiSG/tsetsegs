@@ -7,7 +7,8 @@ export type PortalSettings = { display_name?: string; logo_url?: string; brand_c
 export type Center = { id: string; name: string; country: string; slug: string; portal_settings?: PortalSettings | null };
 export type CenterRole = 'center_admin' | 'teacher' | 'student';
 
-type Ctx = { center: Center; role: CenterRole | null; name: string; userId: string | null; isSolo: boolean; signOut: () => void; reloadCenter: () => void };
+// rename: the portal's own copy of the name, after a solo student sets it in onboarding (solo_set_name, 0155).
+type Ctx = { center: Center; role: CenterRole | null; name: string; userId: string | null; isSolo: boolean; signOut: () => void; reloadCenter: () => void; rename?: (name: string) => void };
 export const CenterContext = createContext<Ctx | null>(null);
 export function useCenter() {
   const ctx = useContext(CenterContext);

@@ -67,7 +67,10 @@ function Choice({ on, onClick, disabled, children }: { on: boolean; onClick: () 
 
 /** First-run flow for a new center student: answers save as they go, step 7 sets the daily ring. */
 export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, goals, record }: { studentId: string; attempts: Attempt[]; meta: Record<string, QMeta>; start: number; satMonth: string | null; goals: CenterGoals | undefined; record: RecordFn }) {
-  const { center, name, isSolo, signOut } = useCenter();
+  const { center, name, isSolo, signOut, rename } = useCenter();
+  // Email sign-ups have no name (solo_join's 'Solo student'): step 1 asks for it (Saagii, 20 Nov).
+  const needsName = isSolo && name === 'Solo student';
+  const [nick, setNick] = useState('');
   const qc = useQueryClient();
   const navigate = useNavigate();
   const plan = useSoloPlan();
@@ -171,6 +174,15 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
 
   const goTo = (next: number) => { setDir(next < step ? -1 : 1); setStep(next); };
 
+  const saveName = async () => {
+    setSaving(true);
+    const { data, error } = await supabase.rpc('solo_set_name' as never, { _name: nick } as never);
+    setSaving(false);
+    if (error) { toast.error(SAVE_ERROR); return; }
+    rename?.(data as unknown as string);
+    await save({}, 2);
+  };
+
   const save = async (patch: Patch, next: number) => {
     setSaving(true);
     const { error } = await supabase.from('tenant_student_goals').upsert({ student_id: studentId, institution_id: center.id, onboarding_step: next, ...patch });
@@ -205,7 +217,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
 
   const finish = () => { const at = new Date().toISOString(); save({ ...vals, intensity, set_at: at, onboarding_done_at: at }, 7); };
   const action: { label: string; ready: boolean; run: () => void } =
-    step === 1 ? { label: 'Start', ready: true, run: () => save({}, 2) }
+    step === 1 ? { label: 'Start', ready: !needsName || !!nick.trim(), run: needsName ? saveName : () => save({}, 2) }
     : step === 2 ? { label: 'Continue', ready: satDate !== undefined, run: () => save({ sat_date: satDate ?? null }, 3) }
     : step === 3 ? { label: 'Continue', ready: prior === 'no' || priorScore != null, run: () => save({ prior_score: priorScore }, 4) }
     : step === 4 ? { label: 'Continue', ready: true, run: () => save({ target_score: target }, 5) }
@@ -225,7 +237,7 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
   const pickTarget = () => { setGlide(true); setTarget(helpMePick(priorScore)); setWhy(helpMePickReason(priorScore)); setNod(n => n + 1); };
 
   const first = name.split(' ')[0];
-  const titles = [first ? `Welcome, ${first}` : 'Welcome', 'When is your SAT?', 'Taken a practice SAT?', 'Target score', 'Which part feels harder?', 'Try one real SAT question'];
+  const titles = [needsName ? 'What should we call you?' : first ? `Welcome, ${first}` : 'Welcome', 'When is your SAT?', 'Taken a practice SAT?', 'Target score', 'Which part feels harder?', 'Try one real SAT question'];
   const [lead, profile] = planProfile(intensity);
   // The sky echoes the latest answer: [big value, caption].
   const [answer, caption]: [string | null, string] =
@@ -300,6 +312,11 @@ export function CenterOnboarding({ studentId, attempts, meta, start, satMonth, g
                     </AnimatePresence>
                   )}
                 </motion.h1>
+                {step === 1 && needsName && <motion.div variants={ITEM} className="space-y-2">
+                  <Input autoFocus autoComplete="given-name" aria-label="Your name" placeholder="Your name" maxLength={80} value={nick} disabled={saving}
+                    onChange={e => setNick(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && nick.trim() && !saving) void saveName(); }} className="h-14 text-xl" />
+                  <p className="text-sm sky-body">Leaderboards show your first name and last initial.</p>
+                </motion.div>}
                 {step === 1 && <motion.p variants={ITEM} className="text-lg sky-body">{welcomeCopy(centerDisplayName(center), isSolo)}</motion.p>}
                 {step === 2 && <div role="group" aria-labelledby={titleId} className="grid gap-2">
                   {dates.options.map(o => <Choice key={o.value} on={satDate === o.value} disabled={saving} onClick={() => tap(o.value, () => setSatDate(o.value))}>{o.label}</Choice>)}
