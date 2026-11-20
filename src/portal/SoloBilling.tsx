@@ -52,9 +52,8 @@ export function billingSummary(b: Billing, now = new Date()) {
   const price = cycle && `${PRICE[cycle]} a ${cycle === 'yearly' ? 'year' : 'month'}`;
   const cancel = !!b.whop_cancel_at_period_end || b.whop_status === 'canceling';
   if (b.whop_status === 'trialing') {
-    const days = Math.max(0, Math.ceil((new Date(end).getTime() - now.getTime()) / DAY));
     const line = cancel ? `Your trial ends ${fmt(end)}. You won't be charged.` : `Free trial ends ${fmt(end)}${price ? `, then ${price}` : ''}.`;
-    return { kind: 'trial' as const, title, line, days };
+    return { kind: 'trial' as const, title, line };
   }
   if (cancel) return { kind: 'paid' as const, title, line: `Cancels on ${fmt(end)}. You keep Premium until then.` };
   return { kind: 'paid' as const, title, line: `Renews on ${fmt(end)}${cycle ? ` for ${PRICE[cycle]}` : ''}.` };
@@ -97,18 +96,13 @@ export function SoloBilling() {
   );
 }
 
-/** Top bar chip for solo students: Free opens the upgrade page, a trial or Premium opens Billing. Short words on phones. */
+/** Top bar chip for solo students: Free opens the upgrade page, Premium (trial included, Saagii 20 Nov) opens Billing. */
 export function PlanChip() {
   const ctx = useContext(CenterContext);
   const { premium, ready } = useSoloPlan();
-  const billing = useSoloBilling();
   if (!ctx?.isSolo || !ready) return null;
-  const s = billing.data ? billingSummary(billing.data) : null;
   if (!premium) {
     return <Link to="/student/premium" className="student-chip shrink-0" title="Upgrade to Premium">Free<span className="max-sm:hidden text-muted-foreground">· Upgrade</span></Link>;
-  }
-  if (s?.kind === 'trial') {
-    return <Link to="/student/billing" className="student-chip shrink-0" title="Billing"><Sparkles className="h-3.5 w-3.5" aria-hidden />Trial<span className="max-sm:hidden text-muted-foreground">· {s.days === 1 ? '1 day' : `${s.days} days`} left</span></Link>;
   }
   return <Link to="/student/billing" className="student-chip shrink-0" title="Billing"><Sparkles className="h-3.5 w-3.5" aria-hidden />Premium</Link>;
 }

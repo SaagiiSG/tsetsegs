@@ -12,8 +12,8 @@ const whop = (over: Partial<Billing>): Billing => ({ ...base, plan: 'premium', p
 
 describe('billing summary', () => {
   it('free', () => expect(billingSummary(base, now)).toMatchObject({ kind: 'free', title: 'Free' }));
-  it('a yearly trial says when it ends and what comes next, with days left for the chip', () => {
-    expect(billingSummary(whop({}), now)).toEqual({ kind: 'trial', title: 'Premium · Yearly', line: 'Free trial ends 26 Nov 2026, then $39 a year.', days: 7 });
+  it('a yearly trial says when it ends and what comes next', () => {
+    expect(billingSummary(whop({}), now)).toEqual({ kind: 'trial', title: 'Premium · Yearly', line: 'Free trial ends 26 Nov 2026, then $39 a year.' });
   });
   it('a trial canceled early promises no charge', () => {
     expect(billingSummary(whop({ whop_cancel_at_period_end: true }), now).line).toBe("Your trial ends 26 Nov 2026. You won't be charged.");
@@ -60,9 +60,9 @@ describe('plan chip', () => {
     const html = render(<PlanChip />, base);
     expect(html).toContain('href="/student/premium"'); expect(html).toContain('Free'); expect(html).toContain('Upgrade');
   });
-  it('a trial shows the days left and opens Billing', () => {
-    const html = render(<PlanChip />, whop({ premium_until: new Date(Date.now() + 6 * 864e5).toISOString(), whop_period_end: new Date(Date.now() + 5 * 864e5 - 1000).toISOString() }));
-    expect(html).toContain('href="/student/billing"'); expect(html).toContain('Trial'); expect(html).toContain('5 days left');
+  it('a trial says Premium too, and opens Billing', () => {
+    const html = render(<PlanChip />, whop({ premium_until: new Date(Date.now() + 6 * 864e5).toISOString(), whop_period_end: new Date(Date.now() + 5 * 864e5).toISOString() }));
+    expect(html).toContain('href="/student/billing"'); expect(html).toContain('Premium'); expect(html).not.toContain('Trial');
   });
   it('paid Premium', () => {
     const html = render(<PlanChip />, whop({ whop_status: 'active', premium_until: '2099-01-02T00:00:00Z', whop_period_end: '2099-01-01T00:00:00Z' }));
