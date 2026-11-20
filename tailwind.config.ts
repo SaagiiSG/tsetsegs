@@ -81,6 +81,11 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      // ease-enter for things coming in, ease-exit for things leaving (ux-motion 5).
+      transitionTimingFunction: {
+        enter: "cubic-bezier(0.16, 1, 0.3, 1)",
+        exit: "cubic-bezier(0.7, 0, 0.84, 0)",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
