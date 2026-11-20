@@ -1,4 +1,6 @@
-.landing-v2 {
+/* Pop-ups and toasts render at the end of <body>, outside .landing-v2, so the page's tokens also go on <body>
+   (else they fall back to the old rose theme). :where() keeps it at zero specificity so the portals' own body themes win. */
+.landing-v2, :where(body:has(.landing-v2)) {
   --background: 0 0% 100%;
   --foreground: 0 0% 9%;
   --card: 0 0% 100%;
