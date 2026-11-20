@@ -3865,11 +3865,7 @@ export type Database = {
           provider: string | null
           updated_at: string
           user_id: string
-          whop_billing_period_days: number | null
-          whop_cancel_at_period_end: boolean | null
           whop_membership_id: string | null
-          whop_period_end: string | null
-          whop_status: string | null
           whop_updated_at: string | null
         }
         Insert: {
@@ -3881,11 +3877,7 @@ export type Database = {
           provider?: string | null
           updated_at?: string
           user_id: string
-          whop_billing_period_days?: number | null
-          whop_cancel_at_period_end?: boolean | null
           whop_membership_id?: string | null
-          whop_period_end?: string | null
-          whop_status?: string | null
           whop_updated_at?: string | null
         }
         Update: {
@@ -3897,11 +3889,7 @@ export type Database = {
           provider?: string | null
           updated_at?: string
           user_id?: string
-          whop_billing_period_days?: number | null
-          whop_cancel_at_period_end?: boolean | null
           whop_membership_id?: string | null
-          whop_period_end?: string | null
-          whop_status?: string | null
           whop_updated_at?: string | null
         }
         Relationships: []
@@ -7682,8 +7670,6 @@ export type Database = {
       }
       whop_sync_membership: {
         Args: {
-          _billing_period_days?: number
-          _cancel_at_period_end?: boolean
           _membership: string
           _period_end: string
           _status: string
