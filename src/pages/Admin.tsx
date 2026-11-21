@@ -30,6 +30,7 @@ import ConceptVideosAdmin from '@/pages/admin/ConceptVideosAdmin';
 import IntlDbQuestions from '@/pages/admin/IntlDbQuestions';
 import InstitutionCustomers from '@/pages/admin/InstitutionCustomers';
 import DemoRequests from '@/pages/admin/DemoRequests';
+import Partners from '@/pages/admin/Partners';
 import SupportRequests from '@/pages/admin/SupportRequests';
 import { usePageTitle } from '@/components/admin/mobile/usePageTitle';
 import { AdminCohortProvider } from '@/contexts/AdminCohortContext';
@@ -75,6 +76,7 @@ const Admin = () => {
       <Route path="tsetsegs/dashboard" element={<DashboardStats />} />
       <Route path="customers" element={<InstitutionCustomers />} />
       <Route path="demo-requests" element={<DemoRequests />} />
+      <Route path="partners" element={<Partners />} />
       <Route path="support" element={<SupportRequests />} />
       <Route path="analytics" element={<PlatformInsights />} />
       <Route path="tsetsegs/analytics" element={<AnalyticsDashboard />} />
