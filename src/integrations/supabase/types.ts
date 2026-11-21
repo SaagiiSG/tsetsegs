@@ -2701,6 +2701,196 @@ export type Database = {
           },
         ]
       }
+      partner_applications: {
+        Row: {
+          country: string
+          created_at: string
+          email: string
+          id: string
+          kind: string
+          link: string
+          message: string
+          name: string
+          notified_at: string | null
+          partner_id: string | null
+          status: string
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          email: string
+          id?: string
+          kind: string
+          link?: string
+          message?: string
+          name: string
+          notified_at?: string | null
+          partner_id?: string | null
+          status?: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          email?: string
+          id?: string
+          kind?: string
+          link?: string
+          message?: string
+          name?: string
+          notified_at?: string | null
+          partner_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      partner_earnings: {
+        Row: {
+          alerted_at: string | null
+          amount_cents: number
+          created_at: string
+          due_at: string
+          id: string
+          paid_at: string
+          paid_marked_at: string | null
+          partner_id: string
+          payment_id: string
+          status: string
+          student_user_id: string
+          voided_at: string | null
+        }
+        Insert: {
+          alerted_at?: string | null
+          amount_cents?: number
+          created_at?: string
+          due_at: string
+          id?: string
+          paid_at: string
+          paid_marked_at?: string | null
+          partner_id: string
+          payment_id: string
+          status?: string
+          student_user_id: string
+          voided_at?: string | null
+        }
+        Update: {
+          alerted_at?: string | null
+          amount_cents?: number
+          created_at?: string
+          due_at?: string
+          id?: string
+          paid_at?: string
+          paid_marked_at?: string | null
+          partner_id?: string
+          payment_id?: string
+          status?: string
+          student_user_id?: string
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_earnings_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_invites: {
+        Row: {
+          created_at: string
+          partner_id: string
+          student_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          partner_id: string
+          student_user_id: string
+        }
+        Update: {
+          created_at?: string
+          partner_id?: string
+          student_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_invites_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_invites_student_user_id_fkey"
+            columns: ["student_user_id"]
+            isOneToOne: true
+            referencedRelation: "solo_students"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      partner_voided_payments: {
+        Row: {
+          created_at: string
+          payment_id: string
+        }
+        Insert: {
+          created_at?: string
+          payment_id: string
+        }
+        Update: {
+          created_at?: string
+          payment_id?: string
+        }
+        Relationships: []
+      }
+      partners: {
+        Row: {
+          application_id: string | null
+          code: string
+          created_at: string
+          email: string
+          id: string
+          kind: string
+          name: string
+          paused_at: string | null
+          user_id: string | null
+          welcomed_at: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          code: string
+          created_at?: string
+          email: string
+          id?: string
+          kind: string
+          name: string
+          paused_at?: string | null
+          user_id?: string | null
+          welcomed_at?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          code?: string
+          created_at?: string
+          email?: string
+          id?: string
+          kind?: string
+          name?: string
+          paused_at?: string | null
+          user_id?: string | null
+          welcomed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partners_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "partner_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       password_reset_codes: {
         Row: {
           attempts: number
@@ -6744,6 +6934,10 @@ export type Database = {
         Args: { p_points: number; p_sprint: string; p_student: string }
         Returns: undefined
       }
+      approve_partner_application: {
+        Args: { _code: string; _id: string }
+        Returns: string
+      }
       batch_by_link: {
         Args: { _link: string }
         Returns: {
@@ -6783,6 +6977,16 @@ export type Database = {
       challenge_finish_time_sprint: {
         Args: { _challenge_id: string }
         Returns: boolean
+      }
+      claim_partner_payouts_due: {
+        Args: never
+        Returns: {
+          amount_cents: number
+          code: string
+          due_at: string
+          id: string
+          partner_name: string
+        }[]
       }
       claim_trial_reminders: {
         Args: never
@@ -6895,6 +7099,7 @@ export type Database = {
         }[]
       }
       current_student_account_id: { Args: never; Returns: string }
+      decline_partner_application: { Args: { _id: string }; Returns: undefined }
       demo_attach_logins: {
         Args: {
           _admin: string
@@ -7124,6 +7329,23 @@ export type Database = {
       }
       ngee_undo_check_in: { Args: { p_booking_id: string }; Returns: boolean }
       normalize_mn_phone: { Args: { p: string }; Returns: string }
+      partner_admin_data: { Args: never; Returns: Json }
+      partner_code_ok: { Args: { _code: string }; Returns: boolean }
+      partner_dashboard: { Args: never; Returns: Json }
+      partner_link_user: { Args: { _partner: string }; Returns: string }
+      partner_mark_paid: { Args: { _earning: string }; Returns: undefined }
+      partner_record_payment: {
+        Args: {
+          _amount: number
+          _membership: string
+          _paid_at: string
+          _payment: string
+          _user: string
+          _yearly: boolean
+        }
+        Returns: string
+      }
+      partner_void_payment: { Args: { _payment: string }; Returns: string }
       pick_hardest_questions: {
         Args: {
           p_limit?: number
@@ -7367,6 +7589,10 @@ export type Database = {
         Args: { p_batch_id: string; p_nickname: string }
         Returns: undefined
       }
+      set_partner_paused: {
+        Args: { _partner: string; _paused: boolean }
+        Returns: undefined
+      }
       shared_attempts: {
         Args: { _token: string }
         Returns: {
@@ -7407,6 +7633,7 @@ export type Database = {
       solo_join: { Args: never; Returns: string }
       solo_set_name: { Args: { _name: string }; Returns: string }
       solo_speed_runs_left: { Args: never; Returns: number }
+      solo_use_invite: { Args: { _code: string }; Returns: string }
       speed_window_counts: {
         Args: { p_seconds: number; p_student: string }
         Returns: {
@@ -7563,6 +7790,18 @@ export type Database = {
           _name: string
           _phone: string
           _students: number
+          _website?: string
+        }
+        Returns: string
+      }
+      submit_partner_application: {
+        Args: {
+          _country: string
+          _email: string
+          _kind: string
+          _link: string
+          _message: string
+          _name: string
           _website?: string
         }
         Returns: string
@@ -7753,6 +7992,10 @@ export type Database = {
       tenant_user_in_center: {
         Args: { _except?: string; _institution: string; _uid: string }
         Returns: boolean
+      }
+      unclaim_partner_payouts_due: {
+        Args: { _ids: string[] }
+        Returns: undefined
       }
       unclaim_trial_reminder: {
         Args: { _period_end: string; _user: string }
