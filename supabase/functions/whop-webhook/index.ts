@@ -1,10 +1,13 @@
 // Whop calls this on membership.activated and membership.updated. It checks Whop's signature, then hands the
 // membership's state to whop_sync_membership (0145), which turns solo Premium on or off.
+// payment.succeeded, refund.created and dispute.created feed the partner program: partner_record_payment earns the
+// $10, partner_void_payment takes it back (0163).
 // The student comes from the metadata whop-checkout put on the checkout. Secret: WHOP_WEBHOOK_SECRET (the ws_ value,
 // as Whop shows it once); when WHOP_ENV is 'production', WHOP_WEBHOOK_SECRET_LIVE wins if set (20 Nov). verify_jwt is off for this function: Whop signs its requests instead of sending a JWT.
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { unwrapWebhook } from 'npm:@whop/sdk@2.8.1/helpers'
+import { paymentFields, refundPaymentId, yearlyPlans } from '../_shared/partner-payment.ts'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -32,6 +35,32 @@ Deno.serve(async (req) => {
   }
 
   // Anything Whop can't fix by retrying gets a 200, so it stops resending.
+  if (event.type === 'payment.succeeded' || event.type === 'refund.created' || event.type === 'dispute.created') {
+    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
+    const live = Deno.env.get('WHOP_ENV') === 'production'
+    let plans: Record<string, string> = {}
+    try { plans = JSON.parse((live && Deno.env.get('WHOP_PLAN_IDS_LIVE')) || Deno.env.get('WHOP_PLAN_IDS') || '{}') } catch (_err) { /* no plans: nothing counts as yearly */ }
+    let call
+    if (event.type === 'payment.succeeded') {
+      const p = paymentFields(event.data)
+      if (!p) return new Response('ignored')
+      call = admin.rpc('partner_record_payment', {
+        _user: p.user, _membership: p.membership, _payment: p.payment, _yearly: p.plan !== null && yearlyPlans(plans).has(p.plan),
+        _amount: p.amount, _paid_at: p.paidAt,
+      })
+    } else {
+      const payment = refundPaymentId(event.data)
+      if (!payment) return new Response('ignored')
+      call = admin.rpc('partner_void_payment', { _payment: payment })
+    }
+    const { data, error } = await call
+    if (error) {
+      console.error('partner', event.type, error.message)
+      return new Response('partner sync failed', { status: 500 })
+    }
+    console.log('whop', event.type, data)
+    return new Response(String(data))
+  }
   if (event.type !== 'membership.activated' && event.type !== 'membership.updated') return new Response('ignored')
   const m = event.data
   const user = m.metadata?.customer_id
