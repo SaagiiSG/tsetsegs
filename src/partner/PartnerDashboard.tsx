@@ -144,19 +144,28 @@ export default function PartnerDashboard() {
   }, []);
 
   const uid = session?.user.id;
+  const [tries, setTries] = useState(0); // Retry bumps this to run the load again
   useEffect(() => {
-    if (!uid) { setDash(undefined); return; }
+    if (!uid) { setDash(undefined); setError(null); return; }
     let live = true;
     (supabase as unknown as Rpc).rpc('partner_dashboard').then(({ data, error: e }) => {
       if (!live) return;
       if (e) setError(e.message || 'Something went wrong. Try again.'); else { setError(null); setDash(data); }
     });
     return () => { live = false; };
-  }, [uid]);
+  }, [uid, tries]);
 
   if (session === undefined) return <PartnerShell><p className="text-sm text-muted-foreground" role="status">Loading…</p></PartnerShell>;
   if (!session) return <SignIn />;
-  if (error) return <PartnerShell><p role="alert" className="text-sm text-destructive">{error}</p></PartnerShell>;
+  if (error) return (
+    <PartnerShell>
+      <p role="alert" className="text-sm text-destructive">{error}</p>
+      <div className="flex gap-3">
+        <Button onClick={() => { setError(null); setTries(n => n + 1); }}>Retry</Button>
+        <Button variant="outline" onClick={() => void supabase.auth.signOut()}>Sign out</Button>
+      </div>
+    </PartnerShell>
+  );
   if (dash === undefined) return <PartnerShell><p className="text-sm text-muted-foreground" role="status">Loading…</p></PartnerShell>;
   if (dash === null) return (
     <PartnerShell>

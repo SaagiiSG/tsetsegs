@@ -17,11 +17,14 @@ export function inviteRow(i: Invite): { date: string; status: string; payout: st
   if (i.earning_status === 'paid') return { date, status: `Yearly, paid ${on(i.paid_at)}`, payout: `${$} paid ${on(i.paid_marked_at)}` };
   if (i.earning_status === 'void') return { date, status: 'Refunded', payout: 'No payout' };
   if (i.whop_status === 'trialing') return { date, status: i.period_end ? `In trial, ends ${on(i.period_end)}` : 'In trial', payout: '—' };
+  if (i.whop_status === null) return { date, status: 'Free', payout: '—' };
   if (i.whop_status === 'canceled') return { date, status: 'Canceled', payout: 'No payout' };
-  if (i.whop_status === 'active') return i.billing_days != null && i.billing_days <= 31
-    ? { date, status: 'Monthly', payout: 'No payout (monthly)' }
-    : { date, status: 'Yearly', payout: 'No payout' };
-  return { date, status: 'Free', payout: '—' };
+  if (i.whop_status === 'active' || i.whop_status === 'canceling') {
+    // No earning yet can mean the payment webhook hasn't landed, so a long plan says "Checking", not "No payout".
+    if (i.billing_days == null) return { date, status: 'Paid plan', payout: 'Checking' };
+    return i.billing_days <= 31 ? { date, status: 'Monthly', payout: 'No payout (monthly)' } : { date, status: 'Yearly', payout: 'Checking' };
+  }
+  return { date, status: 'Not on a plan', payout: '—' };
 }
 
 export function totals(invites: Invite[]) {

@@ -11,6 +11,11 @@ describe('inviteRow', () => {
     expect(inviteRow({ ...base, whop_status: 'canceled' })).toMatchObject({ status: 'Canceled', payout: 'No payout' });
     expect(inviteRow({ ...base, earning_status: 'pending', paid_at: '2026-12-10T10:00:00Z', due_at: '2026-12-24T00:00:00Z' })).toMatchObject({ status: 'Yearly, paid 10 Dec', payout: '$10 due 24 Dec' });
     expect(inviteRow({ ...base, earning_status: 'paid', paid_at: '2026-12-10T10:00:00Z', paid_marked_at: '2026-12-24T09:00:00Z' }).payout).toBe('$10 paid 24 Dec');
+    expect(inviteRow({ ...base, whop_status: 'canceling', billing_days: 30 })).toMatchObject({ status: 'Monthly', payout: 'No payout (monthly)' });
+    expect(inviteRow({ ...base, whop_status: 'active', billing_days: 365 })).toMatchObject({ status: 'Yearly', payout: 'Checking' });
+    expect(inviteRow({ ...base, whop_status: 'canceling', billing_days: 365 })).toMatchObject({ status: 'Yearly', payout: 'Checking' });
+    expect(inviteRow({ ...base, whop_status: 'active' })).toMatchObject({ status: 'Paid plan', payout: 'Checking' });
+    for (const s of ['past_due', 'expired', 'unpaid', 'paused', 'completed']) expect(inviteRow({ ...base, whop_status: s })).toMatchObject({ status: 'Not on a plan', payout: '—' });
     expect(inviteRow({ ...base, earning_status: 'void', whop_status: 'canceled' })).toMatchObject({ status: 'Refunded', payout: 'No payout' });
   });
 });
