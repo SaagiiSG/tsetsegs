@@ -36,7 +36,7 @@ export function Terms() {
 
       <h2 id="refunds">Refunds</h2>
       <ul>
-        <li>You can get a full refund within 14 days of a payment, on both the monthly and the yearly plan. This includes the first payment after a free trial.</li>
+        <li>You can get a full refund on both the monthly and the yearly plan. The day you're charged counts as day 1, and you can ask until the end of day 14. This includes the first payment after a free trial.</li>
         <li>To ask for one, email {EMAIL} from your account’s email address. You don’t need to give a reason. We give one refund per account.</li>
         <li>As soon as we refund a payment, your account moves to the Free plan. Your progress stays.</li>
         <li>After 14 days we don’t refund, but you can cancel at any time and keep paid features until the end of the period you paid for.</li>
@@ -96,6 +96,7 @@ export function Privacy() {
         <li><strong>Practice activity:</strong> the questions you answer, your answers, how long you take, scores, points, streaks, badges, test results and use of tools like the calculator. Teachers may add attendance and notes.</li>
         <li><strong>Device and security data:</strong> when you sign in, your IP address and browser details. Students in the main portal also get a random device ID and a code made from browser settings (such as screen size, time zone and language), so an account can only be used on a limited number of devices.</li>
         <li><strong>Early bird list:</strong> your email address, if you joined the list before it closed.</li>
+        <li><strong>Partner application:</strong> if you apply to be a partner, your name, email, country, the link you gave us and your message.</li>
         <li><strong>Messages you send us:</strong> what you write in our contact, support and educator forms, bug reports and screenshots, and replies to our text messages.</li>
       </ul>
       <p>When you create a solo account, we check which country you are connecting from, because solo accounts are not available in Mongolia. We don’t store it.</p>
@@ -118,6 +119,7 @@ export function Privacy() {
       <ul>
         <li><strong>Your center and teachers</strong> (if you joined through one) see your profile, contact details, results and notes.</li>
         <li><strong>Other students</strong> see your name, class, points, rank and some scores on leaderboards, live games and profiles. Some leaderboards shorten your name to a first name and last initial. If you have no name on the main portal, the last 4 digits of your phone number are shown instead.</li>
+        <li><strong>Partner who invited you</strong> (if you signed up with a partner's invite code): they see the date you signed up and whether you're on a trial or a plan. Never your name or email.</li>
         <li><strong>Parents and guardians</strong> can see reports that your center shares with them by link.</li>
       </ul>
 
