@@ -8,6 +8,7 @@ import { AppleMark, GoogleMark, MicrosoftMark } from '@/components/auth/BrandIco
 import { authInputClasses, authLabelClasses, authPrimaryButtonClasses } from '@/components/auth/AuthSplitLayout';
 import clouds from '@/assets/landing/07-clouds-near.svg';
 import '@/components/landing/landing.css';
+import InviteCodeField from '@/partner/InviteCodeField';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
 import { PRIVACY_URL, TERMS_URL, TERMS_VERSION, rememberTick } from '@/lib/terms';
@@ -153,6 +154,7 @@ export default function SoloSignIn({ start = 'signup' }: { start?: 'signup' | 's
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Solo practice</p>
         <h1 className="text-4xl font-semibold tracking-tight leading-[1.1]">{heading}</h1>
         {mode === 'signup' && <p className="text-sm text-muted-foreground">Free, no card needed. <a className="underline underline-offset-4 hover:text-foreground" href="/?lang=eng#pricing">See plans</a></p>}
+        {mode === 'signup' && <InviteCodeField />}
       </div>
 
       {mode === 'code' ? (

@@ -10,9 +10,13 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { deviceLanguage } from '@/lib/publicLanguage';
 import CenterPortalApp from '@/portal/CenterPortalApp';
+import { captureRefParam, rememberInvite, storedInvite } from '@/partner/invite';
 import SoloSignIn, { SoloBlocked, SoloSetPassword, SoloShell } from './SoloSignIn';
 
 type Joined = 'pending' | 'ok' | string;
+
+// Read ?ref= once, before anything can reload the page for sign-in.
+captureRefParam(typeof window === 'undefined' ? '' : window.location.search);
 
 export default function SoloPortal() {
   const [queryClient] = useState(() => new QueryClient());
@@ -39,6 +43,14 @@ export default function SoloPortal() {
       );
     return () => { live = false; };
   }, [userId]);
+
+  // Tie the student to their partner once, right after the solo account exists; the answer is never shown and sign-up never waits.
+  useEffect(() => {
+    const _code = joined === 'ok' ? storedInvite() : null;
+    if (!_code) return;
+    (supabase as unknown as { rpc: (fn: string, args: object) => PromiseLike<unknown> }).rpc('solo_use_invite', { _code })
+      .then(() => rememberInvite(null), () => { /* keep the code; try again next time */ });
+  }, [joined]);
 
   const signOut = () => void supabase.auth.signOut();
   const loading = <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Loading…</div>;

@@ -46,3 +46,8 @@ it('signing in offers the password, a forgot link and a code instead', () => {
   expect(html).toContain('New here?');
   expect(html).not.toContain('Create account<');
 });
+
+it('sign-up offers an invite code link, sign-in does not', () => {
+  expect(renderToStaticMarkup(<SoloSignIn />)).toContain('Have an invite code?');
+  expect(renderToStaticMarkup(<SoloSignIn start="signin" />)).not.toContain('invite code');
+});
