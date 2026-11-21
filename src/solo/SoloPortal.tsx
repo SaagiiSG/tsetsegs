@@ -15,10 +15,9 @@ import SoloSignIn, { SoloBlocked, SoloSetPassword, SoloShell } from './SoloSignI
 
 type Joined = 'pending' | 'ok' | string;
 
-// Read ?ref= once, before anything can reload the page for sign-in.
-captureRefParam(typeof window === 'undefined' ? '' : window.location.search);
-
 export default function SoloPortal() {
+  // Read ?ref= once, on the solo page only, before anything can reload the page for sign-in.
+  useState(() => captureRefParam(window.location.search));
   const [queryClient] = useState(() => new QueryClient());
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [joined, setJoined] = useState<Joined>('pending');

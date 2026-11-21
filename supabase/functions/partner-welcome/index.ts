@@ -76,6 +76,11 @@ Deno.serve(async (req) => {
       idempotencyKey: `partner-welcome-${partnerId}`,
     })
     await log(result.sent ? 'sent' : 'suppressed')
+    if (!result.sent) {
+      // Not delivered (e.g. suppressed address): free the claim so the admin can see it and retry.
+      await release()
+      return json({ error: 'The email was not sent (the address may be blocked)' }, 502)
+    }
   } catch (sendError) {
     console.error('Partner welcome failed', sendError)
     await log('failed', sendError instanceof Error ? sendError.message : String(sendError))

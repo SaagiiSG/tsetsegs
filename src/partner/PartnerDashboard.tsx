@@ -61,7 +61,7 @@ function SignIn() {
             <InputOTPGroup>{Array.from({ length: CODE_LENGTH }, (_, i) => <InputOTPSlot key={i} index={i} className="w-9 sm:w-10" />)}</InputOTPGroup>
           </InputOTP>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <p className="text-sm text-muted-foreground">No email? <button type="button" className="font-medium text-foreground underline underline-offset-4" disabled={busy} onClick={() => void send()}>Send a new code</button></p>
+          <p className="text-sm text-muted-foreground">No email? <Button type="button" variant="link" className="h-auto p-0 font-medium text-foreground" disabled={busy} onClick={() => void send()}>Send a new code</Button></p>
         </div>
       ) : (
         <form onSubmit={send} className="space-y-4">
@@ -103,6 +103,7 @@ function Signed({ d }: { d: Dash }) {
         </div>
         {d.paused && <Badge variant="secondary">Paused</Badge>}
       </div>
+      {d.paused && <p className="text-sm text-muted-foreground">Your link is paused. New sign-ups won't count.</p>}
       <Card><CardContent className="space-y-4 pt-6">
         <CopyRow label="Your link" value={partnerLink(d.code)} />
         <CopyRow label="Your code" value={d.code} />

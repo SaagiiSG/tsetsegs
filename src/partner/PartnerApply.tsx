@@ -43,10 +43,10 @@ export default function PartnerApply() {
     </PartnerShell>
   );
 
-  const field = (id: string, label: string, k: keyof typeof f, type = 'text', required = true) => (
+  const field = (id: string, label: string, k: keyof typeof f, type = 'text', required = true, inputMode?: 'url') => (
     <div className="space-y-1.5">
       <Label htmlFor={id} className={authLabelClasses}>{label}</Label>
-      <Input id={id} type={type} required={required} className={authInputClasses} value={f[k]} onChange={set(k)} />
+      <Input id={id} type={type} inputMode={inputMode} required={required} className={authInputClasses} value={f[k]} onChange={set(k)} />
     </div>
   );
   return (
@@ -67,7 +67,7 @@ export default function PartnerApply() {
             <div className="flex items-center gap-2"><RadioGroupItem value="creator" id="p-creator" /><Label htmlFor="p-creator">Creator</Label></div>
           </RadioGroup>
         </div>
-        {field('p-link', 'Where you teach or post (a link)', 'link', 'url')}
+        {field('p-link', 'Where you teach or post (a link)', 'link', 'text', true, 'url')}
         {field('p-country', 'Country', 'country')}
         <div className="space-y-1.5">
           <Label htmlFor="p-message" className={authLabelClasses}>Anything else (optional)</Label>

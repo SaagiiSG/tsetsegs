@@ -34,33 +34,39 @@ Deno.serve(async (req) => {
     return new Response('Bad signature', { status: 401 })
   }
 
-  // Anything Whop can't fix by retrying gets a 200, so it stops resending.
   if (event.type === 'payment.succeeded' || event.type === 'refund.created' || event.type === 'dispute.created') {
-    const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
-    const live = Deno.env.get('WHOP_ENV') === 'production'
-    let plans: Record<string, string> = {}
-    try { plans = JSON.parse((live && Deno.env.get('WHOP_PLAN_IDS_LIVE')) || Deno.env.get('WHOP_PLAN_IDS') || '{}') } catch (_err) { /* no plans: nothing counts as yearly */ }
-    let call
-    if (event.type === 'payment.succeeded') {
-      const p = paymentFields(event.data)
-      if (!p) return new Response('ignored')
-      call = admin.rpc('partner_record_payment', {
-        _user: p.user, _membership: p.membership, _payment: p.payment, _yearly: p.plan !== null && yearlyPlans(plans).has(p.plan),
-        _amount: p.amount, _paid_at: p.paidAt,
-      })
-    } else {
-      const payment = refundPaymentId(event.data)
-      if (!payment) return new Response('ignored')
-      call = admin.rpc('partner_void_payment', { _payment: payment })
+    // A permanent partner failure must not get this shared endpoint disabled, it also syncs memberships.
+    try {
+      const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } })
+      const live = Deno.env.get('WHOP_ENV') === 'production'
+      let plans: Record<string, string> = {}
+      try { plans = JSON.parse((live && Deno.env.get('WHOP_PLAN_IDS_LIVE')) || Deno.env.get('WHOP_PLAN_IDS') || '{}') } catch (_err) { /* no plans: nothing counts as yearly */ }
+      let call
+      if (event.type === 'payment.succeeded') {
+        const p = paymentFields(event.data)
+        if (!p) return new Response('ignored')
+        call = admin.rpc('partner_record_payment', {
+          _user: p.user, _membership: p.membership, _payment: p.payment, _yearly: p.plan !== null && yearlyPlans(plans).has(p.plan),
+          _amount: p.amount, _paid_at: p.paidAt,
+        })
+      } else {
+        const payment = refundPaymentId(event.data)
+        if (!payment) return new Response('ignored')
+        call = admin.rpc('partner_void_payment', { _payment: payment })
+      }
+      const { data, error } = await call
+      if (error) {
+        console.error('partner', event.type, error.message)
+        return new Response('partner sync failed', { status: 500 })
+      }
+      console.log('whop', event.type, data)
+      return new Response(String(data))
+    } catch (err) {
+      console.error('partner', event.type, err instanceof Error ? err.message : String(err))
+      return new Response('ignored')
     }
-    const { data, error } = await call
-    if (error) {
-      console.error('partner', event.type, error.message)
-      return new Response('partner sync failed', { status: 500 })
-    }
-    console.log('whop', event.type, data)
-    return new Response(String(data))
   }
+  // Anything Whop can't fix by retrying gets a 200, so it stops resending.
   if (event.type !== 'membership.activated' && event.type !== 'membership.updated') return new Response('ignored')
   const m = event.data
   const user = m.metadata?.customer_id

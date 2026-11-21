@@ -119,7 +119,7 @@ export function Privacy() {
       <ul>
         <li><strong>Your center and teachers</strong> (if you joined through one) see your profile, contact details, results and notes.</li>
         <li><strong>Other students</strong> see your name, class, points, rank and some scores on leaderboards, live games and profiles. Some leaderboards shorten your name to a first name and last initial. If you have no name on the main portal, the last 4 digits of your phone number are shown instead.</li>
-        <li><strong>Partner who invited you</strong> (if you signed up with a partner's invite code): they see the date you signed up and whether you're on a trial or a plan. Never your name or email.</li>
+        <li><strong>Partner who invited you</strong> (if you signed up with a partner's invite code): they see the date you signed up, whether you’re on a trial, a monthly or a yearly plan, the date of your yearly payment, and whether you canceled or got a refund. Never your name or email.</li>
         <li><strong>Parents and guardians</strong> can see reports that your center shares with them by link.</li>
       </ul>
 

@@ -26,3 +26,7 @@ describe('totals', () => {
       .toEqual({ signedUp: 5, inTrial: 1, paidYearly: 2, onItsWayCents: 1000, paidCents: 1000 });
   });
 });
+
+it('renders a date-only sign-up (the dashboard sends YYYY-MM-DD) as 3 Dec', () => {
+  expect(inviteRow({ ...base, signed_up: '2026-12-03' }).date).toBe('3 Dec');
+});

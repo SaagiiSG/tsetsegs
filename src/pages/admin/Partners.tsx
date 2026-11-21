@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { fmtDate } from '@/partner/status';
 
 type Application = { id: string; name: string; email: string; kind: string; link: string | null; country: string | null; message: string | null; status: 'new' | 'approved' | 'declined'; created_at: string };
-type Partner = { id: string; name: string; email: string; kind: string; code: string; paused: boolean; created_at: string; signed_up: number; paid_yearly: number; owed_cents: number; paid_cents: number };
+type Partner = { id: string; name: string; email: string; kind: string; code: string; paused: boolean; welcomed: boolean; created_at: string; signed_up: number; paid_yearly: number; owed_cents: number; paid_cents: number };
 type Earning = { id: string; partner_name: string; code: string; paid_at: string; due_at: string; status: 'pending' | 'void' | 'paid'; amount_cents: number; paid_marked_at: string | null };
 type Missing = { partner_name: string; code: string; signed_up: string };
 type AdminData = { applications: Application[]; partners: Partner[]; earnings: Earning[]; missing: Missing[] };
@@ -45,8 +45,9 @@ export default function Partners() {
   };
 
   const welcome = async (partnerId: string): Promise<void> => {
-    const { error } = await api.functions.invoke('partner-welcome', { body: { partner_id: partnerId } });
-    if (error) toast.error('Approved, but the email failed. Try Resend.', { action: { label: 'Resend', onClick: () => void run(() => welcome(partnerId)) } });
+    // The client usually resolves failures as { error }, but a thrown one must reach the same Resend toast.
+    const failed = await api.functions.invoke('partner-welcome', { body: { partner_id: partnerId } }).then(r => !!r.error, () => true);
+    if (failed) toast.error('Approved, but the email failed. Try Resend.', { action: { label: 'Resend', onClick: () => { if (!busy) void run(() => welcome(partnerId)); } } });
     else toast.success('Approved. Welcome email sent.');
   };
 
@@ -124,6 +125,7 @@ export default function Partners() {
                     <p className="mt-1 text-sm text-muted-foreground break-all">{p.email}</p>
                     <p className="mt-1 text-sm text-muted-foreground">{p.signed_up} signed up · {p.paid_yearly} paid yearly · owed {usd(p.owed_cents)} · paid {usd(p.paid_cents)}</p>
                   </div>
+                  {!p.welcomed && <Button variant="outline" size="sm" disabled={busy} onClick={() => run(() => welcome(p.id))}>Send welcome</Button>}
                   <div className="flex items-center gap-2"><Switch id={`pause-${p.id}`} checked={p.paused} disabled={busy} onCheckedChange={v => pause(p, v)} /><Label htmlFor={`pause-${p.id}`}>Pause</Label></div>
                 </li>
               ))}</ul>}

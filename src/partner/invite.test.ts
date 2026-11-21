@@ -38,3 +38,9 @@ it('attachInvite clears the code on a clean answer, keeps it on { error } or a t
   await attachInvite(rpc); expect(rpc).toHaveBeenCalledWith('solo_use_invite', { _code: 'BRODY' }); expect(storedInvite()).toBeNull();
   await attachInvite(rpc); expect(rpc).toHaveBeenCalledTimes(1);
 });
+
+it('stores only a well-formed ref code, so ?ref=websummit-2026 tags nothing', () => {
+  captureRefParam('?ref=websummit-2026'); expect(storedInvite()).toBeNull();
+  captureRefParam('?ref=ab'); expect(storedInvite()).toBeNull();
+  captureRefParam('?ref=websummit'); expect(storedInvite()).toBe('WEBSUMMIT');
+});

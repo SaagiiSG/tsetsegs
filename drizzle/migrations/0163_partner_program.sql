@@ -181,6 +181,8 @@ RETURNS text LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public
 DECLARE sid uuid; pid uuid; n int; voided boolean;
         due timestamptz := ((_paid_at AT TIME ZONE 'UTC')::date + 14)::timestamp AT TIME ZONE 'UTC';
 BEGIN
+  -- Serialise a payment with its refund so neither can miss the other.
+  PERFORM pg_advisory_xact_lock(hashtext('partner_payment:' || _payment));
   SELECT user_id INTO sid FROM public.solo_students WHERE user_id = _user;
   IF sid IS NULL AND _membership IS NOT NULL THEN
     SELECT user_id INTO sid FROM public.solo_students WHERE whop_membership_id = _membership;
@@ -203,6 +205,7 @@ CREATE OR REPLACE FUNCTION public.partner_void_payment(_payment text)
 RETURNS text LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public AS $$
 DECLARE n int;
 BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('partner_payment:' || _payment));
   INSERT INTO public.partner_voided_payments (payment_id) VALUES (_payment) ON CONFLICT DO NOTHING;
   UPDATE public.partner_earnings SET status = 'void', voided_at = now() WHERE payment_id = _payment AND status = 'pending';
   GET DIAGNOSTICS n = ROW_COUNT;
@@ -251,7 +254,7 @@ BEGIN
   IF NOT FOUND THEN RETURN NULL; END IF;
   RETURN jsonb_build_object('name', p.name, 'code', p.code, 'paused', p.paused_at IS NOT NULL, 'invites', coalesce((
     SELECT jsonb_agg(jsonb_build_object(
-      'signed_up', i.created_at, 'whop_status', s.whop_status, 'billing_days', s.whop_billing_period_days,
+      'signed_up', (i.created_at AT TIME ZONE 'UTC')::date, 'whop_status', s.whop_status, 'billing_days', s.whop_billing_period_days,
       'period_end', s.whop_period_end, 'earning_status', e.status, 'paid_at', e.paid_at, 'due_at', e.due_at,
       'paid_marked_at', e.paid_marked_at) ORDER BY i.created_at DESC)
     FROM public.partner_invites i
@@ -284,7 +287,7 @@ BEGIN
       'link', a.link, 'country', a.country, 'message', a.message, 'status', a.status, 'created_at', a.created_at)
       ORDER BY a.created_at DESC) FROM public.partner_applications a), '[]'::jsonb),
     'partners', coalesce((SELECT jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name, 'email', p.email, 'kind', p.kind,
-      'code', p.code, 'paused', p.paused_at IS NOT NULL, 'created_at', p.created_at,
+      'code', p.code, 'paused', p.paused_at IS NOT NULL, 'created_at', p.created_at, 'welcomed', p.welcomed_at IS NOT NULL,
       'signed_up', (SELECT count(*) FROM public.partner_invites i WHERE i.partner_id = p.id),
       'paid_yearly', (SELECT count(*) FROM public.partner_earnings e WHERE e.partner_id = p.id AND e.status <> 'void'),
       'owed_cents', (SELECT coalesce(sum(e.amount_cents), 0) FROM public.partner_earnings e WHERE e.partner_id = p.id AND e.status = 'pending'),

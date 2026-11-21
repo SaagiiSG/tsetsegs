@@ -11,7 +11,8 @@ export function storedInvite(): string | null {
 }
 export function captureRefParam(search: string) {
   const ref = new URLSearchParams(search).get('ref');
-  if (ref && normalizeCode(ref)) rememberInvite(normalizeCode(ref));
+  // Other pages use ?ref=websummit-2026 style tags; only a well-formed code is ours.
+  if (ref && /^[A-Z0-9]{3,20}$/.test(normalizeCode(ref))) rememberInvite(normalizeCode(ref));
 }
 
 type RpcResult = { error?: unknown } | null | undefined;
