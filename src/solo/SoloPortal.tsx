@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { deviceLanguage } from '@/lib/publicLanguage';
 import CenterPortalApp from '@/portal/CenterPortalApp';
-import { captureRefParam, rememberInvite, storedInvite } from '@/partner/invite';
+import { attachInvite, captureRefParam } from '@/partner/invite';
 import SoloSignIn, { SoloBlocked, SoloSetPassword, SoloShell } from './SoloSignIn';
 
 type Joined = 'pending' | 'ok' | string;
@@ -46,10 +46,7 @@ export default function SoloPortal() {
 
   // Tie the student to their partner once, right after the solo account exists; the answer is never shown and sign-up never waits.
   useEffect(() => {
-    const _code = joined === 'ok' ? storedInvite() : null;
-    if (!_code) return;
-    (supabase as unknown as { rpc: (fn: string, args: object) => PromiseLike<unknown> }).rpc('solo_use_invite', { _code })
-      .then(() => rememberInvite(null), () => { /* keep the code; try again next time */ });
+    if (joined === 'ok') void attachInvite((supabase as unknown as { rpc: (fn: string, args: object) => PromiseLike<{ error?: unknown }> }).rpc.bind(supabase));
   }, [joined]);
 
   const signOut = () => void supabase.auth.signOut();

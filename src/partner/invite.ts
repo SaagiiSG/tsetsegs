@@ -13,3 +13,12 @@ export function captureRefParam(search: string) {
   const ref = new URLSearchParams(search).get('ref');
   if (ref && normalizeCode(ref)) rememberInvite(normalizeCode(ref));
 }
+
+type RpcResult = { error?: unknown } | null | undefined;
+
+/** Tie the stored code to the new student. The client resolves failures as { error }, so only a clean answer clears it. */
+export async function attachInvite(rpc: (fn: string, args: object) => PromiseLike<RpcResult>): Promise<void> {
+  const _code = storedInvite();
+  if (!_code) return;
+  try { if (!(await rpc('solo_use_invite', { _code }))?.error) rememberInvite(null); } catch { /* keep the code */ }
+}

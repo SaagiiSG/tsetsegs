@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,14 +20,23 @@ export default function InviteCodeField() {
   const [value, setValue] = useState('');
   const [bad, setBad] = useState(false);
 
+  const req = useRef(0); // a newer blur, Cancel or edit makes an older answer stale
+  const checked = useRef('');
+
+  // Store the typed code right away: the OAuth click that blurs this box can unload the page before the check answers.
   const check = async () => {
     const code = normalizeCode(value);
-    if (!code) { setBad(false); return; }
+    if (!code || code === checked.current) return;
+    checked.current = code;
+    const mine = ++req.current;
+    rememberInvite(code);
     let ok = false;
     try { ok = !!(await codeOk(code)).data; } catch { /* treat a failed check as a bad code */ }
-    if (ok) { rememberInvite(code); setSaved(code); setOpen(false); setValue(''); setBad(false); }
-    else setBad(true);
+    if (mine !== req.current) return;
+    if (ok) { setSaved(code); setOpen(false); setValue(''); setBad(false); }
+    else { rememberInvite(saved); setBad(true); }
   };
+  const cancel = () => { req.current++; checked.current = ''; rememberInvite(saved); setOpen(false); setBad(false); };
 
   if (saved && !open) {
     return (
@@ -43,10 +52,10 @@ export default function InviteCodeField() {
     <div className="space-y-1.5">
       <Label htmlFor="solo-invite" className={authLabelClasses}>Invite code</Label>
       <Input id="solo-invite" autoFocus autoCapitalize="characters" autoComplete="off" spellCheck={false} maxLength={30}
-        className={authInputClasses} value={value} onChange={e => { setValue(e.target.value); setBad(false); }}
+        className={authInputClasses} value={value} onChange={e => { setValue(e.target.value); setBad(false); checked.current = ''; }}
         onBlur={() => void check()} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void check(); } }} />
       {bad && <p role="status" className="text-xs text-muted-foreground">That code doesn't work. You can still sign up without one.</p>}
-      <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={() => { setOpen(false); setBad(false); }}>Cancel</Button>
+      <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={cancel}>Cancel</Button>
     </div>
   );
 }

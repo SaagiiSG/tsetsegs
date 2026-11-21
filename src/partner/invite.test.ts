@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { captureRefParam, normalizeCode, rememberInvite, storedInvite } from './invite';
+import { attachInvite, captureRefParam, normalizeCode, rememberInvite, storedInvite } from './invite';
 
 // The test environment is node, so give it an in-memory localStorage.
 const stubStorage = (over: Partial<Storage> = {}) => {
@@ -28,4 +28,13 @@ it('blocked storage means no code and no crash', () => {
   expect(() => rememberInvite('BRODY')).not.toThrow();
   expect(() => rememberInvite(null)).not.toThrow();
   expect(() => captureRefParam('?ref=x')).not.toThrow();
+});
+
+it('attachInvite clears the code on a clean answer, keeps it on { error } or a throw', async () => {
+  rememberInvite('BRODY');
+  await attachInvite(async () => ({ error: { message: 'x' } })); expect(storedInvite()).toBe('BRODY');
+  await attachInvite(async () => { throw new Error('net'); }); expect(storedInvite()).toBe('BRODY');
+  const rpc = vi.fn(async () => ({ error: null }));
+  await attachInvite(rpc); expect(rpc).toHaveBeenCalledWith('solo_use_invite', { _code: 'BRODY' }); expect(storedInvite()).toBeNull();
+  await attachInvite(rpc); expect(rpc).toHaveBeenCalledTimes(1);
 });
