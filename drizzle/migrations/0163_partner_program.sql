@@ -241,20 +241,14 @@ $$;
 REVOKE ALL ON FUNCTION public.unclaim_partner_payouts_due(uuid[]) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.unclaim_partner_payouts_due(uuid[]) TO service_role;
 
--- The partner's own page: dates, statuses and amounts only, never who the student is. The sign-in email must be
--- confirmed, or anyone could sign up with a partner's address and read their page.
+-- The partner's own page: dates, statuses and amounts only, never who the student is. Found by user_id alone: a
+-- confirmed email proves nothing here (center admins can create confirmed accounts), so partner_link_user sets it.
 CREATE OR REPLACE FUNCTION public.partner_dashboard()
-RETURNS jsonb LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public AS $$
-DECLARE uid uuid := auth.uid(); p public.partners;
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public AS $$
+DECLARE p public.partners;
 BEGIN
-  IF uid IS NULL THEN RETURN NULL; END IF;
-  SELECT * INTO p FROM public.partners WHERE user_id = uid;
-  IF NOT FOUND THEN
-    SELECT pt.* INTO p FROM public.partners pt JOIN auth.users u ON lower(btrim(u.email)) = lower(pt.email)
-    WHERE u.id = uid AND u.email_confirmed_at IS NOT NULL AND pt.user_id IS NULL;
-    IF NOT FOUND THEN RETURN NULL; END IF;
-    UPDATE public.partners SET user_id = uid WHERE id = p.id;
-  END IF;
+  SELECT * INTO p FROM public.partners WHERE user_id = auth.uid();
+  IF NOT FOUND THEN RETURN NULL; END IF;
   RETURN jsonb_build_object('name', p.name, 'code', p.code, 'paused', p.paused_at IS NOT NULL, 'invites', coalesce((
     SELECT jsonb_agg(jsonb_build_object(
       'signed_up', i.created_at, 'whop_status', s.whop_status, 'billing_days', s.whop_billing_period_days,
@@ -267,6 +261,18 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.partner_dashboard() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.partner_dashboard() TO authenticated;
+
+-- Called by the welcome function right after it creates the partner's account, so only that account is linked.
+CREATE OR REPLACE FUNCTION public.partner_link_user(_partner uuid)
+RETURNS uuid LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public AS $$
+DECLARE uid uuid;
+BEGIN
+  SELECT u.id INTO uid FROM auth.users u JOIN public.partners p ON lower(btrim(u.email)) = lower(btrim(p.email)) WHERE p.id = _partner;
+  IF uid IS NOT NULL THEN UPDATE public.partners SET user_id = uid WHERE id = _partner; END IF;
+  RETURN uid;
+END $$;
+REVOKE ALL ON FUNCTION public.partner_link_user(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.partner_link_user(uuid) TO service_role;
 
 -- missing = students whose yearly payment we never recorded (webhook down or a bad plan id), so Saagii can fix it by hand.
 CREATE OR REPLACE FUNCTION public.partner_admin_data()
