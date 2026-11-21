@@ -102,14 +102,14 @@ BEGIN
   GET DIAGNOSTICS n = ROW_COUNT;
   RETURN CASE WHEN n = 1 THEN 'added' ELSE 'already' END;
 END $$;
-REVOKE ALL ON FUNCTION public.solo_use_invite(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.solo_use_invite(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.solo_use_invite(text) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.approve_partner_application(_id uuid, _code text)
 RETURNS uuid LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public AS $$
 DECLARE a public.partner_applications; c text := upper(btrim(coalesce(_code, ''))); pid uuid;
 BEGIN
-  IF NOT public.has_role(auth.uid(), 'admin') THEN RAISE EXCEPTION 'Admin access required'; END IF;
+  IF NOT coalesce(public.has_role(auth.uid(), 'admin'), false) THEN RAISE EXCEPTION 'Admin access required'; END IF;
   IF c !~ '^[A-Z0-9]{3,20}$' THEN RAISE EXCEPTION 'A code is 3–20 letters or numbers'; END IF;
   SELECT * INTO a FROM public.partner_applications WHERE id = _id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Application not found'; END IF;
@@ -120,28 +120,28 @@ BEGIN
   UPDATE public.partner_applications SET status = 'approved', partner_id = pid WHERE id = _id;
   RETURN pid;
 END $$;
-REVOKE ALL ON FUNCTION public.approve_partner_application(uuid, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.approve_partner_application(uuid, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.approve_partner_application(uuid, text) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.decline_partner_application(_id uuid)
 RETURNS void LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public AS $$
 DECLARE st text;
 BEGIN
-  IF NOT public.has_role(auth.uid(), 'admin') THEN RAISE EXCEPTION 'Admin access required'; END IF;
+  IF NOT coalesce(public.has_role(auth.uid(), 'admin'), false) THEN RAISE EXCEPTION 'Admin access required'; END IF;
   SELECT status INTO st FROM public.partner_applications WHERE id = _id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Application not found'; END IF;
   IF st = 'approved' THEN RAISE EXCEPTION 'Already approved'; END IF;
   UPDATE public.partner_applications SET status = 'declined' WHERE id = _id;
 END $$;
-REVOKE ALL ON FUNCTION public.decline_partner_application(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.decline_partner_application(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.decline_partner_application(uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.set_partner_paused(_partner uuid, _paused boolean)
 RETURNS void LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  IF NOT public.has_role(auth.uid(), 'admin') THEN RAISE EXCEPTION 'Admin access required'; END IF;
+  IF NOT coalesce(public.has_role(auth.uid(), 'admin'), false) THEN RAISE EXCEPTION 'Admin access required'; END IF;
   UPDATE public.partners SET paused_at = CASE WHEN _paused THEN coalesce(paused_at, now()) END WHERE id = _partner;
   IF NOT FOUND THEN RAISE EXCEPTION 'Partner not found'; END IF;
 END $$;
-REVOKE ALL ON FUNCTION public.set_partner_paused(uuid, boolean) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_partner_paused(uuid, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_partner_paused(uuid, boolean) TO authenticated;
